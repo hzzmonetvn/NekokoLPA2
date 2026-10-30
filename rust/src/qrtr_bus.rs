@@ -69,13 +69,8 @@ fn family(fd: i32) -> io::Result<libc::sa_family_t> {
     let mut address = SockAddrQrtr::default();
     let mut length = size_of::<SockAddrQrtr>() as libc::socklen_t;
 
-    let named = unsafe {
-        libc::getsockname(
-            fd,
-            (&mut address as *mut SockAddrQrtr).cast(),
-            &mut length,
-        )
-    };
+    let named =
+        unsafe { libc::getsockname(fd, (&mut address as *mut SockAddrQrtr).cast(), &mut length) };
 
     if named < 0 {
         return Err(io::Error::last_os_error());
@@ -89,13 +84,8 @@ fn node(fd: i32) -> io::Result<u32> {
     let mut address = SockAddrQrtr::default();
     let mut length = size_of::<SockAddrQrtr>() as libc::socklen_t;
 
-    let named = unsafe {
-        libc::getsockname(
-            fd,
-            (&mut address as *mut SockAddrQrtr).cast(),
-            &mut length,
-        )
-    };
+    let named =
+        unsafe { libc::getsockname(fd, (&mut address as *mut SockAddrQrtr).cast(), &mut length) };
 
     if named < 0 {
         return Err(io::Error::last_os_error());
@@ -180,7 +170,8 @@ fn receive(fd: i32, timeout: Duration) -> io::Result<Option<(u32, u32, Vec<u8>)>
 
         if read < 0 {
             let error = io::Error::last_os_error();
-            if error.kind() == io::ErrorKind::Interrupted || error.kind() == io::ErrorKind::WouldBlock
+            if error.kind() == io::ErrorKind::Interrupted
+                || error.kind() == io::ErrorKind::WouldBlock
             {
                 continue;
             }

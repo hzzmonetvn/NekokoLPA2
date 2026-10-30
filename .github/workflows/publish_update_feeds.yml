@@ -13,10 +13,6 @@ on:
         description: Published stable app tag; leave empty for latest
         type: string
         required: false
-      migrate_standard_desktop:
-        description: Publish the shared NekokoLPA2 Windows/Linux builds to legacy standard channels
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -58,12 +54,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          MIGRATE_STANDARD_DESKTOP: ${{ github.event_name != 'workflow_dispatch' || inputs.migrate_standard_desktop }}
           UPDATE_WORKER_URL: ${{ secrets.UPDATE_WORKER_URL }}
           UPDATE_WORKER_KEY: ${{ secrets.UPDATE_WORKER_KEY }}
         run: |
-          args=(--release-tag "$RELEASE_TAG")
-          if [ "$MIGRATE_STANDARD_DESKTOP" = true ]; then
-            args+=(--migrate-standard-desktop)
-          fi
-          python3 scripts/publish_update_feeds.py "${args[@]}"
+          python3 scripts/publish_update_feeds.py --release-tag "$RELEASE_TAG"

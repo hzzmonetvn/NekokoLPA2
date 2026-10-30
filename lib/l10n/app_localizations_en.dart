@@ -37,6 +37,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stockMD3 => 'Stock MD3';
 
   @override
+  String get amoledTheme => 'AMOLED Black';
+
+  @override
   String get waterfallLayout => 'Waterfall Layout';
 
   @override

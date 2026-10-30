@@ -12,6 +12,43 @@ class AppTheme {
   static ThemeData theme(bool isDark, [AppThemeType? type]) {
     final themeType = type ?? AppSettings().themeType;
 
+    if (themeType == AppThemeType.amoled) {
+      final colorScheme = ColorScheme.fromSeed(
+        seedColor: kPrimaryColor,
+        brightness: Brightness.dark,
+        surface: const Color(0xFF101010),
+        onSurface: const Color(0xFFF5F5F5),
+        surfaceContainerHighest: const Color(0xFF1A1A1A),
+      );
+      return ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: Colors.black,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          surfaceTintColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+            systemNavigationBarColor: Colors.black,
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
+        ),
+        cardTheme: CardThemeData(color: const Color(0xFF101010), elevation: 0),
+        dialogTheme: const DialogThemeData(
+          backgroundColor: Color(0xFF1A1A1A),
+          surfaceTintColor: Colors.transparent,
+        ),
+        popupMenuTheme: const PopupMenuThemeData(
+          color: Color(0xFF1A1A1A),
+          surfaceTintColor: Colors.transparent,
+        ),
+        textTheme: AppTheme.defaultFontTextTheme(ThemeData.dark().textTheme),
+      );
+    }
+
     if (themeType == AppThemeType.stock) {
       return ThemeData(
         useMaterial3: true,
@@ -353,6 +390,9 @@ class AppTheme {
   static Color cardBackground(BuildContext context) {
     if (AppSettings().themeType == AppThemeType.stock) {
       return Theme.of(context).colorScheme.surfaceContainerLow;
+    }
+    if (AppSettings().themeType == AppThemeType.amoled) {
+      return const Color(0xFF101010);
     }
     return Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFF1B2436)

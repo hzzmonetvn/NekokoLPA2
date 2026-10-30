@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish Android variants and the shared NekokoLPA2 desktop releases."""
+"""Publish Android update feeds."""
 import argparse
 import json
 from pathlib import Path
@@ -21,7 +21,7 @@ def api(path):
     return json.loads(result.stdout)
 
 
-def plan(release, channel, certificates, migrate_standard_desktop=False):
+def plan(release, channel, certificates):
     tag = release['tag_name']
     if release['draft'] or release['prerelease'] or re.fullmatch(r'v\d+\.\d+\.\d+\+\d+', tag) is None:
         raise ValueError('A published stable app release is required')
@@ -59,25 +59,6 @@ def plan(release, channel, certificates, migrate_standard_desktop=False):
         legacy['data']['changelog'] = ('Open update available. Choose the Open Android APK or the Open rooted module matching your installation; vendor APKs use different signing/package identities.')
         result.append(legacy)
         result.append({**legacy, 'platform': 'android-armeabi-v7a'})
-        def desktop(platform, variant, canonical, legacy):
-            add(platform, variant, canonical if canonical in assets else legacy)
-
-        for variant, tail in [('open', 'setup.exe'), ('open-portable', 'x64.zip'), ('store', 'setup.exe')]:
-            legacy_tail = 'windows-' + tail
-            desktop('windows', variant, f'ee.nekoko.nlpa2.windows-{suffix}-{tail}', f'{prefix}-{legacy_tail}')
-        for variant, tail in [('open', 'AppImage'), ('open-appimage', 'AppImage'), ('open-tgz', 'tar.gz'), ('store', 'AppImage')]:
-            desktop('linux', variant, f'ee.nekoko.nlpa2.linux-{suffix}-x64.{tail}', f'{prefix}-linux-x64.{tail}')
-        if migrate_standard_desktop:
-            start = len(result)
-            desktop('windows', 'std', f'ee.nekoko.nlpa2.windows-{suffix}-setup.exe', f'{prefix}-windows-setup.exe')
-            for variant, tail in [('std', 'AppImage'), ('std-appimage', 'AppImage'), ('std-tgz', 'tar.gz')]:
-                desktop('linux', variant, f'ee.nekoko.nlpa2.linux-{suffix}-x64.{tail}', f'{prefix}-linux-x64.{tail}')
-            for entry in result[start:]:
-                entry['data']['changelog'] = ('Desktop updates now come from the public NekokoLPA2 repository. Core LPA, readers and experimental IMS/SMS are included. See the release notes for provider integrations included in this build.')
-    elif channel == 'standard':
-        add('windows', 'std', f'ee.nekoko.nlpa2.windows-{suffix}-setup.exe')
-        for variant, tail in [('std', 'AppImage'), ('std-appimage', 'AppImage'), ('std-tgz', 'tar.gz')]:
-            add('linux', variant, f'ee.nekoko.nlpa2.linux-{suffix}-x64.{tail}')
     else:
         raise ValueError('Unknown channel')
     return result
@@ -86,9 +67,8 @@ def plan(release, channel, certificates, migrate_standard_desktop=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--release-tag', default='')
-    parser.add_argument('--channel', choices=['public', 'open', 'standard'], default='public')
+    parser.add_argument('--channel', choices=['public', 'open'], default='public')
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--migrate-standard-desktop', action='store_true')
     args = parser.parse_args()
     latest = api('releases/latest')
     tag = args.release_tag or latest['tag_name']
@@ -105,7 +85,7 @@ def main():
                 subprocess.run(['gh', 'release', 'download', tag, '--repo', REPOSITORY,
                                 '--pattern', filename, '--dir', tmp], check=True)
                 certificates[filename] = get_apk_signature(Path(tmp) / filename)
-        payloads = plan(release, args.channel, certificates, args.migrate_standard_desktop)
+        payloads = plan(release, args.channel, certificates)
     with urlopen(Request(FEED, headers={'User-Agent': 'Mozilla/5.0'}), timeout=30) as response:
         current = json.load(response)
     for payload in payloads:

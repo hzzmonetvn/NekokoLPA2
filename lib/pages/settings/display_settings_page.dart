@@ -317,6 +317,10 @@ class DisplaySettingsPage extends StatelessWidget {
             value: AppThemeType.stock,
             child: Text(l10n.stockMD3),
           ),
+          DropdownMenuItem(
+            value: AppThemeType.amoled,
+            child: Text(l10n.amoledTheme),
+          ),
         ],
         onChanged: (type) {
           if (type != null) settings.setThemeType(type);

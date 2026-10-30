@@ -15,8 +15,7 @@ class FeedPublisherTest(unittest.TestCase):
     def setUp(self):
         prefix = 'ee.nekoko.nlpa2.open-2.4.0-600'
         self.names = [f'{prefix}-{tail}' for tail in [
-            'android.apk', 'rooted-arm64-v8a.apk', 'windows-setup.exe',
-            'windows-x64.zip', 'linux-x64.AppImage', 'linux-x64.tar.gz']]
+            'android.apk', 'rooted-arm64-v8a.apk']]
         self.release = {'tag_name': 'v2.4.0+600', 'draft': False, 'prerelease': False,
                         'html_url': 'https://github.com/iebb/NekokoLPA2/releases/tag/v2.4.0%2B600',
                         'assets': [{'name': name, 'size': 100, 'state': 'uploaded',
@@ -26,44 +25,12 @@ class FeedPublisherTest(unittest.TestCase):
 
     def test_all_public_channels_point_to_their_own_artifacts(self):
         payloads = feeds.plan(self.release, 'open', self.certs)
-        self.assertEqual(len(payloads), 12)
+        self.assertEqual(len(payloads), 5)
         normal = next(p for p in payloads if p['platform'] == 'android' and p['identifier'].startswith('open-' + feeds.COMMUNITY_CERT))
         rooted = next(p for p in payloads if p['identifier'].startswith('open-rooted-'))
         self.assertTrue(normal['data']['download_url'].endswith('-android.apk'))
         self.assertTrue(rooted['data']['download_url'].endswith('-rooted-arm64-v8a.apk'))
         self.assertFalse(any(p['identifier'] == 'std' for p in payloads))
-
-    def test_explicit_desktop_migration_points_standard_users_to_public_builds(self):
-        payloads = feeds.plan(self.release, 'open', self.certs, migrate_standard_desktop=True)
-        legacy = [p for p in payloads if p['identifier'] in ['std', 'std-appimage', 'std-tgz']]
-        self.assertEqual(len(legacy), 4)
-        for entry in legacy:
-            self.assertEqual(entry['data']['build'], 600)
-            self.assertIn('ee.nekoko.nlpa2.open-', entry['data']['download_url'])
-            self.assertIn('public NekokoLPA2 repository', entry['data']['changelog'])
-            self.assertNotIn('Open distribution', entry['data']['changelog'])
-
-    def test_desktop_prefers_canonical_names_without_android_open_branding(self):
-        renamed = deepcopy(self.release)
-        replacements = {
-            self.names[2]: 'ee.nekoko.nlpa2.windows-2.4.0-600-setup.exe',
-            self.names[3]: 'ee.nekoko.nlpa2.windows-2.4.0-600-x64.zip',
-            self.names[4]: 'ee.nekoko.nlpa2.linux-2.4.0-600-x64.AppImage',
-            self.names[5]: 'ee.nekoko.nlpa2.linux-2.4.0-600-x64.tar.gz',
-        }
-        # Both names may exist when old download links are retained.
-        for asset in self.release['assets']:
-            if asset['name'] in replacements:
-                name = replacements[asset['name']]
-                renamed['assets'].append({**asset, 'name': name,
-                    'browser_download_url': asset['browser_download_url'].replace(asset['name'], name)})
-        payloads = feeds.plan(renamed, 'public', self.certs, migrate_standard_desktop=True)
-        desktop = [p for p in payloads if p['platform'] in ['windows', 'linux']]
-        self.assertEqual(len(desktop), 11)
-        for entry in desktop:
-            self.assertNotIn('.open-', entry['data']['download_url'])
-        android = [p for p in payloads if p['identifier'].startswith('open-') and p['platform'] == 'android']
-        self.assertIn('.open-', android[0]['data']['download_url'])
 
     def test_legacy_store_android_uses_a_chooser_not_the_wrong_apk(self):
         payloads = feeds.plan(self.release, 'open', self.certs)

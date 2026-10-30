@@ -9,7 +9,7 @@
 use core::panic::UnwindSafe;
 use core::time::Duration;
 
-use flutter_rust_bridge::{DartFnFuture, frb};
+use flutter_rust_bridge::{frb, DartFnFuture};
 use rm_client_core::{LocalUim, SlotState};
 use rm_qmi::{LocalQrtrSocket, QrtrAddress, QrtrTransport};
 
@@ -125,14 +125,17 @@ pub async fn open_qmi_qrtr_session(
     })
 }
 
+type DartAddressCall = Box<dyn Fn() -> DartFnFuture<Result<QrtrSocketAddress, anyhow::Error>>>;
+type DartSendCall = Box<dyn Fn(QrtrSocketDatagram) -> DartFnFuture<Result<(), anyhow::Error>>>;
+type DartReceiveCall =
+    Box<dyn Fn(u32) -> DartFnFuture<Result<Option<QrtrSocketDatagram>, anyhow::Error>>>;
+
 /// A socket the Dart side implements, because the bus socket is not in this
 /// process.
 struct DartQrtrSocket {
-    address: DartCall<Box<dyn Fn() -> DartFnFuture<Result<QrtrSocketAddress, anyhow::Error>>>>,
-    send: DartCall<Box<dyn Fn(QrtrSocketDatagram) -> DartFnFuture<Result<(), anyhow::Error>>>>,
-    receive: DartCall<
-        Box<dyn Fn(u32) -> DartFnFuture<Result<Option<QrtrSocketDatagram>, anyhow::Error>>>,
-    >,
+    address: DartCall<DartAddressCall>,
+    send: DartCall<DartSendCall>,
+    receive: DartCall<DartReceiveCall>,
 }
 
 /// One call into Dart.

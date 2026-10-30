@@ -47,7 +47,7 @@ enum PhoneFormatStrategy {
 
 enum ProfileSortType { none, iccid, country, nickname }
 
-enum AppThemeType { custom, stock }
+enum AppThemeType { custom, stock, amoled }
 
 enum NicknameRedactionMode { none, redactPhoneNumbers, hideNickname }
 
@@ -511,9 +511,10 @@ class AppSettings extends ChangeNotifier {
         : (themeStr == 'light' ? ThemeMode.light : ThemeMode.system);
 
     final themeTypeStr = _prefs?.getString('themeType') ?? 'custom';
-    _themeType = themeTypeStr == 'stock'
-        ? AppThemeType.stock
-        : AppThemeType.custom;
+    _themeType = AppThemeType.values.firstWhere(
+      (type) => type.name == themeTypeStr,
+      orElse: () => AppThemeType.custom,
+    );
     _autoLoadProfiles = _prefs?.getBool('autoLoadProfiles') ?? true;
     _autoLoadRemoteDevices = _prefs?.getBool('autoLoadRemoteDevices') ?? false;
     _loadProfileIcons = _prefs?.getBool('loadProfileIcons_v2') ?? false;
