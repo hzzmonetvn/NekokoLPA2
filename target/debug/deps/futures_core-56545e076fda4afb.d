@@ -1,0 +1,11 @@
+/home/opc/lpa/NekokoLPA2/target/debug/deps/futures_core-56545e076fda4afb.d: /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/lib.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/future.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/stream.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/mod.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/poll.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/mod.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/atomic_waker.rs
+
+/home/opc/lpa/NekokoLPA2/target/debug/deps/libfutures_core-56545e076fda4afb.rmeta: /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/lib.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/future.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/stream.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/mod.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/poll.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/mod.rs /home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/atomic_waker.rs
+
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/lib.rs:
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/future.rs:
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/stream.rs:
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/mod.rs:
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/poll.rs:
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/mod.rs:
+/home/opc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/atomic_waker.rs:

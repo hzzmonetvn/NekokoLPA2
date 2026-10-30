@@ -26,7 +26,6 @@ analyze.log
 
 # Flutter/Dart/Pub related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -38,7 +37,6 @@ coverage/
 # Reader-backed iOS VoWiFi libraries are rebuilt from source, not committed.
 /mobilecore/build/
 /mobilecore/third_party/opencore-amr/prebuilt/
-/local_packages/proletarius_vowifi/ios/Frameworks/
 
 # Symbolication related
 app.*.symbols
@@ -57,7 +55,6 @@ app.*.map.json
 *.keystore
 android/key.properties
 google-services.json
-GoogleService-Info.plist
 publish.sh
 release/
 outputs/

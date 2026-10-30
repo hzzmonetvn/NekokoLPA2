@@ -267,7 +267,7 @@ class CompositeAdapter extends BaseAdapter {
     }
 
     // 8. Scrp WebUSB (Web only)
-    if (PlatformX.isWeb) {
+    if (false) {
       try {
         addReaders(await _scrpAdapter.listReaders());
       } catch (e) {

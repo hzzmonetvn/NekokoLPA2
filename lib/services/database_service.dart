@@ -5,9 +5,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
-import 'db_init_native.dart' if (dart.library.js_interop) 'db_init_web.dart';
+import 'db_init_native.dart';
 import 'database_transfer_service.dart';
-import '../utils/platform_adapter.dart';
 import 'package:logging/logging.dart';
 
 class NotificationRecord {
@@ -74,37 +73,10 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     final factory = await initDb();
-
-    String path;
-    if (kIsWeb) {
-      path = 'nekokolpa2.db';
-    } else {
-      // On Windows, use a user-writable directory instead of Program Files
-      if (PlatformX.isWindows) {
-        // Use %LOCALAPPDATA%\NekokoLPA2\databases\ for user data
-        final localAppData = PlatformX.getEnv('LOCALAPPDATA');
-        if (localAppData != null && localAppData.isNotEmpty) {
-          final dbDir = join(localAppData, 'NekokoLPA2', 'databases');
-          // Ensure directory exists
-          PlatformX.ensureDirectory(dbDir);
-          path = join(dbDir, 'nekokolpa2.db');
-        } else {
-          path = join(
-            await (factory?.getDatabasesPath() ?? getDatabasesPath()),
-            'nekokolpa2.db',
-          );
-        }
-      } else {
-        path = join(
-          await (factory?.getDatabasesPath() ?? getDatabasesPath()),
-          'nekokolpa2.db',
-        );
-      }
-    }
+    final path = join(await getDatabasesPath(), 'nekokolpa2.db');
 
     if (kDebugMode) {
-      _log.fine('Opening database at path: $path (kIsWeb: $kIsWeb)');
-      _log.fine('Using databaseFactory: ${factory ?? "Default"}');
+      _log.fine('Opening database at path: $path');
     }
 
     try {

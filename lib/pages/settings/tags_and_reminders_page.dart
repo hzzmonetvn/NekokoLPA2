@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:permission_handler/permission_handler.dart';
 import '../../settings/app_settings.dart';
 import '../../theme/app_theme.dart';
@@ -38,24 +36,9 @@ class _TagsAndRemindersPageState extends State<TagsAndRemindersPage> {
   }
 
   Future<void> _checkPermission() async {
-    final isUnsupportedPlatform =
-        !kIsWeb && (defaultTargetPlatform == TargetPlatform.linux);
-
-    if (isUnsupportedPlatform) {
-      if (mounted) {
-        setState(() {
-          _permissionCheckFailed = true;
-          _notificationsEnabled = false;
-        });
-      }
-      return;
-    }
-
     try {
       bool enabled = false;
-      if (defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS ||
-          defaultTargetPlatform == TargetPlatform.android) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
         enabled = await LocalNotificationService().checkPermission();
       } else {
         final status = await Permission.notification.status;

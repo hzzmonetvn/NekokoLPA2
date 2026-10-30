@@ -9,8 +9,6 @@ import 'gm_plugin.dart';
 import 'nekoko_stats_plugin.dart';
 import 'thk_plugin.dart';
 import 'ty_ble_plugin.dart';
-import 'vowifi_plugin.dart';
-import 'vowifi_sim_probe_plugin.dart';
 import 'plugin_base.dart';
 import 'session_plugin.dart';
 
@@ -29,8 +27,6 @@ class BuildPluginRegistry {
         'NekokoStatsPlugin': NekokoStatsPlugin.new,
         'ThkPlugin': ThkPlugin.new,
         'TyBlePlugin': TyBlePlugin.new,
-        'VowifiPlugin': VowifiPlugin.new,
-        'VowifiSimProbePlugin': VowifiSimProbePlugin.new,
       };
 
   static final Map<String, SessionPluginFactory> _sessionFactories =

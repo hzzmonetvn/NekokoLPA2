@@ -22,7 +22,7 @@ class DatabaseTransferService {
 
   /// Returns a consistent copy of the live SQLite database.
   static Future<Uint8List> createSnapshot(Database database) async {
-    if (kIsWeb) {
+    if (false) {
       throw UnsupportedError('Database file export is not supported on web.');
     }
 

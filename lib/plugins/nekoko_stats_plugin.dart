@@ -109,12 +109,6 @@ class NekokoStatsPlugin extends ProfilePlugin {
         final androidInfo = await deviceInfo.androidInfo;
         brand = androidInfo.brand;
         model = androidInfo.model;
-      } else if (PlatformX.isIOS) {
-        final iosInfo = await deviceInfo.iosInfo;
-        brand = 'Apple';
-        model = iosInfo.utsname.machine.isNotEmpty
-            ? iosInfo.utsname.machine
-            : iosInfo.model;
       } else {
         return {};
       }

@@ -1,8 +1,5 @@
 import 'dart:typed_data';
-
-// Conditional import: Use dart:io on mobile/desktop, or local stub on web
-import 'dart:io' if (dart.library.html) 'io_stub.dart' as io;
-import 'package:flutter/foundation.dart';
+import 'dart:io' as io;
 import 'package:logging/logging.dart';
 import 'package:sqflite/sqflite.dart';
 import '../services/database_service.dart';
@@ -18,56 +15,15 @@ class MigrationHelper {
   static final Map<String, int> _memStats = {};
 
   static Future<void> performMigration() async {
-    if (!PlatformX.isAndroid && !PlatformX.isIOS) return;
-
     try {
-      String? mmkvPath;
-      if (PlatformX.isAndroid) {
-        final appDir = await getApplicationDocumentsDirectory();
-        final filesDir = '${appDir.parent.path}/files';
-        mmkvPath = '$filesDir/mmkv/sizeStats';
-      } else if (PlatformX.isIOS) {
-        final docDir = await getApplicationDocumentsDirectory();
-        final appHome = docDir.parent.path;
+      final appDir = await getApplicationDocumentsDirectory();
+      final filesDir = '${appDir.parent.path}/files';
+      final mmkvPath = '$filesDir/mmkv/sizeStats';
 
-        final path = '$appHome/Documents/mmkv/sizeStats';
-        final file = io.File(path);
-        // On web (stub), file.exists() might not exist or return false.
-        // But we are guarded by kIsWeb above.
-        // However, io_stub needs to match API used here or dynamic cast.
-        // io_stub.File doesn't have `exists()` or `readAsBytes()`.
-        // We need to upgrade io_stub or use proper stubs?
-        // Actually, since I deleted the generic split files, I should just make this safe.
-        // Since this code ONLY runs on IO, dynamic dispatch or ignore can work?
-        // No, Analysis fails.
-        // Best approach: Use the `File` class from conditional import.
-        // Need to update `io_stub.dart` to include `exists()` and `readAsBytes()`.
+      final sizeStatsFile = io.File(mmkvPath);
 
-        // Let's assume io_stub update is next step.
-        // For now I write the code assuming `io.File` has these methods.
-        // Note: implicit interface of io.File vs stub.
-
-        // Wait, if I use `io.File`, the analyzer checks against the common interface
-        // or if guarded, it might still verify signatures.
-        // To be safe and since I cannot easily change io_stub without potentially breaking others (though it seems unused mostly?),
-        // I'll update io_stub.dart in next step.
-
-        if (await file.exists()) {
-          _log.info('Found MMKV via candidate: $path');
-          mmkvPath = path;
-        }
-
-        if (mmkvPath == null) {
-          _log.warning('Standard MMKV paths failed.');
-        }
-      }
-
-      final sizeStatsFile = mmkvPath != null ? io.File(mmkvPath) : null;
-
-      if (sizeStatsFile == null || !await sizeStatsFile.exists()) {
-        if (sizeStatsFile != null) {
-          _log.info('MMKV sizeStats not found at ${sizeStatsFile.path}');
-        }
+      if (!await sizeStatsFile.exists()) {
+        _log.info('MMKV sizeStats not found at ${sizeStatsFile.path}');
         return;
       }
 

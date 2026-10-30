@@ -1,7 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:logging/logging.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -43,7 +43,7 @@ class LogBuffer {
   /// build must not leave them on disk for every run; the log console this
   /// exists to support is developer-gated for the same reason.
   Future<void> startFileLogging() async {
-    if (!kDebugMode || kIsWeb || _sink != null) return;
+    if (!kDebugMode || _sink != null) return;
     try {
       final file = await _resolveLogFile();
       _sink = file.openWrite(mode: FileMode.write);
@@ -57,19 +57,8 @@ class LogBuffer {
     }
   }
 
-  /// On macOS the log goes to /private/tmp, which the sandbox is granted in
-  /// DebugProfile.entitlements. The container is unreadable to any other
-  /// process, so a log left there could not be collected afterwards.
+  /// Android-only app. Logs go to app documents directory.
   Future<File> _resolveLogFile() async {
-    if (!kIsWeb && Platform.isMacOS) {
-      final shared = File('/private/tmp/nlpa-session.log');
-      try {
-        shared.writeAsStringSync('', mode: FileMode.write);
-        return shared;
-      } catch (_) {
-        // Fall through to the sandboxed location.
-      }
-    }
     final directory = await getApplicationDocumentsDirectory();
     return File('${directory.path}/nlpa-session.log');
   }

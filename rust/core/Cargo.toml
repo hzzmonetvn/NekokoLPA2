@@ -1,0 +1,10 @@
+[package]
+name = "nlpa_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+rm-client-core = "0.1.0"
+rm-qmi = { version = "0.1.0", features = ["qrtr"] }
+flutter_rust_bridge = "=2.13.0"

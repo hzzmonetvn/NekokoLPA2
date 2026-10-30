@@ -31,8 +31,8 @@ class ReaderTypesSettingsPage extends StatelessWidget {
                   title: l10n.enabledReaderTypes,
                   subtitle: l10n.enabledReaderTypesSubtitle,
                   children: [
-                    if (!PlatformX.isWeb) _buildCcidConnectorSwitcher(context),
-                    if (!PlatformX.isLinux) _buildBleConnectorSwitcher(context),
+                    if (!false) _buildCcidConnectorSwitcher(context),
+                    if (!false) _buildBleConnectorSwitcher(context),
                     _buildRemoteConnectorSwitcher(context),
                     if (PlatformX.isAndroid) ...[
                       _buildQrtrConnectorSwitcher(context),

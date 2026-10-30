@@ -76,11 +76,11 @@ jobs:
         env:
           BUILD_FLAVOR: ${{ matrix.flavor }}
         run: |
-          args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart)
+          args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart --split-per-abi)
           if [ "$BUILD_FLAVOR" = privileged ]; then
-            args+=(--target-platform android-arm64 --dart-define=PRIVILEGED_BUILD=true --dart-define=APP_VARIANT=open-rooted)
+            args+=(--dart-define=PRIVILEGED_BUILD=true --dart-define=APP_VARIANT=open-rooted)
           else
-            args+=(--target-platform android-arm,android-arm64 --dart-define=APP_VARIANT=open)
+            args+=(--dart-define=APP_VARIANT=open)
           fi
           flutter build apk "${args[@]}" --dart-define=GM_PSK_URL="$GM_PSK_URL"
       - name: Package Android artifacts
@@ -91,13 +91,17 @@ jobs:
         run: |
           mkdir -p dist
           if [ "$BUILD_FLAVOR" = privileged ]; then
-            APK=build/app/outputs/flutter-apk/app-privileged-release.apk
+            APK=build/app/outputs/flutter-apk/app-privileged-arm64-v8a-release.apk
             cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-rooted-arm64-v8a.apk"
             python3 scripts/package_rooted_android.py --apk "$APK" \
               --output "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-magisk.zip" --version "$VERSION"
           else
+            cp build/app/outputs/flutter-apk/app-community-armeabi-v7a-release.apk \
+              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-armeabi-v7a.apk" || true
+            cp build/app/outputs/flutter-apk/app-community-arm64-v8a-release.apk \
+              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-arm64-v8a.apk" || true
             cp build/app/outputs/flutter-apk/app-community-release.apk \
-              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-android.apk"
+              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-universal.apk" || true
           fi
       - uses: actions/upload-artifact@v4
         with:
@@ -174,7 +178,9 @@ jobs:
           artifact_table="$(cat <<EOF
           | Artifact | Platform | Description |
           | --- | --- | --- |
-          | \`${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-android.apk\` | Android | Community APK |
+          | \`${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-armeabi-v7a.apk\` | Android (ARMv7) | Community Split APK (ARMv7) |
+          | \`${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-arm64-v8a.apk\` | Android (ARM64) | Community Split APK (ARM64) |
+          | \`${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-universal.apk\` | Android | Community Universal APK |
           | \`${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-rooted-arm64-v8a.apk\` | Rooted Android | Full privileged app APK |
           | \`${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-magisk.zip\` | Rooted Android | Full app systemless module |
           | \`otbridge-*.apk\` | Rooted Android | Small OMAPI/TMAPI helper |

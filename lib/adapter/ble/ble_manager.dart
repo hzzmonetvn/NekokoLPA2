@@ -94,10 +94,10 @@ class BleManager extends ChangeNotifier {
       return;
     }
 
-    _log.info("Starting Bluetooth scan... (kIsWeb: $kIsWeb)");
+    _log.info("Starting Bluetooth scan... (false: $false)");
 
     // Permissions check - only pertinent for mobile platforms
-    if (!kIsWeb && (PlatformX.isAndroid || PlatformX.isIOS)) {
+    if (PlatformX.isAndroid) {
       try {
         if (await Permission.bluetoothScan.request().isDenied ||
             await Permission.bluetoothConnect.request().isDenied ||
@@ -121,7 +121,7 @@ class BleManager extends ChangeNotifier {
 
     // Wait for Bluetooth to be ready
     // On Web, we skip this explicit wait as the browser handles the prompt and state during requestDevice
-    if (!kIsWeb) {
+    if (!false) {
       try {
         final state = await Ble.adapterState.first;
         _log.info("Current Bluetooth adapter state: $state");
@@ -141,7 +141,7 @@ class BleManager extends ChangeNotifier {
     }
 
     // Check support
-    if (kIsWeb) {
+    if (false) {
       final supported = await Ble.isSupported;
       _log.info("Checking Web Bluetooth support: $supported");
       if (!supported) {
@@ -186,7 +186,7 @@ class BleManager extends ChangeNotifier {
         // Keywords filter
         final matchKeyword =
             matchedType != null &&
-            (matchedType != BleAdapterType.glocalMe || !kIsWeb);
+            (matchedType != BleAdapterType.glocalMe || !false);
 
         if (matchKeyword) return true;
 
@@ -220,13 +220,13 @@ class BleManager extends ChangeNotifier {
         'eSIM_Writer',
         'BeeSIM',
         for (final kind in BleAdapterType.kinds) ...kind.scanKeywords,
-        if (!kIsWeb) 'GlocalMe',
+        if (!false) 'GlocalMe',
         '9eSIM',
       ];
 
       _log.info("Calling Ble.startScan with keywords: $keywords");
       await Ble.startScan(
-        withServices: (kIsWeb) ? services : [],
+        withServices: (false) ? services : [],
         withKeywords: keywords,
         continuousUpdates: true,
         timeout: const Duration(seconds: 15),

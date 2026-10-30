@@ -72,8 +72,8 @@ class _MainTabScreenState extends State<MainTabScreen> {
       for (final tabConfig in settings.variantTabs) {
         if (!tabConfig.isEnabled) continue;
         if (!settings.isOnline) continue;
-        if (kIsWeb) continue;
-        if (PlatformX.isWindows || PlatformX.isLinux) continue;
+
+
 
         tabEntries.add(
           _MainTabEntry(

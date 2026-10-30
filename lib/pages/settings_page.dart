@@ -353,9 +353,9 @@ class SettingsPage extends StatelessWidget {
                     _buildImportDatabase(context, width),
                     if (AppSettings().developerModeEnabled)
                       _buildResetDatabase(context, width),
-                    if (PlatformX.isWindows ||
-                        PlatformX.isMacOS ||
-                        PlatformX.isLinux)
+                    if (false ||
+                        false ||
+                        false)
                       _buildOpenDatabaseFolder(context, width),
                   ],
                 ),
@@ -1410,13 +1410,13 @@ class SettingsPage extends StatelessWidget {
           }
 
           // Open folder using platform-specific commands
-          if (PlatformX.isWindows) {
+          if (false) {
             await io.Process.run('explorer.exe', [
               dbDirectory,
             ], runInShell: true);
-          } else if (PlatformX.isMacOS) {
+          } else if (false) {
             await io.Process.run('open', [dbDirectory], runInShell: false);
-          } else if (PlatformX.isLinux) {
+          } else if (false) {
             await io.Process.run('xdg-open', [dbDirectory], runInShell: false);
           }
         } catch (e) {

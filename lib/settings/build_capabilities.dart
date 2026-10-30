@@ -1,9 +1,6 @@
 class BuildCapabilities {
   BuildCapabilities._();
 
-  // Increment this when the warning changes enough to require a fresh opt-in.
-  static const int vowifiConsentVersion = 1;
-
   static String variantForPlatform(String variant, {required bool isAndroid}) {
     if (!isAndroid && (variant == 'open' || variant == 'open-rooted')) {
       return 'std';
@@ -30,25 +27,4 @@ class BuildCapabilities {
         packageName.endsWith('.flavor1');
   }
 
-  static bool isVowifiAvailable({
-    required bool isEsim9Build,
-    required bool isAndroid,
-    required bool isIOS,
-  }) {
-    return !isEsim9Build && !isAndroid && !isIOS;
-  }
-
-  static bool isVowifiEnabled({
-    required bool available,
-    required bool storedEnabled,
-    required int? consentVersion,
-  }) {
-    return available && storedEnabled && consentVersion == vowifiConsentVersion;
-  }
-
-  static bool isVowifiReaderAvailable({
-    required bool isAndroid,
-    required bool isOmapi,
-    required bool supportsRawApdu,
-  }) => !isAndroid && !isOmapi && supportsRawApdu;
 }

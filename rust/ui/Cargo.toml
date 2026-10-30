@@ -1,0 +1,9 @@
+[package]
+name = "nlpa_ui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Using dioxus-core only to avoid heavy desktop dependencies
+dioxus = { version = "0.6", default-features = false }
+nlpa_core = { path = "../core" }

@@ -434,21 +434,6 @@ class AppSettings extends ChangeNotifier {
   String? _remoCardPassword;
   String? get remoCardPassword => _remoCardPassword;
 
-  static const String _vowifiEnabledKey = 'vowifiEnabled';
-  static const String _vowifiConsentVersionKey = 'vowifiConsentVersion';
-
-  bool _vowifiEnabled = false;
-  int? _vowifiConsentVersion;
-  bool get vowifiAvailable => BuildCapabilities.isVowifiAvailable(
-    isEsim9Build: isEsim9Build,
-    isAndroid: PlatformX.isAndroid,
-    isIOS: PlatformX.isIOS,
-  );
-  bool get vowifiEnabled => BuildCapabilities.isVowifiEnabled(
-    available: vowifiAvailable,
-    storedEnabled: _vowifiEnabled,
-    consentVersion: _vowifiConsentVersion,
-  );
 
   Future<void> setRemoCardPassword(String? value) async {
     _remoCardPassword = value;
@@ -667,9 +652,6 @@ class AppSettings extends ChangeNotifier {
     _locale = _prefs?.getString('locale');
     _estkMaxEids = (_prefs?.getStringList('estkMaxEids') ?? []).toSet();
     _aids = _prefs?.getStringList('aids') ?? _aids;
-    _vowifiEnabled = _prefs?.getBool(_vowifiEnabledKey) ?? false;
-    _vowifiConsentVersion = _prefs?.getInt(_vowifiConsentVersionKey);
-
     final phoneFormatIdx = _prefs?.getInt('phoneFormatStrategy');
     if (phoneFormatIdx != null &&
         phoneFormatIdx >= 0 &&
@@ -686,9 +668,7 @@ class AppSettings extends ChangeNotifier {
     _sortAscending = _prefs?.getBool('sortAscending') ?? true;
     _useWaterfallLayout = _prefs?.getBool('useWaterfallLayout') ?? true;
 
-    // Default showProfileSearch based on platform
-    final isDesktop = PlatformX.isDesktop;
-    _showProfileSearch = _prefs?.getBool('showProfileSearch') ?? isDesktop;
+    _showProfileSearch = _prefs?.getBool('showProfileSearch') ?? false;
     _showHardwareTab = _prefs?.getBool('showHardwareTab') ?? true;
     _enableBrowser =
         _prefs?.getBool('enableBrowser') ??
@@ -707,19 +687,8 @@ class AppSettings extends ChangeNotifier {
       // Fallback to defaults already set
     }
 
-    if (!vowifiEnabled) {
-      _vowifiEnabled = false;
-      await _prefs?.remove(_vowifiEnabledKey);
-      if (!vowifiAvailable ||
-          _vowifiConsentVersion != BuildCapabilities.vowifiConsentVersion) {
-        _vowifiConsentVersion = null;
-        await _prefs?.remove(_vowifiConsentVersionKey);
-      }
-    }
-
     // Load variant tabs configuration
-    if (!PlatformX.isWindows && !PlatformX.isLinux) {
-      try {
+    try {
         final String yamlString = await rootBundle.loadString(
           'assets/variant_tabs.yaml',
         );
@@ -756,12 +725,8 @@ class AppSettings extends ChangeNotifier {
             }
           }
         }
-      } catch (e) {
-        _log.warning('Failed to load variant tabs: $e');
-      }
-    } else {
-      _log.info('Variant tabs disabled for this platform');
-      _variantTabs = [];
+    } catch (e) {
+      _log.warning('Failed to load variant tabs: $e');
     }
 
     notifyListeners();
@@ -1300,31 +1265,6 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setVowifiEnabled(
-    bool value, {
-    bool disclaimerAccepted = false,
-  }) async {
-    final wasEnabled = vowifiEnabled;
-
-    if (!value || !vowifiAvailable || !disclaimerAccepted) {
-      _vowifiEnabled = false;
-      await _prefs?.remove(_vowifiEnabledKey);
-      if (!vowifiAvailable) {
-        _vowifiConsentVersion = null;
-        await _prefs?.remove(_vowifiConsentVersionKey);
-      }
-    } else {
-      _vowifiConsentVersion = BuildCapabilities.vowifiConsentVersion;
-      _vowifiEnabled = true;
-      await _prefs?.setInt(
-        _vowifiConsentVersionKey,
-        BuildCapabilities.vowifiConsentVersion,
-      );
-      await _prefs?.setBool(_vowifiEnabledKey, true);
-    }
-
-    if (wasEnabled != vowifiEnabled) notifyListeners();
-  }
 
   Future<void> setEnableCcidConnector(bool value) async {
     _enableCcidConnector = value;

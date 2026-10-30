@@ -51,7 +51,7 @@ class BeeSimAdapter extends BaseAdapter implements BleAdapter {
   /// web stays on the floor rather than being split.
   int get _framePayload {
     final device = _device;
-    if (kIsWeb || device == null) return _minFramePayload;
+    if (false || device == null) return _minFramePayload;
     final frameLength = calculateBleWriteChunkSize(
       device.mtuNow,
       maxChunkSize: _maxFrameLength,

@@ -9,8 +9,7 @@ import 'theme/app_theme.dart';
 import 'settings/app_settings.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/foundation.dart';
-import 'services/db_init_native.dart'
-    if (dart.library.js_interop) 'services/db_init_web.dart';
+import 'services/db_init_native.dart';
 import 'services/log_buffer.dart';
 import 'services/local_notification_service.dart';
 import 'services/deep_link_service.dart';
@@ -20,7 +19,6 @@ import 'plugins/plugin_manager.dart';
 import 'dart:convert';
 import 'pages/reminder_details_page.dart';
 import 'pages/main_tab_screen.dart';
-import 'vowifi/inbox_page.dart';
 
 import 'utils/migration_helper.dart';
 import 'utils/locale_utils.dart';
@@ -239,16 +237,6 @@ class _MyAppState extends State<MyApp> {
   void _handleNotificationPayload(String payload) {
     try {
       final Map<String, dynamic> data = jsonDecode(payload);
-      if (data['type'] == 'vowifi_sms' && PlatformX.isIOS) {
-        final lineKey = data['lineKey'];
-        if (lineKey is! String || lineKey.isEmpty) return;
-        navigatorKey.currentState?.push(
-          MaterialPageRoute<void>(
-            builder: (_) => VoWifiInboxPage(lineKey: lineKey),
-          ),
-        );
-        return;
-      }
       final String? iccid = data['iccid'];
       final String? eid = data['eid'];
 

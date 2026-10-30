@@ -317,13 +317,13 @@ class NoReadersState extends StatelessWidget {
                         _ConnectOptionCard(
                           icon: Icons.bluetooth_searching_rounded,
                           title: l10n.scanForBluetooth,
-                          subtitle: kIsWeb
+                          subtitle: false
                               ? 'Web Bluetooth API'
                               : 'Bluetooth LE',
                           colors: const [Color(0xFF2196F3), Color(0xFF1976D2)],
                           onTap: () async {
                             String? newReaderId;
-                            if (kIsWeb) {
+                            if (false) {
                               try {
                                 newReaderId = await BleManager()
                                     .scanAndAddReaderForWeb();
@@ -348,7 +348,7 @@ class NoReadersState extends StatelessWidget {
                             }
                           },
                         ),
-                      if (kIsWeb) ...[
+                      if (false) ...[
                         const SizedBox(height: 16),
                         _ConnectOptionCard(
                           icon: Icons.usb_rounded,

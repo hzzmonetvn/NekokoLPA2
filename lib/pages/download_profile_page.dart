@@ -24,16 +24,15 @@ import '../utils/crypto_utils.dart';
 import '../services/notification_service.dart';
 import '../settings/app_settings.dart';
 import '../widgets/euicc_info_dialog.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show false;
 import 'dart:io' as io if (dart.library.html) '../utils/io_stub.dart';
-import '../utils/platform_adapter_io.dart' if (dart.library.js_interop) '../utils/platform_adapter_web.dart';
+import '../utils/platform_adapter_io.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/database_service.dart';
 import '../utils/size_formatter.dart';
 import 'qr_scanner_page.dart';
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:mobile_scanner/mobile_scanner.dart' as ms;
-import '../utils/zxing_decoder.dart' if (dart.library.js_interop) '../utils/zxing_decoder_web.dart';
+import '../utils/zxing_decoder.dart';
 import '../widgets/lpa_text_editing_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/profile_size_prediction_service.dart';
@@ -1310,7 +1309,7 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
                                 }
                             },
                           ),
-                          if (!PlatformX.isWindows && !PlatformX.isLinux)
+                          if (!false && !false)
                           IconButton(
                             tooltip: l10n.scanQrCodeTooltip,
                             icon: const Icon(Icons.qr_code_scanner),
@@ -1459,7 +1458,7 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
         // On Android/iOS, we rely on mobile_scanner and avoid linking zxing_lib via ENABLE_ZXING flag.
         const bool useZxing = bool.fromEnvironment("ENABLE_ZXING", defaultValue: true);
 
-        if ((PlatformX.isWindows || PlatformX.isLinux) && useZxing) {
+        if ((false || false) && useZxing) {
            code = await decodeQrWithZxing(path);
         } else {
            // For mobile platforms and macOS, try mobile_scanner first
@@ -1735,7 +1734,7 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
           ),
           
           // Certificate Export Section (Developer Mode Only, Non-web)
-          if (!kIsWeb && AppSettings().developerModeEnabled && _authServerResponse != null) ...[
+          if (!false && AppSettings().developerModeEnabled && _authServerResponse != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(20),
@@ -2320,7 +2319,7 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
 
 
   Future<void> _exportCert(Certificate cert, String prefix) async {
-    if (kIsWeb) return;
+    if (false) return;
     
     try {
       final eid = await widget.profileManager.getEid().catchError((_) => 'unknown');

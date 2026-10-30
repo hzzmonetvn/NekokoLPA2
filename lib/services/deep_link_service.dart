@@ -51,16 +51,10 @@ class DeepLinkService {
       },
     );
 
-    if (!kIsWeb) {
-      _checkCommandLineArgs();
-    }
+    _checkCommandLineArgs();
 
     // Initial check (especially for cold start)
     checkInitialLink();
-
-    if (PlatformX.isWindows) {
-      _registerWindowsProtocol();
-    }
 
     // Load persisted pending LPA
     SharedPreferences.getInstance().then((prefs) {
@@ -294,47 +288,8 @@ class DeepLinkService {
     }
   }
 
-  Future<void> _registerWindowsProtocol() async {
-    if (!PlatformX.isWindows) return;
-    // const protocol = 'lpa';
-    // try {
-    //   final appPath = Platform.resolvedExecutable;
-
-    //   // Basic protocol registration via reg.exe
-    //   // Registry path: HKEY_CURRENT_USER\Software\Classes\lpa
-    //   await Process.run('reg', [
-    //     'add',
-    //     'HKCU\\Software\\Classes\\$protocol',
-    //     '/ve',
-    //     '/d',
-    //     'URL:$protocol Protocol',
-    //     '/f'
-    //   ]);
-    //   await Process.run('reg', [
-    //     'add',
-    //     'HKCU\\Software\\Classes\\$protocol',
-    //     '/v',
-    //     'URL Protocol',
-    //     '/d',
-    //     '',
-    //     '/f'
-    //   ]);
-    //   await Process.run('reg', [
-    //     'add',
-    //     'HKCU\\Software\\Classes\\$protocol\\shell\\open\\command',
-    //     '/ve',
-    //     '/d',
-    //     '\"$appPath\" \"%1\"',
-    //     '/f'
-    //   ]);
-    //   _log.info('Registered $protocol protocol on Windows');
-    // } catch (e) {
-    //   _log.warning('Failed to register $protocol protocol on Windows: $e');
-    // }
-  }
-
   void _checkCommandLineArgs() {
-    // Only called when !kIsWeb
+    // Only called on native
     try {
       for (final arg in Platform.executableArguments) {
         if (arg.startsWith('lpa:') || arg.contains('1\$')) {

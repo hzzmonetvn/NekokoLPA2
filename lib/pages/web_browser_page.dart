@@ -643,8 +643,8 @@ class _WebBrowserPageState extends State<WebBrowserPage> {
                     child: TextField(
                       controller: _urlController,
                       focusNode: _urlFocusNode,
-                      readOnly: !(kDebugMode || PlatformX.isWindows),
-                      onSubmitted: (kDebugMode || PlatformX.isWindows)
+                      readOnly: !(kDebugMode || false),
+                      onSubmitted: (kDebugMode || false)
                           ? (value) {
                               if (value.isNotEmpty) {
                                 String url = value;

@@ -18,11 +18,7 @@ class PluginManager extends ChangeNotifier {
 
   final List<ProfilePlugin> _plugins = [];
 
-  bool _isPluginAvailable(ProfilePlugin plugin) =>
-      plugin.id != 'vowifi' || AppSettings().vowifiAvailable;
-
-  Iterable<ProfilePlugin> get _availablePlugins =>
-      _plugins.where(_isPluginAvailable);
+  Iterable<ProfilePlugin> get _availablePlugins => _plugins;
 
   List<ProfilePlugin> get plugins => List.unmodifiable(_availablePlugins);
 
@@ -52,14 +48,6 @@ class PluginManager extends ChangeNotifier {
       _availablePlugins.any((plugin) => plugin.id == id);
 
   List<AppTabSpec> get appTabs => _availablePlugins
-      .where((plugin) {
-        if (plugin.id == 'vowifi') {
-          if (!AppSettings().vowifiEnabled) {
-            return false;
-          }
-        }
-        return true;
-      })
       .map((plugin) => plugin.appTab)
       .whereType<AppTabSpec>()
       .toList(growable: false);

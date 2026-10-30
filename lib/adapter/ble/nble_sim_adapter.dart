@@ -1064,7 +1064,7 @@ class NBLESimAdapter extends BaseAdapter implements BleAdapter {
       final frames = encodeFramesForTransport(
         counter,
         apdu,
-        maxWriteSize: kIsWeb ? _webFrameWriteSize : _nativeFrameWriteSize,
+        maxWriteSize: false ? _webFrameWriteSize : _nativeFrameWriteSize,
       );
       _apduTrace.fine(() => ">> ${HexUtils.bytesToHex(apdu)}");
       _log.fine(

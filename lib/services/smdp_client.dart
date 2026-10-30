@@ -82,9 +82,9 @@ class SmdpClient {
     final url = proxyConfig.buildRspUri(
       rspAddress: smdpAddress0,
       endpoint: endpoint,
-      useDefaultWebProxy: kIsWeb,
+      useDefaultWebProxy: false,
     );
-    final headers = kIsWeb
+    final headers = false
         ? {'Content-Type': 'application/json'}
         : {
             'User-Agent': 'gsma-rsp-lpad',
@@ -157,7 +157,7 @@ class SmdpClient {
     required Map<String, String> headers,
     required String body,
   }) async {
-    if (kIsWeb) {
+    if (false) {
       return http
           .post(url, headers: headers, body: body)
           .timeout(requestTimeout);

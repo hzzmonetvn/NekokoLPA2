@@ -51,35 +51,9 @@ class LocalNotificationService {
     const fln.AndroidInitializationSettings initializationSettingsAndroid =
         fln.AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final fln.DarwinInitializationSettings initializationSettingsDarwin =
-        fln.DarwinInitializationSettings(
-          requestAlertPermission: false,
-          requestBadgePermission: false,
-          requestSoundPermission: false,
-        );
-
-    // Required when targeting Windows, otherwise the plugin throws at runtime.
-    //
-    // Note: appUserModelId should be stable and match your app's identity.
-    // guid can be any stable GUID (generate your own if you fork/rename).
-    const fln.WindowsInitializationSettings initializationSettingsWindows =
-        fln.WindowsInitializationSettings(
-          appName: 'nlpa2',
-          appUserModelId: 'ee.nekoko.nlpa2',
-          guid: '5d6d4a8f-0b1f-4b8b-bd7b-8d7f9c9b5c2a',
-        );
-
-    // Harmless on Windows/macOS/iOS; useful if Linux desktop is enabled later.
-    const fln.LinuxInitializationSettings initializationSettingsLinux =
-        fln.LinuxInitializationSettings(defaultActionName: 'Open');
-
     final fln.InitializationSettings initializationSettings =
-        fln.InitializationSettings(
+        const fln.InitializationSettings(
           android: initializationSettingsAndroid,
-          iOS: initializationSettingsDarwin,
-          macOS: initializationSettingsDarwin,
-          windows: initializationSettingsWindows,
-          linux: initializationSettingsLinux,
         );
 
     await _notificationsPlugin.initialize(
@@ -94,20 +68,7 @@ class LocalNotificationService {
     _log.info('LocalNotificationService initialized');
   }
 
-  /// Ask from the Connect action; delivery never prompts for authorization.
-  Future<bool> requestVoWifiSmsPermission() async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return false;
-    await init();
-    return await _notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              fln.IOSFlutterLocalNotificationsPlugin
-            >()
-            ?.requestPermissions(alert: true, badge: false, sound: true) ??
-        false;
-  }
-
   Future<String?> getLaunchPayload() async {
-    if (kIsWeb) return null;
     await init();
     final launch = await _notificationsPlugin.getNotificationAppLaunchDetails();
     return launch?.didNotificationLaunchApp == true
@@ -115,72 +76,13 @@ class LocalNotificationService {
         : null;
   }
 
-  /// Presentation of an already committed SMS, without its sender or content.
-  Future<void> showVoWifiSms({
-    required int messageId,
-    required String lineKey,
-  }) async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
-    await init();
-    final locale = resolveSupportedLocale(
-      localeFromPreference(AppSettings().locale) ??
-          PlatformDispatcher.instance.locale,
-      AppLocalizations.supportedLocales,
-    );
-    final l10n = await AppLocalizations.delegate.load(locale);
-    await _notificationsPlugin.show(
-      // Existing reminder IDs are below 100,000.
-      id: 0x40000000 | (messageId & 0x3fffffff),
-      title: l10n.voWifiNewWiFiSMS,
-      body: l10n.voWifiOpenToReadYourMessage,
-      notificationDetails: const fln.NotificationDetails(
-        iOS: fln.DarwinNotificationDetails(
-          presentAlert: true,
-          presentBanner: true,
-          presentList: true,
-          presentSound: true,
-          presentBadge: false,
-          threadIdentifier: 'vowifi.sms',
-        ),
-      ),
-      payload: jsonEncode({'type': 'vowifi_sms', 'lineKey': lineKey}),
-    );
-  }
-
   Future<bool> checkPermission() async {
-    if (kIsWeb) return false;
-    if (PlatformX.isIOS) {
-      // Use permission_handler for status check first as it is more reliable for just checking
-      final status = await Permission.notification.status;
-      if (status.isGranted || status.isProvisional) {
-        return true;
-      }
-
-      // Fallback: If not definitively granted, try requesting via the plugin
-      if (PlatformX.isIOS) {
-        final res = await _notificationsPlugin
+    return await _notificationsPlugin
             .resolvePlatformSpecificImplementation<
-              fln.IOSFlutterLocalNotificationsPlugin
+              fln.AndroidFlutterLocalNotificationsPlugin
             >()
-            ?.requestPermissions(alert: true, badge: true, sound: true);
-        return res ?? false;
-      } else {
-        final res = await _notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              fln.MacOSFlutterLocalNotificationsPlugin
-            >()
-            ?.requestPermissions(alert: true, badge: true, sound: true);
-        return res ?? false;
-      }
-    } else if (PlatformX.isAndroid) {
-      return await _notificationsPlugin
-              .resolvePlatformSpecificImplementation<
-                fln.AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.requestNotificationsPermission() ??
-          false;
-    }
-    return true;
+            ?.requestNotificationsPermission() ??
+        false;
   }
 
   Future<void> scheduleTestReminder() async {
@@ -271,17 +173,8 @@ class LocalNotificationService {
         );
       }
 
-      const fln.DarwinNotificationDetails iosDetails =
-          fln.DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          );
-
       final fln.NotificationDetails platformDetails = fln.NotificationDetails(
         android: androidDetails,
-        iOS: iosDetails,
-        macOS: iosDetails,
       );
 
       // Use Future.delayed + show instead of zonedSchedule to avoid timezone dependency

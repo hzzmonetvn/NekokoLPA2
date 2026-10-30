@@ -41,7 +41,7 @@ Future<void> connectBleDevice(
       attempts: attempts,
     );
     try {
-      if (kIsWeb) {
+      if (false) {
         await device.connect(autoConnect: false, timeout: timeout);
       } else {
         await (device as dynamic).connect(
@@ -50,7 +50,7 @@ Future<void> connectBleDevice(
           timeout: timeout,
         );
       }
-      if (!kIsWeb) {
+      if (!false) {
         try {
           await device.requestMtu(preferredMtu);
         } catch (error) {
@@ -81,7 +81,7 @@ Future<void> connectBleDevice(
       lastStack = stack;
       log.warning('BLE connect attempt $attempt/$attempts failed: $error');
       try {
-        if (kIsWeb) {
+        if (false) {
           await device.disconnect();
         } else {
           await (device as dynamic).disconnect(queue: false);
@@ -102,7 +102,7 @@ Future<void> writeBleChunks({
   required Uint8List data,
   int maxChunkSize = 240,
 }) async {
-  final chunkSize = kIsWeb
+  final chunkSize = false
       ? min(20, maxChunkSize)
       : calculateBleWriteChunkSize(device.mtuNow, maxChunkSize: maxChunkSize);
   final withoutResponse = preferWriteWithoutResponse(
