@@ -58,8 +58,6 @@ dependencies:
 
   collection: ^1.19.1
   convert: ^3.1.2
-  # 12.4.0 requires the iOS 26.1 SDK, which is newer than the SDK on the
-  # macOS 15 CI runner. Keep the last version that supports the current runner.
   device_info_plus: 12.3.0
   xml: ^6.5.0
   rust_lib_nlpa2:
@@ -81,9 +79,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  config:
-    enable-swift-package-manager: false
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

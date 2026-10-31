@@ -434,8 +434,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
   void _armProfileSwitchDeadline(int generation) {
     _switchingTimer?.cancel();
     // A profile switch on a card that lives in a handset waits for the modem to
-    // reset it, which takes tens of seconds and drops the Bluetooth link on the
-    // way. 45s cut that short and reported a working switch as a timeout.
+    // reset it, which takes tens of seconds.
     _switchingTimer = Timer(const Duration(seconds: 150), () {
       if (generation != _profileSwitchGeneration) return;
       _log.warning(
@@ -446,6 +445,11 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _manager = ProfileManager(_adapter);
     AppSettings().addListener(_onSettingsChanged);
     NotificationService().isProcessing.addListener(_onProcessingChanged);
 
@@ -5069,7 +5073,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
             _readers.isNotEmpty &&
             _readers.length <= 2 &&
             !settings.forceDeviceDropdown &&
-            !false &&
             _readers.every((r) => _isOmapi(r) || _isTmapi(r));
 
         final isExtremelySmall = constraints.maxWidth < 300;
@@ -5081,7 +5084,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         final paddingV = isExtremelySmall ? 2.0 : 6.0;
 
         final isLocked =
-            false ||
             _isSwitching ||
             ProfilesScreen.isSwitchingGlobal ||
             _loading ||
@@ -5248,7 +5250,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
                             }
                           }
                         : null,
-                    extraActions: _selectedReader == null || false
+                    extraActions: _selectedReader == null
                         ? []
                         : PluginManager().buildReaderActions(
                             context,
