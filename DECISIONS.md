@@ -6,9 +6,9 @@
 - **Reasoning:** The application interacts with modem buses (QRTR) and SIM interfaces that are strictly available on target Android devices.
 
 ## 2. Full Rust Logic & Workspace Integration
-- **Choice:** Structured a pure Rust workspace (`rust`, `rust/core` and `rust/ui`) using Dioxus for UI prototypes and consolidating core protocol logic.
+- **Choice:** Structured a pure Rust workspace (`rust`, `rust/core` and `rust/ui`) using Dioxus (v0.6) for lightweight, modular UI components and consolidating core protocol logic.
 - **Alternatives Considered:** Keeping business logic embedded within Flutter plugins.
-- **Reasoning:** Clear separation of concerns, higher memory safety, and native performance.
+- **Reasoning:** Clear separation of concerns, higher memory safety, native performance, and ability to render interfaces directly with Rust.
 
 ## 3. Split APK Deployment & Build Workflow
 - **Choice:** Enabled ABI split APKs (`armeabi-v7a`, `arm64-v8a`) via Gradle configuration and updated GitHub Actions CI to package individual split artifacts and universal builds using direct Gradle task execution (`assemble<Flavor>Release`).
@@ -16,7 +16,7 @@
 - **Reasoning:** Flutter CLI version 3.47.2 fails with `Gradle build failed to produce an .apk file` when product flavors and ABI splits are enabled simultaneously because it expects single un-split APK naming conventions. Running Gradle directly generates all split and universal APKs reliably.
 
 ## 4. AMOLED Dark Theme & System Bar Overlay
-- **Choice:** Introduced pure black (`#000000`) theme palette with high-contrast surfaces (`#101010`) and system bar overlay style configuration.
+- **Choice:** Introduced pure black (`#000000`) theme palette with high-contrast surfaces (`#101010`) and system bar overlay style configuration across both Flutter and Dioxus UI components.
 - **Alternatives Considered:** Standard dark gray palette.
 - **Reasoning:** Maximum battery efficiency on OLED/AMOLED mobile screens and consistent visual hierarchy.
 
@@ -24,3 +24,8 @@
 - **Choice:** Added full Vietnamese ARB localization and Vietnamese README.
 - **Alternatives Considered:** English only.
 - **Reasoning:** User accessibility and primary market support.
+
+## 6. Extreme Native Binary Optimization & ProGuard Rules
+- **Choice:** Configured `opt-level = "z"`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"`, and `strip = true` in workspace `[profile.release]`, paired with thorough ProGuard rules protecting JNI methods, Shizuku, Cargokit, and `flutter_rust_bridge`.
+- **Alternatives Considered:** Default Cargo dev/release profiles without LTO or stripping.
+- **Reasoning:** Minimizes `.so` binary footprint on mobile storage, removes unused dead code across cross-compilation boundaries, and accelerates cold startup on ARM devices.

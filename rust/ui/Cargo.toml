@@ -3,7 +3,14 @@ name = "nlpa_ui"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "nlpa_ui"
+path = "src/lib.rs"
+
+[[bin]]
+name = "nlpa_ui"
+path = "src/main.rs"
+
 [dependencies]
-# Using dioxus-core only to avoid heavy desktop dependencies
-dioxus = { version = "0.6", default-features = false }
+dioxus = { version = "0.6", default-features = false, features = ["macro", "hooks", "html", "signals"] }
 nlpa_core = { path = "../core" }
