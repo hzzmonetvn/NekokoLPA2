@@ -506,6 +506,15 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     // Check initial values
     _onPendingLpaChanged();
     _onPendingSigningUriChanged();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadReaders();
+        _checkForUpdates();
+        LocalNotificationService().checkPermission();
+        ProfileRedaction.warmupOperatorPlaceholders();
+      }
+    });
   }
 
   @override

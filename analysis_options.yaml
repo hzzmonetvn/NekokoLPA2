@@ -23,6 +23,7 @@ analyzer:
     dead_code: ignore
     unused_import: ignore
     unnecessary_import: ignore
+    unused_element: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the
