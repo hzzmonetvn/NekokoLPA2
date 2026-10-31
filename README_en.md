@@ -7,7 +7,7 @@
 
 **Language:** **English** | [Tiếng Việt](./README.md) | [日本語](./README_ja-JP.md) | [简体中文](./README_zh-CN.md)
 
-NekokoLPA2 is an eSIM management application specialized for Android (ARM64 and ARMv7 architectures). It features high-performance Rust protocol integration for working with local eUICCs, external readers (BLE, USB CCID), and remote reader endpoints.
+NekokoLPA2 is an eSIM management application specialized for Android (ARM64 and ARMv7 architectures). It features high-performance Rust protocol integration for working with local eUICCs, USB CCID readers, Qualcomm QRTR modems, SE HAL, and remote reader endpoints.
 
 [Get started](#get-started) · [Readers and platforms](#platform-support) · [Features](#features) · [Build from source](#build-from-source) · [Troubleshooting](#troubleshooting)
 
@@ -16,7 +16,7 @@ Choosing a download: [Android variants and builds](docs/build-variants.md) · [O
 ## Get started
 
 1. Install the app from [GitHub Releases](https://github.com/hzzmonetvn/NekokoLPA2/releases) or Google Play.
-2. Connect an eUICC reader and enable its connection type in reader settings. For Bluetooth LE, grant requested permissions and scan for the reader.
+2. Connect an eUICC reader and enable its connection type in reader settings (USB CCID, OMAPI, TMAPI, QRTR, or SE HAL).
 3. Select the reader and load its profiles. Use an activation code or QR code to download profiles; enable, rename, or delete profiles directly from the profile list.
 
 ## Highlights
@@ -32,13 +32,13 @@ Choosing a download: [Android variants and builds](docs/build-variants.md) · [O
 
 | Connection Type | Android (ARM64 / ARMv7) | Notes |
 | --- | --- | --- |
-| BLE readers | ✅ | Standard Bluetooth Low Energy and Tianyu/9eSIM readers |
 | USB CCID readers | ✅ | Standard CCID readers via USB OTG |
 | Remote readers | ✅ | Connection via Cloud Reader endpoints |
 | OMAPI | ✅ | Android Open Mobile API |
 | Telephony / TMAPI | ✅ | Supported devices via Shizuku / Bridge |
 | `OTBridge` Provider | ✅ | Extension module for rooted devices |
 | SE HAL (Shizuku) | ✅ | Secure Element HAL via Shizuku |
+| QRTR Modem | ✅ | Direct Qualcomm modem bus communication |
 
 ## Build from source
 
@@ -58,6 +58,23 @@ dart analyze
 flutter test
 cargo test --workspace
 ```
+
+### Packaging APKs (Split APK per-ABI & Universal)
+
+```sh
+# Community flavor
+flutter build apk --release --flavor community --target lib/main.dart
+cd android && ./gradlew assembleCommunityRelease && cd ..
+
+# Privileged (Rooted) flavor
+flutter build apk --release --flavor privileged --target lib/main.dart --dart-define=PRIVILEGED_BUILD=true
+cd android && ./gradlew assemblePrivilegedRelease && cd ..
+```
+
+The APK files will be generated in `build/app/outputs/flutter-apk/`:
+- `app-arm64-v8a-<flavor>-release.apk`: For 64-bit ARM devices
+- `app-armeabi-v7a-<flavor>-release.apk`: For 32-bit ARM devices
+- `app-universal-<flavor>-release.apk`: Universal multi-ABI package
 
 ## License
 

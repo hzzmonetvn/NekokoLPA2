@@ -37,6 +37,7 @@
   - Removed `ReaderType::Ble` from Rust models and components (`rust/ui/src/models.rs`, `rust/ui/src/components/reader_selector.rs`).
   - Excised all BLE adapter implementations (`lib/adapter/ble/`), UI settings pages (`ble_devices_settings_page.dart`), scan dialogs (`ble_scan_dialog.dart`), and BLE plugins (`ty_ble_plugin.dart`, `bee_sim_plugin.dart`).
   - Stripped BLE connection, scanning, error states (`ReaderStatus.bleError`), and manager hooks from `lib/pages/profiles_screen.dart`, `lib/adapter/composite_adapter.dart`, `lib/settings/app_settings.dart`, and `lib/widgets/profiles_screen/state_messages.dart`.
+  - Cleaned and synchronized all multilingual documentation (`README.md`, `README_en.md`, `README_ja-JP.md`, `README_zh-CN.md`) to reflect strict Android ARM specialization (USB CCID, OMAPI, TMAPI, QRTR, SE HAL, Remote).
 - **Alternatives Considered:** Leaving BLE code unused or conditionally disabling it via runtime feature toggles.
 - **Reasoning:** The user specifically mandated focusing exclusively on Android ARM native reader capabilities (OMAPI, TMAPI/Telephony, QRTR modem bus, SE HAL, and USB CCID). Retaining the BLE stack added unnecessary background services, Bluetooth permission prompts, code complexity, and binary bloat without aligning with the dedicated native Android target.
 

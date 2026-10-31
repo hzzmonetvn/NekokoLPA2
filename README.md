@@ -7,7 +7,7 @@
 
 **Language:** [English](./README_en.md) | **Tiếng Việt** | [日本語](./README_ja-JP.md) | [简体中文](./README_zh-CN.md)
 
-NekokoLPA2 là ứng dụng quản lý eSIM chuyên biệt dành cho nền tảng Android (kiến trúc ARM64 và ARMv7), tối ưu hóa sâu với lõi Rust tốc độ cao, hỗ trợ làm việc với các chip eUICC nội bộ, đầu đọc thẻ ngoài (BLE, USB CCID), và các điểm cuối đọc thẻ từ xa.
+NekokoLPA2 là ứng dụng quản lý eSIM chuyên biệt dành cho nền tảng Android (kiến trúc ARM64 và ARMv7), tối ưu hóa sâu với lõi Rust tốc độ cao, hỗ trợ làm việc với các chip eUICC nội bộ, đầu đọc thẻ qua USB CCID, modem Qualcomm QRTR, SE HAL, và các điểm cuối đọc thẻ từ xa.
 
 [Bắt đầu](#bắt-đầu) · [Đầu đọc và nền tảng](#hỗ-trợ-nền-tảng) · [Tính năng](#tính-năng) · [Ghi chú cho Android](#ghi-chú-cho-android) · [Biên dịch từ mã nguồn](#biên-dịch-từ-mã-nguồn) · [Xử lý sự cố](#xử-lý-sự-cố)
 
@@ -18,7 +18,7 @@ Khôi phục OMAPI trên Android: [Hồi phục lỗi khởi động lại](docs
 ## Bắt đầu
 
 1. Cài đặt ứng dụng từ [kênh phát hành GitHub](https://github.com/hzzmonetvn/NekokoLPA2/releases) hoặc Google Play.
-2. Kết nối đầu đọc eUICC và bật kiểu kết nối tương ứng trong cài đặt đầu đọc thẻ. Đối với Bluetooth LE, cấp quyền Bluetooth được yêu cầu và quét tìm tên đầu đọc hiển thị.
+2. Kết nối đầu đọc eUICC và bật kiểu kết nối tương ứng trong cài đặt đầu đọc thẻ (USB CCID, OMAPI, TMAPI, QRTR, hoặc SE HAL).
 3. Chọn đầu đọc thẻ và tải danh sách hồ sơ (profile). Sử dụng mã kích hoạt (activation code) hoặc mã QR để tải hồ sơ; bật, đổi tên hoặc xóa hồ sơ ngay từ danh sách hồ sơ của đầu đọc.
 
 ## Điểm nổi bật
@@ -28,20 +28,20 @@ Khôi phục OMAPI trên Android: [Hồi phục lỗi khởi động lại](docs
 - **Hỗ trợ Split APK per-ABI & Universal APK**: Tự động đóng gói APK tối ưu dung lượng cho từng kiến trúc ARM hoặc bản Universal tổng hợp.
 - **Giao diện AMOLED Pure Black**: Tối ưu tiết kiệm pin trên màn hình OLED/AMOLED với hệ màu đen tuyệt đối và độ tương phản cao.
 - **Bản địa hóa Tiếng Việt toàn diện**: Hỗ trợ ngôn ngữ tiếng Việt hoàn chỉnh trong toàn bộ ứng dụng và tài liệu.
-- **Hỗ trợ đa dạng đầu đọc thẻ**: Đầu đọc BLE, USB CCID, OMAPI, Telephony/TMAPI, đầu đọc từ xa (Remote Reader).
+- **Hỗ trợ đa dạng đầu đọc thẻ**: Đầu đọc USB CCID, OMAPI, Telephony/TMAPI, modem QRTR, SE HAL, đầu đọc từ xa (Remote Reader).
 - **Hỗ trợ thiết bị Root & Magisk**: Tích hợp module `OTBridge` để bật hỗ trợ Telephony và bỏ qua các hạn chế OMAPI ARA-M.
 
 ## Hỗ trợ nền tảng
 
 | Kiểu kết nối | Android (ARM64 / ARMv7) | Ghi chú |
 | --- | --- | --- |
-| Đầu đọc BLE | ✅ | Hỗ trợ chuẩn Bluetooth Low Energy và đầu đọc Tianyu/9eSIM |
 | Đầu đọc USB CCID | ✅ | Giao thức CCID tiêu chuẩn qua USB OTG |
 | Đầu đọc từ xa (Remote) | ✅ | Kết nối qua Cloud Reader endpoint |
 | OMAPI | ✅ | Giao diện Open Mobile API của hệ thống Android |
 | Telephony / TMAPI | ✅ | Hỗ trợ trên các thiết bị tương thích qua Shizuku / Bridge |
 | `OTBridge` Provider | ✅ | Module mở rộng dành cho thiết bị Root |
 | SE HAL (Shizuku) | ✅ | Giao tiếp Secure Element HAL qua Shizuku |
+| Modem QRTR | ✅ | Giao tiếp modem trực tiếp trên Qualcomm SoC |
 
 ## Bản địa hóa & Dịch thuật
 
@@ -49,8 +49,7 @@ Khôi phục OMAPI trên Android: [Hồi phục lỗi khởi động lại](docs
 
 ## Tính năng
 
-- **Hỗ trợ đa đầu đọc thẻ**: BLE, USB CCID, OMAPI, Telephony API, đầu đọc từ xa.
-- **Đầu đọc TYBLE**: Đầu đọc Tianyu với tiền tố tên như `SCT-BT-<UID>`, `TES-BT-<UID>`, và đầu đọc 9eSIM B0 Plus mang tên `9eSIM` theo sau là 8 chữ số.
+- **Hỗ trợ đa đầu đọc thẻ**: USB CCID, OMAPI, Telephony API, modem QRTR, SE HAL, đầu đọc từ xa.
 - **Truy vấn thông tin thẻ (SIM probing)**: Thẻ SIM thông thường có thể hiển thị thông tin nhà mạng và định danh trên màn hình khi đầu đọc cho phép truyền lệnh APDU thô.
 - **Giải pháp cho máy Android đã Root**: `OTBridge` cho phép kích hoạt hỗ trợ Telephony và bỏ qua giới hạn OMAPI ARA-M trong khi vẫn giữ ứng dụng chính ở chế độ không đặc quyền.
 - **Quản lý hồ sơ thông minh**: Tùy chỉnh biểu tượng, ghi chú, thẻ phân loại (tags) và thông báo nhắc nhở ngày hết hạn gói cước.
