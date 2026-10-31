@@ -37,13 +37,7 @@ class _TagsAndRemindersPageState extends State<TagsAndRemindersPage> {
 
   Future<void> _checkPermission() async {
     try {
-      bool enabled = false;
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        enabled = await LocalNotificationService().checkPermission();
-      } else {
-        final status = await Permission.notification.status;
-        enabled = status.isGranted || status.isProvisional;
-      }
+      final enabled = await LocalNotificationService().checkPermission();
 
       if (mounted) {
         setState(() {

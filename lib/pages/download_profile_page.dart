@@ -25,7 +25,6 @@ import '../services/notification_service.dart';
 import '../settings/app_settings.dart';
 import '../widgets/euicc_info_dialog.dart';
 import 'dart:io' as io;
-import '../utils/platform_adapter_io.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/database_service.dart';
 import '../utils/size_formatter.dart';
@@ -1240,16 +1239,10 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
     );
   }
 
-    Widget _buildInput(BuildContext context) {
+  Widget _buildInput(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    return DropTarget(
-      onDragDone: (detail) async {
-        if (detail.files.isNotEmpty) {
-           await _handleImageFile(detail.files.first.path);
-        }
-      },
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Center(
           child: Container(
@@ -1437,8 +1430,7 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _handleImageFile(String path) async {
