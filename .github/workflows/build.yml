@@ -2,9 +2,9 @@ name: Build NekokoLPA2
 
 on:
   push:
-    branches: [release]
+    branches: [release, master]
   pull_request:
-    branches: [release]
+    branches: [release, master]
   workflow_dispatch:
     inputs:
       android_tools_only:
