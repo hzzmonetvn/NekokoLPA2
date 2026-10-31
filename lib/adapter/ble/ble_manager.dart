@@ -94,7 +94,7 @@ class BleManager extends ChangeNotifier {
       return;
     }
 
-    _log.info("Starting Bluetooth scan... (false: $false)");
+    _log.info("Starting Bluetooth scan...");
 
     // Permissions check - only pertinent for mobile platforms
     if (PlatformX.isAndroid) {

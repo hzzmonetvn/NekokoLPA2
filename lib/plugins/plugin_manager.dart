@@ -25,7 +25,7 @@ class PluginManager extends ChangeNotifier {
   void _registerPlugins() {
     _plugins
       ..clear()
-      ..addAll(BuildPluginRegistry.createPlugins().where(_isPluginAvailable));
+      ..addAll(BuildPluginRegistry.createPlugins());
     for (final plugin in _plugins) {
       plugin.bleReaderKinds.forEach(BleAdapterType.register);
     }

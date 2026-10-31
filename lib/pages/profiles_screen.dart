@@ -501,10 +501,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     }
   }
 
-
-    return true;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -2002,13 +1998,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
 
     // Define all actions in order (right to left folding priority)
     final allActions = <Map<String, dynamic>>[
-      if (false &&
-          false))
-        {
-          'icon': Icons.wifi_calling_3,
-          'tooltip': AppLocalizations.of(context)!.voWifiWiFiCalling,
-          'key': 'wifi_calling',
-        },
       if (_eid != null || _isUnsupported || _isAraMFailed)
         {
           'icon': revealIdentifiers
