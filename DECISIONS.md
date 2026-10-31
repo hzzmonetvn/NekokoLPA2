@@ -41,3 +41,8 @@
 - **Alternatives Considered:** Leaving BLE code unused or conditionally disabling it via runtime feature toggles.
 - **Reasoning:** The user specifically mandated focusing exclusively on Android ARM native reader capabilities (OMAPI, TMAPI/Telephony, QRTR modem bus, SE HAL, and USB CCID). Retaining the BLE stack added unnecessary background services, Bluetooth permission prompts, code complexity, and binary bloat without aligning with the dedicated native Android target.
 
+## 8. High-Precision Telecom Localization Overhaul (app_vi.arb)
+- **Choice:** Conducted an exhaustive review and refinement of `l10n/app_vi.arb`, correcting automated translation defects, removing redundant repeated phrases ("Đầu đầu đọc từ xa" → "Đầu đọc từ xa"), fixing reversed logic ("Trình duyệt Bật" → "Bật trình duyệt"), standardizing domain terminology ("Toán tử" → "Nhà mạng", "Đang đọc SIM nguồn…", "Máy chủ SM-DS"), and neutralizing lingering Apple/iOS/CallKit/Bluetooth copy into clean Android-native terms.
+- **Alternatives Considered:** Relying on raw machine translation outputs or keeping generic translations.
+- **Reasoning:** Inaccurate and unnatural translations undermine user clarity and trust in critical cryptographic operations such as eUICC profile installation, deletion, and carrier authorization. Refining translations using specialized telecom domain knowledge ensures exact semantic alignment with GSMA eSIM specifications.
+
