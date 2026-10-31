@@ -4,6 +4,8 @@ import 'package:nlpa2/settings/app_settings.dart';
 import 'package:nlpa2/theme/app_theme.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('AMOLED theme uses black system bars and accessible dark colors', () {
     final theme = AppTheme.theme(true, AppThemeType.amoled);
 

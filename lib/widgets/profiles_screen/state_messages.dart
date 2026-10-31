@@ -9,7 +9,6 @@ import '../../adapter/ble/ble_manager.dart';
 import '../../utils/platform_adapter.dart';
 import '../common/loading_spinner.dart';
 import 'ble_scan_dialog.dart';
-import '../../adapter/composite_adapter.dart';
 
 /// Base widget for displaying state messages in the profiles screen.
 class ColumnStateMessage extends StatelessWidget {
@@ -316,78 +315,19 @@ class NoReadersState extends StatelessWidget {
                         _ConnectOptionCard(
                           icon: Icons.bluetooth_searching_rounded,
                           title: l10n.scanForBluetooth,
-                          subtitle: false
-                              ? 'Web Bluetooth API'
-                              : 'Bluetooth LE',
+                          subtitle: 'Bluetooth LE',
                           colors: const [Color(0xFF2196F3), Color(0xFF1976D2)],
                           onTap: () async {
-                            String? newReaderId;
-                            if (false) {
-                              try {
-                                newReaderId = await BleManager()
-                                    .scanAndAddReaderForWeb();
-                                if (newReaderId != null) {
-                                  await onReadersLoaded(); // Use await
-                                  onReaderSelected(newReaderId);
-                                }
-                              } catch (e) {
-                                // user cancelled or error
-                              } finally {
-                                await onReadersLoaded();
-                              }
-                            } else {
-                              newReaderId = await showDialog<String>(
-                                context: context,
-                                builder: (context) => const BleScanDialog(),
-                              );
-                              if (newReaderId != null) {
-                                await onReadersLoaded();
-                                onReaderSelected(newReaderId);
-                              }
-                            }
-                          },
-                        ),
-                      if (false) ...[
-                        const SizedBox(height: 16),
-                        _ConnectOptionCard(
-                          icon: Icons.usb_rounded,
-                          title: 'Connect USB Reader',
-                          subtitle: 'WebUSB (SCRP Protocol)',
-                          colors: const [Color(0xFF009688), Color(0xFF00796B)],
-                          onTap: () async {
-                            try {
-                              final reader = await CompositeAdapter()
-                                  .scanScrp();
-                              if (reader != null) {
-                                await onReadersLoaded();
-                                onReaderSelected(reader.id);
-                              }
-                            } catch (e) {
-                              // ignore
-                            } finally {
-                              // refresh will handle clearing loading if it succeeds,
-                              // but we should ensure it's cleared if cancelled.
+                            final newReaderId = await showDialog<String>(
+                              context: context,
+                              builder: (context) => const BleScanDialog(),
+                            );
+                            if (newReaderId != null) {
                               await onReadersLoaded();
+                              onReaderSelected(newReaderId);
                             }
                           },
                         ),
-                        const SizedBox(height: 16),
-                        _ConnectOptionCard(
-                          icon: Icons.extension_rounded,
-                          title: l10n.downloadExtension,
-                          subtitle: 'WebCard Browser Extension',
-                          colors: const [Color(0xFFFF9800), Color(0xFFF57C00)],
-                          onTap: () async {
-                            final uri = Uri.parse(
-                              "https://webcard.cardid.org/",
-                            );
-                            await launchUrl(
-                              uri,
-                              mode: LaunchMode.externalApplication,
-                            );
-                          },
-                        ),
-                      ],
                       if (AppSettings().remoCardUrls.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         _ConnectOptionCard(

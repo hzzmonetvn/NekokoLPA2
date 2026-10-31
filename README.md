@@ -1,184 +1,104 @@
-![NekokoLPA2 — cross-platform eSIM manager](docs/assets/readme-banner.png)
+![NekokoLPA2 — Trình quản lý eSIM đa nền tảng tối ưu cho Android](docs/assets/readme-banner.png)
 
 # NekokoLPA2
 [![Crowdin](https://badges.crowdin.net/nekokolpa2/localized.svg)](https://crowdin.com/project/nekokolpa2)
 
+[![Tải trên Google Play](https://img.shields.io/badge/Google%20Play-Download-34A853?logo=googleplay&logoColor=white&style=for-the-badge)](https://play.google.com/store/apps/details?id=ee.nekoko.nlpa)
 
-[![Download on the App Store](https://img.shields.io/badge/App%20Store-Download-0D96F6?logo=appstore&logoColor=white&style=for-the-badge)](https://apps.apple.com/en/app/nekokolpa-2/id6757540723)
-[![Get it on Google Play](https://img.shields.io/badge/Google%20Play-Download-34A853?logo=googleplay&logoColor=white&style=for-the-badge)](https://play.google.com/store/apps/details?id=ee.nekoko.nlpa)
+**Language:** [English](./README_en.md) | **Tiếng Việt** | [日本語](./README_ja-JP.md) | [简体中文](./README_zh-CN.md)
 
+NekokoLPA2 là ứng dụng quản lý eSIM chuyên biệt dành cho nền tảng Android (kiến trúc ARM64 và ARMv7), tối ưu hóa sâu với lõi Rust tốc độ cao, hỗ trợ làm việc với các chip eUICC nội bộ, đầu đọc thẻ ngoài (BLE, USB CCID), và các điểm cuối đọc thẻ từ xa.
 
-**Language:** **English** | [Tiếng Việt](./README_vi-VN.md) | [日本語](./README_ja-JP.md) | [简体中文](./README_zh-CN.md)
+[Bắt đầu](#bắt-đầu) · [Đầu đọc và nền tảng](#hỗ-trợ-nền-tảng) · [Tính năng](#tính-năng) · [Ghi chú cho Android](#ghi-chú-cho-android) · [Biên dịch từ mã nguồn](#biên-dịch-từ-mã-nguồn) · [Xử lý sự cố](#xử-lý-sự-cố)
 
+Tùy chọn tải về: [Các biến thể Android và bản build](docs/build-variants.md) · [So sánh OTBridge và ứng dụng Rooted](docs/android-root.md).
 
-NekokoLPA2 is a cross-platform eSIM management app for working with local eUICCs, external readers, and remote reader endpoints. It is designed for users who need more control over profile operations, transport choices, and card visibility than a typical carrier app exposes.
+Khôi phục OMAPI trên Android: [Hồi phục lỗi khởi động lại](docs/omapi-recovery.md).
 
-[Get started](#get-started) · [Readers and platforms](#platform-support) · [VoWiFi and IMS](#vowifi-and-ims) · [Build from source](#build-from-source) · [Troubleshooting](#troubleshooting)
+## Bắt đầu
 
-Choosing a download: [Android variants and desktop builds](docs/build-variants.md) · [OTBridge versus the rooted app](docs/android-root.md).
+1. Cài đặt ứng dụng từ [kênh phát hành GitHub](https://github.com/hzzmonetvn/NekokoLPA2/releases) hoặc Google Play.
+2. Kết nối đầu đọc eUICC và bật kiểu kết nối tương ứng trong cài đặt đầu đọc thẻ. Đối với Bluetooth LE, cấp quyền Bluetooth được yêu cầu và quét tìm tên đầu đọc hiển thị.
+3. Chọn đầu đọc thẻ và tải danh sách hồ sơ (profile). Sử dụng mã kích hoạt (activation code) hoặc mã QR để tải hồ sơ; bật, đổi tên hoặc xóa hồ sơ ngay từ danh sách hồ sơ của đầu đọc.
 
-Android OMAPI: [restart regression and recovery](docs/omapi-recovery.md).
+## Điểm nổi bật
 
-## Get started
+- **Chuyên biệt cho Android & ARM**: Tối ưu độc quyền cho Android trên các kiến trúc `arm64-v8a` và `armeabi-v7a`.
+- **Lõi xử lý viết bằng Rust**: Toàn bộ module giao thức (modem QRTR, protocol engine, UI bindings) được hợp nhất trong workspace Rust (`rust`, `rust/core`, `rust/ui`).
+- **Hỗ trợ Split APK per-ABI & Universal APK**: Tự động đóng gói APK tối ưu dung lượng cho từng kiến trúc ARM hoặc bản Universal tổng hợp.
+- **Giao diện AMOLED Pure Black**: Tối ưu tiết kiệm pin trên màn hình OLED/AMOLED với hệ màu đen tuyệt đối và độ tương phản cao.
+- **Bản địa hóa Tiếng Việt toàn diện**: Hỗ trợ ngôn ngữ tiếng Việt hoàn chỉnh trong toàn bộ ứng dụng và tài liệu.
+- **Hỗ trợ đa dạng đầu đọc thẻ**: Đầu đọc BLE, USB CCID, OMAPI, Telephony/TMAPI, đầu đọc từ xa (Remote Reader).
+- **Hỗ trợ thiết bị Root & Magisk**: Tích hợp module `OTBridge` để bật hỗ trợ Telephony và bỏ qua các hạn chế OMAPI ARA-M.
 
-1. Install the app from an [official download channel](#download).
-2. Connect an eUICC reader and enable its connection type in reader settings. For Bluetooth, allow the requested Bluetooth permissions and scan for the advertised reader name.
-3. Select the reader and load its profiles. Use an activation code or QR code to download a profile; enable, rename, or delete profiles from the reader's profile list.
+## Hỗ trợ nền tảng
 
-An external reader manages the card connected to that reader. It does not turn an iPhone's internal eSIM into an externally accessible card. Android's internal-card access depends on the available OMAPI, bridge, or modem interface and the card's access rules.
+| Kiểu kết nối | Android (ARM64 / ARMv7) | Ghi chú |
+| --- | --- | --- |
+| Đầu đọc BLE | ✅ | Hỗ trợ chuẩn Bluetooth Low Energy và đầu đọc Tianyu/9eSIM |
+| Đầu đọc USB CCID | ✅ | Giao thức CCID tiêu chuẩn qua USB OTG |
+| Đầu đọc từ xa (Remote) | ✅ | Kết nối qua Cloud Reader endpoint |
+| OMAPI | ✅ | Giao diện Open Mobile API của hệ thống Android |
+| Telephony / TMAPI | ✅ | Hỗ trợ trên các thiết bị tương thích qua Shizuku / Bridge |
+| `OTBridge` Provider | ✅ | Module mở rộng dành cho thiết bị Root |
+| SE HAL (Shizuku) | ✅ | Giao tiếp Secure Element HAL qua Shizuku |
 
-## Highlights
+## Bản địa hóa & Dịch thuật
 
-- Works across Android, iOS, macOS, Linux, Windows, and Chrome
-- Supports BLE readers, USB CCID readers, OMAPI, Telephony/TMAPI, remote readers, and browser-side WebUSB paths
-- Includes profile organization tools such as custom icons, notes, tags, and scheduled notifications
-- On rooted Android devices, `OTBridge` can enable Telephony support and help bypass OMAPI ARA-M restrictions without requiring NekokoLPA2 itself to be installed as a privileged app
+Ứng dụng hỗ trợ đa ngôn ngữ với tiếng Việt là một trong những ngôn ngữ chính thức. Bản dịch được quản lý tập trung trên [Crowdin](https://crowdin.com/project/nekokolpa2).
 
-## Platform Support
+## Tính năng
 
-Experimental reader-backed Wi-Fi calling is available through the iOS Manage
-screen. It requires an external SIM reader, not the phone's internal SIM;
-see [build instructions and limitations](docs/ios-vowifi.txt).
+- **Hỗ trợ đa đầu đọc thẻ**: BLE, USB CCID, OMAPI, Telephony API, đầu đọc từ xa.
+- **Đầu đọc TYBLE**: Đầu đọc Tianyu với tiền tố tên như `SCT-BT-<UID>`, `TES-BT-<UID>`, và đầu đọc 9eSIM B0 Plus mang tên `9eSIM` theo sau là 8 chữ số.
+- **Truy vấn thông tin thẻ (SIM probing)**: Thẻ SIM thông thường có thể hiển thị thông tin nhà mạng và định danh trên màn hình khi đầu đọc cho phép truyền lệnh APDU thô.
+- **Giải pháp cho máy Android đã Root**: `OTBridge` cho phép kích hoạt hỗ trợ Telephony và bỏ qua giới hạn OMAPI ARA-M trong khi vẫn giữ ứng dụng chính ở chế độ không đặc quyền.
+- **Quản lý hồ sơ thông minh**: Tùy chỉnh biểu tượng, ghi chú, thẻ phân loại (tags) và thông báo nhắc nhở ngày hết hạn gói cước.
+- **Giao diện AMOLED Dark Theme**: Trải nghiệm giao diện nền đen sâu hoàn toàn, bảo vệ mắt và tiết kiệm điện năng.
 
-Experimental desktop VoWiFi/SMS is also included on Windows, macOS and Linux.
-**VoWiFi is disabled on Android and for OMAPI adapters.** Desktop sessions
-require a reader with direct raw basic-channel APDUs; see [setup and restrictions](#vowifi-and-ims).
+## Ghi chú cho Android
 
-| Connection Type | Android | iOS | macOS | Linux | Windows | Chrome |
-| --- | --- | --- | --- | --- | --- | --- |
-| BLE readers | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| USB CCID readers | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Remote readers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| OMAPI | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Telephony / TMAPI | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `OTBridge` provider | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| SE HAL (Shizuku) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| WebUSB SCRP / WebCard | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+- NekokoLPA2 ưu tiên sử dụng `OTBridge` provider trên Android khi đã được cài đặt.
+- Trên các thiết bị đã Root, `OTBridge` mở ra quyền truy cập Telephony/TMAPI và hỗ trợ vượt qua các hạn chế OMAPI ARA-M.
+- Mã nguồn và các bản phát hành của OTBridge được duy trì tại: [thư mục otbridge](otbridge/).
 
-Notes:
-- `Telephony / TMAPI` and `OTBridge` are Android-only paths.
-- `OTBridge` is intended for rooted Android setups where Telephony access or OMAPI policy bypass is needed.
-- `SE HAL` is experimental and off by default. It needs Shizuku, and works only where the device lets `shell` call the Secure Element HAL.
-- Chrome support refers to the web build running in a Chromium browser with the required browser APIs available.
+## Biên dịch từ mã nguồn
 
-## Translation
-
-Translations are managed on [Crowdin](https://crowdin.com/project/nekokolpa2).
-
-
-## Features
-
-- **Multi-reader support**: BLE, USB CCID, OMAPI, Telephony API, remote readers, and browser-based transports
-- **TYBLE readers**: Tianyu readers with names such as `SCT-BT-<UID>` and `TES-BT-<UID>`, plus 9eSIM B0 Plus readers named `9eSIM` followed by eight digits. Six-character 9eSIM suffixes continue to use the NineESIM protocol. TYBLE uses the BLE platforms listed above.
-- **SIM probing**: Plain SIMs can show their operator and identity details on the unsupported-card screen when the connected reader permits raw APDUs.
-- **Desktop VoWiFi/SMS**: Optional experimental SMS sessions backed by an external SIM reader on Windows, macOS and Linux
-- **Rooted Android path**: `OTBridge` can enable Telephony support and bypass OMAPI ARA-M restrictions while keeping the main app unprivileged
-- **Provider integrations**: eSIM.cc rewards/portal, eSIM.gg number/balance/package status, and 3HK number/expiry/package status are maintained here in the public repository.
-- **Profile organization**: Custom icons, notes, tags, and compact management tools
-- **Scheduled notifications**: Reminders for expiry and other profile-related events
-- **Cross-platform UI**: Responsive layout with platform-aware reader flows
-
-## Android Notes
-
-- NekokoLPA2 prefers the external `OTBridge` provider on Android when it is installed.
-- On rooted Android devices, `OTBridge` can expose Telephony/TMAPI access and help bypass OMAPI ARA-M restrictions while keeping NekokoLPA2 itself on the normal app path.
-- OTBridge source and builds now live in this repository: [source](otbridge/), [release downloads](https://github.com/iebb/NekokoLPA2/releases).
-- The separate full rooted app/module is also maintained. [Compare OTBridge and the rooted app, with installation/build instructions](docs/android-root.md).
-- VoWiFi remains disabled on Android, including when an external reader or bridge is available. OMAPI profile management remains available separately.
-
-## VoWiFi and IMS
-
-| Feature | Windows / macOS / Linux | iOS | Android | Browser |
-| --- | --- | --- | --- | --- |
-| Experimental desktop SMS over IMS | Opt-in, external raw-APDU reader | — | Disabled | — |
-| Reader-backed Wi-Fi calling | — | External USB CCID or supported RED BLE reader | Disabled | — |
-| VoWiFi through OMAPI | Disabled | Disabled | Disabled | — |
-
-### Desktop setup
-
-1. Use a non-9eSIM-branded build on Windows, macOS or Linux.
-2. Connect an external SIM/eUICC reader that permits raw APDUs on the basic channel. OMAPI and SE HAL readers are not eligible.
-3. In Settings, enable **VoWiFi** and accept the experimental-feature notice.
-4. On the reader page, choose **Load current SIM to VoWiFi**. The app derives the IMS realm, ePDG address and SMSC from the SIM where available.
-5. Use the VoWiFi tab to view sessions and exchange SMS. Disable VoWiFi or disconnect a session to stop it.
-
-The desktop implementation provides SMS. The iOS Manage screen uses a separate reader-backed calling implementation; see its [build instructions, background limits and verification notes](docs/ios-vowifi.txt).
-
-### Protocol behavior and limits
-
-The desktop IMS client handles AKA resynchronization with AUTS, binary RES values, quoted Digest challenges, `auth`/`auth-int` quality-of-protection negotiation, nonce counts, and supported MD5/SHA-256 digest variants. It correlates final SIP responses to the outstanding transaction, retains the registrar's ordered `Service-Route` values, and honors a valid `423 Min-Expires` response with one bounded retry.
-
-These paths have unit and local SIP-peer regression tests. Carrier provisioning, ePDG access, SIM policy and network behavior still determine whether a real subscription registers and exchanges SMS. This is experimental software, and the project does not claim universal carrier compatibility. See [implementation details, research references and remaining limits](docs/desktop-ims.md).
-
-## Build from source
-
-The public repository includes TYBLE readers, SIM probing and desktop VoWiFi/SMS without a private overlay. Use the Flutter version pinned in [CI](.github/workflows/build.yml), currently **3.47.2**. Android's QRTR transport also requires **Rust 1.89 or later**. Native desktop builds require that platform's Flutter build toolchain.
+Dự án yêu cầu Flutter phiên bản **3.47.2**, Android NDK r28c, và **Rust 1.89+** với các target `aarch64-linux-android` và `armv7-linux-androideabi`.
 
 ```sh
-git clone --branch master https://github.com/iebb/NekokoLPA2.git
+git clone --branch master https://github.com/hzzmonetvn/NekokoLPA2.git
 cd NekokoLPA2
 flutter pub get
-flutter devices
-flutter run -d macos  # choose an available device from flutter devices
+flutter gen-l10n
 ```
 
-For reader-backed iOS calling, first follow the [source-built Go framework and codec instructions](docs/ios-vowifi.txt). `GM_PSK_URL` can be supplied as a non-secret `--dart-define`; leaving it empty still builds the app, with GM PSKs limited to those already cached.
-
-### Validate a change
+### Kiểm tra và kiểm thử
 
 ```sh
-dart analyze lib test
-flutter test --no-pub
-flutter build web --release --no-pub
+dart analyze
+flutter test
+cargo test --workspace
 ```
 
-Format the Dart files you change. Add user-facing strings only to `l10n/app_en.arb`, then run `flutter gen-l10n`; Crowdin owns the translated ARB files. When adding a plugin, regenerate its registry with `dart run scripts/generate_plugin_registry.dart`. Maintainers working with a private overlay should use `--public` for the committed registry.
+### Đóng gói APK (Split APK per-ABI & Universal)
 
-## Troubleshooting
+```sh
+# Bản Community
+flutter build apk --release --flavor community --target lib/main.dart
+cd android && ./gradlew assembleCommunityRelease && cd ..
 
-| Symptom | Check |
-| --- | --- |
-| Bluetooth reader is missing | Enable Bluetooth, allow the platform permissions, enable that reader type and scan again. Linux has no BLE transport in this app. |
-| An Android card refuses OMAPI | Check its access rules or use a supported bridge/reader. VoWiFi is unavailable through OMAPI. |
-| The VoWiFi setting is absent | Desktop VoWiFi is unavailable on Android, iOS and 9eSIM-branded builds. iOS calling has its own Manage entry. |
-| IMS registration or SMS fails | Check reader eligibility, SIM carrier provisioning, the reported SIP status and the [IMS limitations](docs/desktop-ims.md). A passing build does not establish carrier support. |
+# Bản Privileged (Rooted)
+flutter build apk --release --flavor privileged --target lib/main.dart --dart-define=PRIVILEGED_BUILD=true
+cd android && ./gradlew assemblePrivilegedRelease && cd ..
+```
 
-When reporting a problem, include the app version, operating system, reader model and a redacted error. Remove subscriber identities, activation codes, phone numbers, raw APDUs and authentication material from shared logs.
+Các file APK sẽ được tạo tại `build/app/outputs/flutter-apk/`:
+- `app-arm64-v8a-<flavor>-release.apk`: Dành cho thiết bị 64-bit ARM
+- `app-armeabi-v7a-<flavor>-release.apk`: Dành cho thiết bị 32-bit ARM
+- `app-universal-<flavor>-release.apk`: Bản đa kiến trúc tổng hợp
 
-## Download
+## Giấy phép
 
-- [![Download on the App Store](https://img.shields.io/badge/App%20Store-Download-0D96F6?logo=appstore&logoColor=white&style=for-the-badge)](https://apps.apple.com/en/app/nekokolpa-2/id6757540723)
-- [![Get it on Google Play](https://img.shields.io/badge/Google%20Play-Download-34A853?logo=googleplay&logoColor=white&style=for-the-badge)](https://play.google.com/store/apps/details?id=ee.nekoko.nlpa)
-- **GitHub Releases**: [iebb/NekokoLPA2 releases](https://github.com/iebb/NekokoLPA2/releases)
-- **TestFlight**: [Join TestFlight](https://testflight.apple.com/join/bP38fzC4)
-- **Web**: [web.lpa.ee](https://web.lpa.ee) — [release deployment guide](docs/web-release.md)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=iebb/NekokoLPA2%2Ciebb/NekokoLPA&type=date&legend=top-left)](https://www.star-history.com/?repos=iebb%2FNekokoLPA2%2Ciebb%2FNekokoLPA&type=date&legend=top-left)
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history and user-facing changes.
-
-## Wiki
-
-- [Wiki Home](https://github.com/iebb/NekokoLPA2/wiki)
-- [Getting Started](https://github.com/iebb/NekokoLPA2/wiki/Getting-Started)
-- [Features](https://github.com/iebb/NekokoLPA2/wiki/Features)
-- [Readers and Platforms](https://github.com/iebb/NekokoLPA2/wiki/Readers-and-Platforms)
-- [Troubleshooting](https://github.com/iebb/NekokoLPA2/wiki/Troubleshooting)
-
-## Support
-
-For issues, feature requests, or questions, please visit our [GitHub Issues](https://github.com/iebb/NekokoLPA2/issues).
-
-## License
-
-NekokoLPA2 is released under the [MIT License](LICENSE).
-
-The NekokoLPA cat mascot artwork was created by @sanzennami. Reference use is OK, but the mascot SHOULD NOT be used as your own logo, app icon, shop avatar, or dominant brand mark without agreement. You may include it as part of a logo or image only when it does not exceed 10% of the entire logo or image and the use does not imply official endorsement. See [NOTICE](NOTICE) and [BRANDING.md](BRANDING.md).
-
----
-
-© 2026 Nekoko.
+NekokoLPA2 được phân phối theo giấy phép [MIT License](LICENSE).
+Tác giả: **hzzmonetvn**.

@@ -76,13 +76,17 @@ jobs:
         env:
           BUILD_FLAVOR: ${{ matrix.flavor }}
         run: |
-          args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart --split-per-abi)
+          args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart)
           if [ "$BUILD_FLAVOR" = privileged ]; then
             args+=(--dart-define=PRIVILEGED_BUILD=true --dart-define=APP_VARIANT=open-rooted)
           else
             args+=(--dart-define=APP_VARIANT=open)
           fi
+          # Build Flutter app to bundle Dart/Flutter assets and Rust binaries via Cargokit
           flutter build apk "${args[@]}" --dart-define=GM_PSK_URL="$GM_PSK_URL"
+          # Run Gradle directly to produce ABI split and universal APKs reliably
+          cap_flavor="$(tr '[:lower:]' '[:upper:]' <<< "${BUILD_FLAVOR:0:1}")${BUILD_FLAVOR:1}"
+          cd android && ./gradlew "assemble${cap_flavor}Release" && cd ..
       - name: Package Android artifacts
         env:
           VERSION_CLEAN: ${{ needs.meta.outputs.version_clean }}
@@ -90,17 +94,23 @@ jobs:
           BUILD_FLAVOR: ${{ matrix.flavor }}
         run: |
           mkdir -p dist
+          echo "Generated APK files in build output:"
+          find build/app/outputs/ -name "*.apk" || true
           if [ "$BUILD_FLAVOR" = privileged ]; then
-            APK=build/app/outputs/flutter-apk/app-privileged-arm64-v8a-release.apk
+            APK=$(ls build/app/outputs/flutter-apk/app-arm64-v8a-privileged-release.apk build/app/outputs/apk/privileged/release/app-arm64-v8a-privileged-release.apk 2>/dev/null | head -n 1)
+            if [ -z "$APK" ] || [ ! -f "$APK" ]; then
+              APK=$(ls build/app/outputs/flutter-apk/*privileged*.apk build/app/outputs/apk/privileged/release/*privileged*.apk 2>/dev/null | head -n 1)
+            fi
+            echo "Selected privileged APK: $APK"
             cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-rooted-arm64-v8a.apk"
             python3 scripts/package_rooted_android.py --apk "$APK" \
               --output "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-magisk.zip" --version "$VERSION"
           else
-            cp build/app/outputs/flutter-apk/app-community-armeabi-v7a-release.apk \
+            cp $(ls build/app/outputs/flutter-apk/app-armeabi-v7a-community-release.apk build/app/outputs/apk/community/release/app-armeabi-v7a-community-release.apk 2>/dev/null | head -n 1) \
               "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-armeabi-v7a.apk" || true
-            cp build/app/outputs/flutter-apk/app-community-arm64-v8a-release.apk \
+            cp $(ls build/app/outputs/flutter-apk/app-arm64-v8a-community-release.apk build/app/outputs/apk/community/release/app-arm64-v8a-community-release.apk 2>/dev/null | head -n 1) \
               "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-arm64-v8a.apk" || true
-            cp build/app/outputs/flutter-apk/app-community-release.apk \
+            cp $(ls build/app/outputs/flutter-apk/app-universal-community-release.apk build/app/outputs/apk/community/release/app-universal-community-release.apk build/app/outputs/flutter-apk/app-community-release.apk build/app/outputs/apk/community/release/app-community-release.apk 2>/dev/null | head -n 1) \
               "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-universal.apk" || true
           fi
       - uses: actions/upload-artifact@v4
