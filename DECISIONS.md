@@ -20,10 +20,10 @@
 - **Alternatives Considered:** Standard dark gray palette.
 - **Reasoning:** Maximum battery efficiency on OLED/AMOLED mobile screens and consistent visual hierarchy.
 
-## 5. Vietnamese Primary Localization
-- **Choice:** Added full Vietnamese ARB localization and Vietnamese README.
-- **Alternatives Considered:** English only.
-- **Reasoning:** User accessibility and primary market support.
+## 5. Vietnamese Primary Localization & Terminology Overhaul
+- **Choice:** Standardized full Vietnamese ARB localization (`l10n/app_vi.arb`) and documentation, replacing rough automated translations with precise, natural Vietnamese telecommunications and mobile UI terminology.
+- **Alternatives Considered:** Leaving machine translations or using automated Google Translate without telecom domain context.
+- **Reasoning:** Telecommunications and eSIM operations require precise domain terminology (eUICC, APDU, ICCID, OMAPI, matching ID, carrier/nhà mạng, đầu đọc thẻ, mượn kênh, ký xác thực) to prevent confusion and errors during critical cryptographic SIM profile tasks.
 
 ## 6. Extreme Native Binary Optimization & ProGuard Rules
 - **Choice:** Configured `opt-level = "z"`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"`, and `strip = true` in workspace `[profile.release]`, paired with thorough ProGuard rules protecting JNI methods, Shizuku, Cargokit, and `flutter_rust_bridge`.
