@@ -17,8 +17,6 @@ import '../plugins/build_plugin_registry.dart';
 import '../adapter/euicc_adapter.dart';
 import '../adapter/composite_adapter.dart';
 import '../adapter/remote/remocard_adapter.dart';
-import '../adapter/ble/ble_adapter.dart';
-import '../adapter/ble/ble_manager.dart';
 import '../utils/error_codes.dart';
 import '../adapter/nbridge/nbridge_adapter.dart';
 import '../adapter/omapi/omapi_adapter.dart';
@@ -39,7 +37,6 @@ import 'notifications_screen.dart';
 import '../pages/settings_page.dart';
 import '../pages/settings/remote_settings_page.dart';
 import 'profile_tag_manager_page.dart';
-import '../widgets/profiles_screen/ble_scan_dialog.dart' as ble;
 import '../widgets/euicc_info_dialog.dart';
 import '../widgets/common/simple_dialog_container.dart';
 import '../models/euicc_profile.dart';
@@ -81,7 +78,6 @@ enum ReaderStatus {
   noCard,
   unsupported,
   araMFailed,
-  bleError,
   remoteError,
   error,
 }
@@ -121,15 +117,6 @@ class ReaderState {
     if (val) {
       status = ReaderStatus.unsupported;
     } else if (status == ReaderStatus.unsupported) {
-      status = ReaderStatus.ready;
-    }
-  }
-
-  bool get isBleConnectionError => status == ReaderStatus.bleError;
-  set isBleConnectionError(bool val) {
-    if (val) {
-      status = ReaderStatus.bleError;
-    } else if (status == ReaderStatus.bleError) {
       status = ReaderStatus.ready;
     }
   }
@@ -249,7 +236,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
   final GlobalKey _downloadButtonKey2 = GlobalKey();
 
   final Set<String> _restoredReaders =
-      {}; // Track restored devices (BLE & Remote)
+      {}; // Track restored devices (Remote)
   bool _hasLoadedRestoredReaders = false;
   bool _isListingProfiles = false; // Prevent infinite loops
 
@@ -258,10 +245,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
   Timer? _simChangeDebounce;
   StreamSubscription<String>? _deepLinkSub;
   StreamSubscription? _simChangeSub;
-
-  bool _isBle(Reader? reader) {
-    return reader?.source is BleAdapter;
-  }
 
   bool _isRemote(Reader? reader) {
     if (reader == null) return false;
@@ -329,15 +312,10 @@ class _ProfilesScreenState extends State<ProfilesScreen>
           originalError: e,
         ),
         false,
-        false,
       );
       return;
     }
 
-    final bool isBleError =
-        (e is AppException &&
-        (e.code == AppErrorCode.ERROR_BLUETOOTH_DISABLED ||
-            e.code == AppErrorCode.ERROR_BLUETOOTH_TIMEOUT));
     final bool isRemoteConnectionError =
         e is RemoCardConnectionException ||
         (e is AppException &&
@@ -359,7 +337,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         return;
       }
       if (e.code == AppErrorCode.ERROR_REMOTE_WRONG_PASSWORD) {
-        // NBLESimAdapter handles its own password loop now.
+        // Remote reader handles its own password loop now.
         // It prompts and retries, throwing only if user cancels.
         if (reader != null) {
           _updateReaderSession(reader.id, (s) {
@@ -370,34 +348,10 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         return;
       }
 
-      if (e.code == AppErrorCode.ERROR_BLUETOOTH_NOT_CONNECTED) {
-        if (mounted) {
-          _showPremiumConfirmDialog(
-            title: AppLocalizations.of(context)!.bleDisconnectedTitle,
-            message: AppLocalizations.of(context)!.bleDisconnectedMessage,
-            confirmLabel: AppLocalizations.of(context)!.retry,
-          ).then((retry) {
-            if (retry == true && onRetry != null) {
-              if (reader != null) {
-                _updateReaderSession(reader.id, (s) {
-                  s.loading = true;
-                  s.error = null;
-                });
-              }
-              onRetry();
-            } else {
-              _setErrorState(reader, e, true, false);
-            }
-          });
-        }
-        return;
-      }
-
-      final isBle = e.code.name.startsWith("ERROR_BLUETOOTH");
       final isRemote = e.code.name.startsWith("ERROR_REMOTE");
 
       // Pass the error object directly to be handled by ErrorState widget
-      _setErrorState(reader, e, isBle, isRemote);
+      _setErrorState(reader, e, isRemote);
       return;
     }
 
@@ -438,28 +392,25 @@ class _ProfilesScreenState extends State<ProfilesScreen>
           }
           onRetry();
         } else {
-          _setErrorState(reader, e, isBleError, isRemoteConnectionError);
+          _setErrorState(reader, e, isRemoteConnectionError);
         }
       });
       return;
     }
 
-    _setErrorState(reader, e, isBleError, isRemoteConnectionError);
+    _setErrorState(reader, e, isRemoteConnectionError);
     _log.severe("Operation failed: $e");
   }
 
   void _setErrorState(
     Reader? reader,
     Object error,
-    bool isBleError,
     bool isRemoteError,
   ) {
     if (reader == null) return;
 
     ReaderStatus status = ReaderStatus.error;
-    if (isBleError) {
-      status = ReaderStatus.bleError;
-    } else if (isRemoteError) {
+    if (isRemoteError) {
       status = ReaderStatus.remoteError;
     }
 
@@ -495,31 +446,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     });
   }
 
-  void _onBleManagerChanged() {
-    if (mounted && !_loading && !_isListingProfiles && !_isConnecting) {
-      _loadReaders(skipLoading: true);
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _manager = ProfileManager(_adapter);
-    for (var plugin in BuildPluginRegistry.createSessionPlugins()) {
-      _manager.addSessionPlugin(plugin);
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _loadReaders();
-        _checkForUpdates();
-        LocalNotificationService().checkPermission();
-        ProfileRedaction.warmupOperatorPlaceholders();
-      }
-    });
-
     AppSettings().addListener(_onSettingsChanged);
-    BleManager().addListener(_onBleManagerChanged);
     NotificationService().isProcessing.addListener(_onProcessingChanged);
 
     // _adapter.addListener(_onAdapterEvent);
@@ -595,7 +522,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     ProfilesScreen.isSwitchingGlobal = false;
     _simChangeDebounce?.cancel();
     _simChangeSub?.cancel();
-    BleManager().removeListener(_onBleManagerChanged);
     AppSettings().removeListener(_onSettingsChanged);
     NotificationService().isProcessing.removeListener(_onProcessingChanged);
     super.dispose();
@@ -1190,9 +1116,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
               _isAraMFailed = state?.isAraMFailed ?? false;
               _unsupportedOperatorIcon = state?.unsupportedOperatorIcon;
               _unsupportedFallbackDetails = state?.unsupportedFallbackDetails;
-              if (_status == ReaderStatus.bleError) {
-                _status = ReaderStatus.ready; // Reset by default
-              }
             }
 
             if (readers.length != _tabController?.length) {
@@ -1204,21 +1127,16 @@ class _ProfilesScreenState extends State<ProfilesScreen>
             }
 
             final bool isProfilesEmpty = _profiles?.isEmpty ?? true;
-            // Apply restored logic to both BLE and Remote devices
-            final bool isSpecialDevice =
-                _isBle(_selectedReader) || _isRemote(_selectedReader);
+            // Apply restored logic to Remote devices
+            final bool isSpecialDevice = _isRemote(_selectedReader);
             final bool isRestored =
                 isSpecialDevice &&
                 _restoredReaders.contains(_selectedReader!.id);
 
-            // If it's a restored special device (BLE/Remote) and we haven't loaded profiles:
+            // If it's a restored special device (Remote) and we haven't loaded profiles:
             // Force the "Not Connected" / specific error screen to wait for user action.
             if (isRestored && isProfilesEmpty) {
-              if (_isBle(_selectedReader)) {
-                _status = ReaderStatus.bleError;
-              } else {
-                _status = ReaderStatus.remoteError;
-              }
+              _status = ReaderStatus.remoteError;
               _error = null;
             } else if (AppSettings().autoLoadProfiles &&
                 (isProfilesEmpty &&
@@ -1345,7 +1263,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
       final needsConnect =
           (state?.profiles?.isEmpty ?? true) ||
           state?.lastError != null ||
-          state?.status == ReaderStatus.bleError;
+          state?.status == ReaderStatus.remoteError;
       if (needsConnect && !_loading && !_isConnecting) {
         _log.info(
           'Reader ${reader.id} reselected while not ready; connecting.',
@@ -1379,9 +1297,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
       _loading = state.loading;
       _isConnecting = state.isConnecting;
       _isListingProfiles = state.isListingProfiles;
-      if (state.status == ReaderStatus.bleError) {
-        _status = ReaderStatus.bleError;
-      }
       if (state.status == ReaderStatus.remoteError) {
         _status = ReaderStatus.remoteError;
       }
@@ -1405,9 +1320,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         !_isNoCard) {
       await _listProfiles();
     } else {
-      // Connect on an explicit selection, Bluetooth included. Skipping BLE here
-      // left a deliberately chosen card sitting at "Bluetooth Not Connected"
-      // until something else happened to connect it.
       {
         _adapter.connect(reader).catchError((e) {
           _log.warning("Silent connect failed: $e");
@@ -2015,41 +1927,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         'onPressed': _refreshDeviceList,
         'key': 'refresh',
       },
-      if (!false && AppSettings().enableBleConnector)
-        {
-          'icon': Icons.bluetooth_searching,
-          'tooltip': AppLocalizations.of(context)!.scanBluetooth,
-          'onPressed': () async {
-
-            if (false) {
-              final newReaderId = await BleManager().scanAndAddReaderForWeb();
-              if (newReaderId != null && mounted) {
-                await _loadReaders(skipLoading: true);
-                try {
-                  final reader = _readers.firstWhere(
-                    (r) => r.id == newReaderId,
-                  );
-                  _selectReader(reader);
-                } catch (_) {}
-              }
-            } else {
-              final newReaderId = await showDialog<String>(
-                context: context,
-                builder: (context) => const ble.BleScanDialog(),
-              );
-              if (newReaderId != null && mounted) {
-                await _loadReaders(skipLoading: true);
-                try {
-                  final reader = _readers.firstWhere(
-                    (r) => r.id == newReaderId,
-                  );
-                  _selectReader(reader);
-                } catch (_) {}
-              }
-            }
-          },
-          'key': 'bluetooth',
-        },
       if (AppSettings().enableRemoteConnector)
         {
           'icon': Icons.cloud_outlined,
@@ -2395,11 +2272,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     // reports a switch that actually succeeded as a failure.
     if (error is ConditionOfUseNotSatisfiedException) return true;
     if (error is ProactiveRefreshException) return true;
-    if (error is! AppException) return false;
-    return error.code == AppErrorCode.ERROR_BLUETOOTH_TIMEOUT ||
-        error.code == AppErrorCode.ERROR_BLUETOOTH_NOT_CONNECTED ||
-        error.code == AppErrorCode.ERROR_BLUETOOTH_CONNECT_FAILED ||
-        error.code == AppErrorCode.ERROR_BLUETOOTH_DISABLED;
+    return false;
   }
 
   Future<void> _toggleProfile(EuiccProfile p, bool enable) async {
@@ -2650,7 +2523,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
             reconnect: () async {
               ensureCurrentSwitch();
               _log.info(
-                'Reconnecting Bluetooth transport before profile verification.',
+                'Reconnecting transport before profile verification.',
               );
               await _adapter.reconnect();
             },
@@ -5111,22 +4984,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         );
       case ReaderStatus.noCard:
         return NoCardDetectedState(onRefresh: _listProfiles);
-      case ReaderStatus.bleError:
-        return BluetoothConnectionErrorState(
-          error: _error?.toString(),
-          onRetry: _listProfiles,
-          onRemove: () {
-
-            if (reader != null) {
-              _adapter.removeReader(reader.id);
-              _loadReaders(skipLoading: true);
-              _updateReaderSession(reader.id, (s) {
-                s.status = ReaderStatus.idle;
-                s.lastError = null;
-              });
-            }
-          },
-        );
       case ReaderStatus.remoteError:
         return RemoteConnectionErrorState(
           error: _error?.toString(),

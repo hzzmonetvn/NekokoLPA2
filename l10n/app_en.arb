@@ -56,7 +56,7 @@
   "enableTmapi": "Telephony API Connector",
   "enableTmapiSubtitle": "Enable Telephony API functionality for SIM-based eUICC management.",
   "readerTypes": "Reader Types",
-  "readerTypesSubtitle": "Manage enabled reader types (CCID, Bluetooth, Remote, etc.)",
+  "readerTypesSubtitle": "Manage enabled reader types (CCID, OMAPI, Remote, etc.)",
   "enabledReaderTypes": "Enabled Reader Types",
   "enabledReaderTypesSubtitle": "Control which types of readers are available in the app",
   "remoteReaderSettings": "Remote Reader Settings",

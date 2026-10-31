@@ -32,7 +32,6 @@ class ReaderTypesSettingsPage extends StatelessWidget {
                   subtitle: l10n.enabledReaderTypesSubtitle,
                   children: [
                     if (!false) _buildCcidConnectorSwitcher(context),
-                    if (!false) _buildBleConnectorSwitcher(context),
                     _buildRemoteConnectorSwitcher(context),
                     if (PlatformX.isAndroid) ...[
                       _buildQrtrConnectorSwitcher(context),
@@ -331,35 +330,6 @@ class ReaderTypesSettingsPage extends StatelessWidget {
       ),
       onTap: () =>
           settings.setEnableSeHalConnector(!settings.enableSeHalConnector),
-    );
-  }
-
-  Widget _buildBleConnectorSwitcher(BuildContext context) {
-    final settings = AppSettings();
-    final l10n = AppLocalizations.of(context)!;
-
-    return _buildResponsiveTile(
-      context,
-      icon: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.bluetooth_rounded,
-          size: 20,
-          color: Colors.blue,
-        ),
-      ),
-      title: l10n.bluetoothReaderTitle,
-      subtitle: l10n.bluetoothReaderSubtitle,
-      child: _buildCustomSwitch(
-        context,
-        settings.enableBleConnector,
-        (v) => settings.setEnableBleConnector(v),
-      ),
-      onTap: () => settings.setEnableBleConnector(!settings.enableBleConnector),
     );
   }
 

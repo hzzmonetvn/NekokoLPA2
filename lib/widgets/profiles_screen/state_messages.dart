@@ -5,10 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../settings/app_settings.dart';
-import '../../adapter/ble/ble_manager.dart';
 import '../../utils/platform_adapter.dart';
 import '../common/loading_spinner.dart';
-import 'ble_scan_dialog.dart';
 
 /// Base widget for displaying state messages in the profiles screen.
 class ColumnStateMessage extends StatelessWidget {
@@ -81,68 +79,6 @@ class ColumnStateMessage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class BluetoothConnectionErrorState extends StatelessWidget {
-  final String? error;
-  final VoidCallback onRetry;
-  final VoidCallback onRemove;
-
-  const BluetoothConnectionErrorState({
-    super.key,
-    this.error,
-    required this.onRetry,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-
-    return ColumnStateMessage(
-      icon: Icon(
-        error == null
-            ? Icons.bluetooth_rounded
-            : Icons.bluetooth_disabled_rounded,
-        size: 64,
-        color: error == null
-            ? theme.colorScheme.primary
-            : theme.colorScheme.error,
-      ),
-      iconContainerColor:
-          (error == null ? theme.colorScheme.primary : theme.colorScheme.error)
-              .withValues(alpha: 0.1),
-      title: error == null
-          ? l10n.bluetoothNotConnected
-          : l10n.bluetoothConnectionFailed,
-      subtitle: error == null
-          ? l10n.bluetoothNotConnectedSubtitle
-          : l10n.bluetoothConnectionFailedSubtitle(error!),
-      actions: [
-        OutlinedButton.icon(
-          onPressed: onRemove,
-          icon: const Icon(Icons.delete_outline),
-          label: Text(l10n.removeDevice),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: theme.colorScheme.error,
-            side: BorderSide(
-              color: theme.colorScheme.error.withValues(alpha: 0.5),
-            ),
-          ),
-        ),
-        ElevatedButton.icon(
-          onPressed: onRetry,
-          icon: const Icon(Icons.refresh),
-          label: Text(l10n.retryConnection),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: Colors.white,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -298,10 +234,7 @@ class NoReadersState extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        PlatformX.supportsBle &&
-                                AppSettings().enableBleConnector
-                            ? l10n.connectReaderSubtitleBle
-                            : l10n.connectReaderSubtitleCcid,
+                        l10n.connectReaderSubtitleCcid,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,
@@ -310,24 +243,6 @@ class NoReadersState extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 48),
-                      if (PlatformX.supportsBle &&
-                          AppSettings().enableBleConnector)
-                        _ConnectOptionCard(
-                          icon: Icons.bluetooth_searching_rounded,
-                          title: l10n.scanForBluetooth,
-                          subtitle: 'Bluetooth LE',
-                          colors: const [Color(0xFF2196F3), Color(0xFF1976D2)],
-                          onTap: () async {
-                            final newReaderId = await showDialog<String>(
-                              context: context,
-                              builder: (context) => const BleScanDialog(),
-                            );
-                            if (newReaderId != null) {
-                              await onReadersLoaded();
-                              onReaderSelected(newReaderId);
-                            }
-                          },
-                        ),
                       if (AppSettings().remoCardUrls.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         _ConnectOptionCard(

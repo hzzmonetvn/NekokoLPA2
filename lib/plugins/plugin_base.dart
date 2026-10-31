@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../adapter/ble/ble_adapter.dart';
 import '../adapter/euicc_adapter.dart';
 import '../logic/profile_manager.dart';
 import '../logic/profile_download_session.dart';
@@ -55,10 +54,6 @@ abstract class ProfilePlugin {
 
   /// Provide routes for plugin-specific pages.
   Map<String, WidgetBuilder> get routes => {};
-
-  /// Bluetooth reader kinds this plugin adds; registered at startup, before
-  /// any scan or reader restore.
-  List<BleReaderKind> get bleReaderKinds => const [];
 
   /// Switches this plugin adds to the reader settings.
   List<PluginSettingsToggle> settingsToggles(BuildContext context) => const [];

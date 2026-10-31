@@ -17,7 +17,6 @@ pub struct ProfileItem {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ReaderType {
-    Ble,
     UsbCcid,
     Omapi,
     Remote,

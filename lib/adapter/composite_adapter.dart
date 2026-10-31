@@ -4,14 +4,6 @@ import '../utils/platform_adapter.dart';
 import 'euicc_adapter.dart';
 import 'ccid/ccid_adapter.dart';
 import 'webcard/web_card_adapter.dart';
-import 'ble/red_ble_adapter.dart';
-import 'ble/red_ble2_adapter.dart';
-
-import 'ble/ble_adapter.dart';
-import 'ble/sim_link_adapter.dart';
-import 'ble/nble_sim_adapter.dart';
-import 'ble/bee_sim_adapter.dart';
-import 'ble/ble_manager.dart';
 import 'nbridge/nbridge_adapter.dart';
 import 'adb_bridge/adb_bridge_adapter.dart';
 import 'omapi/omapi_adapter.dart';
@@ -66,15 +58,6 @@ class CompositeAdapter extends BaseAdapter {
 
   Adapter? _connectedAdapter;
   Reader? _currentReader;
-
-  BaseAdapter _createBleAdapter(BleAdapterType type) => switch (type) {
-    BleAdapterType.redBle => RedBleAdapter(),
-    BleAdapterType.redBle2 => RedBle2Adapter(),
-    BleAdapterType.glocalMe || BleAdapterType.nineEsim => NBLESimAdapter(),
-    BleAdapterType.beeSim => BeeSimAdapter(),
-    BleAdapterType.simLink => SimLinkAdapter(),
-    _ => BleAdapterType.kindOf(type)?.createAdapter() ?? RedBleAdapter(),
-  };
 
   final StreamController<EuiccPortState> _stateController =
       StreamController<EuiccPortState>.broadcast();
@@ -142,25 +125,10 @@ class CompositeAdapter extends BaseAdapter {
     for (final r in _readerCache.values) {
       if (r.source is RemoCardAdapter) {
         uniqueReaders[r.id] = r;
-      } else if (r.source is BleAdapter) {
-        if (AppSettings().enableBleConnector) {
-          uniqueReaders[r.id] = r;
-        }
       }
     }
 
-    // 2. Load session BLE readers from BleManager
-    if (AppSettings().enableBleConnector) {
-      for (final info in BleManager().sessionReaders) {
-        final id = info.readerName;
-        if (!uniqueReaders.containsKey(id)) {
-          final source = _createBleAdapter(info.type);
-          uniqueReaders[id] = Reader(id: id, name: info.name, source: source);
-        }
-      }
-    }
-
-    // 3. Load Remote slots if auto-load is enabled
+    // 2. Load Remote slots if auto-load is enabled
     if (AppSettings().autoLoadRemoteDevices) {
       final List<Future<List<Reader>>> futures = [];
       for (final url in AppSettings().remoCardUrls) {
@@ -295,7 +263,7 @@ class CompositeAdapter extends BaseAdapter {
     }
 
     if (uniqueReaders.isEmpty && omapiDiscoveryFailure != null) {
-      // Show the reboot-required error instead of the unrelated Bluetooth/empty-reader prompt.
+      // Show the reboot-required error instead of the empty-reader prompt.
       throw omapiDiscoveryFailure;
     }
     return uniqueReaders.values.toList();
@@ -453,12 +421,6 @@ class CompositeAdapter extends BaseAdapter {
         if (url != null) {
           AppSettings().removeRemoCardUrl(url);
         }
-      } else if (reader.source is BleAdapter) {
-        // Extract ID from name "type: name|ID"
-        final parts = readerId.split('|');
-        if (parts.length > 1) {
-          BleManager().removeReader(parts.last);
-        }
       }
 
       _log.info("Manually removed reader: $readerId");
@@ -477,14 +439,7 @@ class CompositeAdapter extends BaseAdapter {
   @override
   Future<void> connect(Reader reader) async {
     // Check if connector is enabled
-    if (reader.source is BleAdapter) {
-      if (!AppSettings().enableBleConnector) {
-        throw AppException(
-          AppErrorCode.ERROR_BLUETOOTH_PERMISSION_DENIED,
-          message: "Bluetooth connector is disabled",
-        );
-      }
-    } else if (reader.source is CcidAdapter ||
+    if (reader.source is CcidAdapter ||
         reader.source is WebCardAdapter) {
       if (!AppSettings().enableCcidConnector) {
         throw AppException(
@@ -584,10 +539,8 @@ class CompositeAdapter extends BaseAdapter {
     interruptedAdapter?.interruptPendingOperation();
     // Do not let a later ordinary connect mistake the interrupted transport
     // for a healthy connection merely because the reader ID still matches.
-    // Retain the delegate as the cleanup owner: its interrupt is deliberately
-    // synchronous and cannot tear down GATT listeners while its operation owns
-    // the delegate lock. The next disconnect/connect can then cleanly dispose
-    // that interrupted transport.
+    // Retain the delegate as the cleanup owner.
+    // The next disconnect/connect can then cleanly dispose that interrupted transport.
     _currentReader = null;
     _stateController.add(EuiccPortState.closed);
   }

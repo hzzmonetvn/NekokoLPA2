@@ -18,7 +18,6 @@ import 'settings/stats_settings_page.dart';
 import 'settings/display_settings_page.dart';
 import 'settings/redaction_settings_page.dart';
 import 'settings/reader_types_settings_page.dart';
-import 'settings/ble_devices_settings_page.dart';
 import 'app_logs_page.dart';
 import 'adb_bridge_connect_page.dart';
 import 'settings/tags_and_reminders_page.dart';
@@ -311,7 +310,6 @@ class SettingsPage extends StatelessWidget {
                   title: l10n.connectivity,
                   children: [
                     _buildReaderTypesLink(context, width),
-                    _buildBleDevicesLink(context, width),
                     if (PlatformX.isAndroid && AppSettings().rootDetected)
                       _buildOtBridgeHintTile(context, width),
                     if (PlatformX.isAndroid)
@@ -1593,36 +1591,6 @@ class SettingsPage extends StatelessWidget {
         MaterialPageRoute(
           builder: (context) => const ReaderTypesSettingsPage(),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBleDevicesLink(BuildContext context, double screenWidth) {
-    final l10n = AppLocalizations.of(context)!;
-    return _buildResponsiveTile(
-      context,
-      screenWidth: screenWidth,
-      icon: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.indigo.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.bluetooth_connected_rounded,
-          size: 20,
-          color: Colors.indigo,
-        ),
-      ),
-      title: l10n.savedBleDevices,
-      subtitle: l10n.savedBleDevicesSubtitle,
-      child: Icon(
-        Icons.chevron_right,
-        color: AppTheme.onSurfaceVerySubtle(context),
-      ),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const BleDevicesSettingsPage()),
       ),
     );
   }

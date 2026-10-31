@@ -195,7 +195,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readerTypesSubtitle =>
-      'Manage enabled reader types (CCID, Bluetooth, Remote, etc.)';
+      'Manage enabled reader types (CCID, OMAPI, Remote, etc.)';
 
   @override
   String get enabledReaderTypes => 'Enabled Reader Types';

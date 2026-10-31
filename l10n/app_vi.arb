@@ -56,7 +56,7 @@
   "enableTmapi": "Bộ kết nối Telephony API",
   "enableTmapiSubtitle": "Bật chức năng Telephony API để quản lý eUICC qua SIM.",
   "readerTypes": "Loại đầu đọc",
-  "readerTypesSubtitle": "Quản lý các loại đầu đọc đang bật (CCID, Bluetooth, từ xa, v.v.)",
+  "readerTypesSubtitle": "Quản lý các loại đầu đọc đang bật (CCID, OMAPI, từ xa, v.v.)",
   "enabledReaderTypes": "Các loại đầu đọc đang bật",
   "enabledReaderTypesSubtitle": "Chọn loại đầu đọc có thể dùng trong ứng dụng",
   "remoteReaderSettings": "Cài đặt đầu đầu đọc từ xa",

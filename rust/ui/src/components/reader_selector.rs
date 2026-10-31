@@ -16,7 +16,6 @@ pub fn ReaderSelector(
                     let is_selected = selected_id.as_deref() == Some(&reader.id);
                     let rid = reader.id.clone();
                     let kind_badge = match reader.kind {
-                        ReaderType::Ble => "BLE",
                         ReaderType::UsbCcid => "USB CCID",
                         ReaderType::Omapi => "OMAPI",
                         ReaderType::Remote => "Cloud",

@@ -43,9 +43,9 @@ fn App() -> Element {
             connected: false,
         },
         ReaderInfo {
-            id: "ble-0".to_string(),
-            name: "9eSIM B0 Plus".to_string(),
-            kind: ReaderType::Ble,
+            id: "usb-0".to_string(),
+            name: "USB CCID Reader".to_string(),
+            kind: ReaderType::UsbCcid,
             connected: false,
         },
     ];

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'plugin_base.dart';
-import '../adapter/ble/ble_adapter.dart';
 import '../adapter/euicc_adapter.dart';
 import 'build_plugin_registry.dart';
 import '../models/euicc_profile.dart';
@@ -25,9 +24,6 @@ class PluginManager extends ChangeNotifier {
     _plugins
       ..clear()
       ..addAll(BuildPluginRegistry.createPlugins());
-    for (final plugin in _plugins) {
-      plugin.bleReaderKinds.forEach(BleAdapterType.register);
-    }
   }
 
   List<PluginSettingsToggle> settingsToggles(BuildContext context) => [

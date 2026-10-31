@@ -8,7 +8,6 @@ import '../adapter/qrtr/qrtr_host.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:logging/logging.dart';
 import '../services/database_service.dart';
-import '../adapter/ble/ble_manager.dart';
 import '../services/nbridge_service.dart';
 import '../services/rsp_proxy_config.dart';
 import '../utils/platform_adapter.dart';
@@ -404,9 +403,6 @@ class AppSettings extends ChangeNotifier {
       _notifAutoSendDisable ||
       _notifAutoSendDelete;
 
-  bool _enableBleConnector = true;
-  bool get enableBleConnector => _enableBleConnector;
-
   bool _enableCcidConnector = true;
   bool get enableCcidConnector => _enableCcidConnector;
 
@@ -595,7 +591,6 @@ class AppSettings extends ChangeNotifier {
         _prefs?.getBool('enableProfileStatusEnhancer') ?? true;
     _enableScheduledNotifications =
         _prefs?.getBool('enableScheduledNotifications') ?? true;
-    _enableBleConnector = _prefs?.getBool('enableBleConnector') ?? true;
     _enableCcidConnector = _prefs?.getBool('enableCcidConnector') ?? true;
     // On a Qualcomm device the bus is there whether or not anything is
     // plugged in, so it starts on there and off everywhere else.
@@ -677,8 +672,6 @@ class AppSettings extends ChangeNotifier {
 
     // Always load configured remote servers
     _remoCardUrls = await DatabaseService().getRemoteServers();
-
-    await BleManager().init();
 
     try {
       final PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -1258,13 +1251,6 @@ class AppSettings extends ChangeNotifier {
     }
     notifyListeners();
   }
-
-  Future<void> setEnableBleConnector(bool value) async {
-    _enableBleConnector = value;
-    await _prefs?.setBool('enableBleConnector', value);
-    notifyListeners();
-  }
-
 
   Future<void> setEnableCcidConnector(bool value) async {
     _enableCcidConnector = value;

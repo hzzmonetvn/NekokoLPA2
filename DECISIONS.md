@@ -29,3 +29,14 @@
 - **Choice:** Configured `opt-level = "z"`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"`, and `strip = true` in workspace `[profile.release]`, paired with thorough ProGuard rules protecting JNI methods, Shizuku, Cargokit, and `flutter_rust_bridge`.
 - **Alternatives Considered:** Default Cargo dev/release profiles without LTO or stripping.
 - **Reasoning:** Minimizes `.so` binary footprint on mobile storage, removes unused dead code across cross-compilation boundaries, and accelerates cold startup on ARM devices.
+
+## 7. Complete Bluetooth / BLE Stack Removal
+- **Choice:** Completely excised all Bluetooth Low Energy (BLE) functionality, code, dependencies, and permissions from the application:
+  - Removed local package dependency `ble: path: local_packages/ble` and deleted directory `local_packages/ble/`.
+  - Removed all Bluetooth hardware permissions (`BLUETOOTH`, `BLUETOOTH_ADMIN`, `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`) and BLE hardware feature flags from `android/app/src/main/AndroidManifest.xml`.
+  - Removed `ReaderType::Ble` from Rust models and components (`rust/ui/src/models.rs`, `rust/ui/src/components/reader_selector.rs`).
+  - Excised all BLE adapter implementations (`lib/adapter/ble/`), UI settings pages (`ble_devices_settings_page.dart`), scan dialogs (`ble_scan_dialog.dart`), and BLE plugins (`ty_ble_plugin.dart`, `bee_sim_plugin.dart`).
+  - Stripped BLE connection, scanning, error states (`ReaderStatus.bleError`), and manager hooks from `lib/pages/profiles_screen.dart`, `lib/adapter/composite_adapter.dart`, `lib/settings/app_settings.dart`, and `lib/widgets/profiles_screen/state_messages.dart`.
+- **Alternatives Considered:** Leaving BLE code unused or conditionally disabling it via runtime feature toggles.
+- **Reasoning:** The user specifically mandated focusing exclusively on Android ARM native reader capabilities (OMAPI, TMAPI/Telephony, QRTR modem bus, SE HAL, and USB CCID). Retaining the BLE stack added unnecessary background services, Bluetooth permission prompts, code complexity, and binary bloat without aligning with the dedicated native Android target.
+
