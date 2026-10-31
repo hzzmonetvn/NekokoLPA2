@@ -46,3 +46,8 @@
 - **Alternatives Considered:** Relying on raw machine translation outputs or keeping generic translations.
 - **Reasoning:** Inaccurate and unnatural translations undermine user clarity and trust in critical cryptographic operations such as eUICC profile installation, deletion, and carrier authorization. Refining translations using specialized telecom domain knowledge ensures exact semantic alignment with GSMA eSIM specifications.
 
+## 9. Dioxus Native UI Architecture & AMOLED Optimization
+- **Choice:** Expanded the pure Rust UI component tree with Dioxus v0.6 (`nlpa_ui`) to support complete eSIM lifecycle operations natively: added `EuiccInfoDialog` for inspecting card EID and GSMA SGP.22 metadata, `DownloadProfileModal` for activation code input with IMEI targeting, reactive feedback banners, and rigorous test coverage with Virtual DOM headless mounting (`ui_test.rs`).
+- **Alternatives Considered:** Leaving Rust UI as an incomplete mockup without modals or dialogues.
+- **Reasoning:** Full native Rust UI capabilities ensure modularity, memory safety, and direct compilation to native code or webview integration with zero overhead, styled with the `#000000` AMOLED token design.
+

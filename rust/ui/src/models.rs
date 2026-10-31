@@ -37,3 +37,18 @@ pub struct ApduLogEntry {
     pub data: String,
     pub sw: Option<String>,
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct EuiccDetails {
+    pub eid: String,
+    pub default_smdp: Option<String>,
+    pub free_nvram: Option<String>,
+    pub spec_version: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActivationCodeInput {
+    pub lpa: String,
+    pub confirmation_code: Option<String>,
+    pub imei: Option<String>,
+}
