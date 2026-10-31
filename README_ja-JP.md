@@ -2,7 +2,7 @@
 [![Download on the App Store](https://img.shields.io/badge/App%20Store-Download-0D96F6?logo=appstore&logoColor=white&style=for-the-badge)](https://apps.apple.com/en/app/nekokolpa-2/id6757540723)
 [![Get it on Google Play](https://img.shields.io/badge/Google%20Play-Download-34A853?logo=googleplay&logoColor=white&style=for-the-badge)](https://play.google.com/store/apps/details?id=ee.nekoko.nlpa)
 
-**Language:** [English](./README.md) | **日本語** | [简体中文](./README_zh-CN.md)
+**Language:** [English](./README.md) | [Tiếng Việt](./README_vi-VN.md) | **日本語** | [简体中文](./README_zh-CN.md)
 
 NekokoLPA2 は、複数のカードリーダーと高度なプロファイル管理機能をサポートする強力なクロスプラットフォームな eSIM 管理アプリです。
 

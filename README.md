@@ -8,7 +8,7 @@
 [![Get it on Google Play](https://img.shields.io/badge/Google%20Play-Download-34A853?logo=googleplay&logoColor=white&style=for-the-badge)](https://play.google.com/store/apps/details?id=ee.nekoko.nlpa)
 
 
-**Language:** **English** | [日本語](./README_ja-JP.md) | [简体中文](./README_zh-CN.md)
+**Language:** **English** | [Tiếng Việt](./README_vi-VN.md) | [日本語](./README_ja-JP.md) | [简体中文](./README_zh-CN.md)
 
 
 NekokoLPA2 is a cross-platform eSIM management app for working with local eUICCs, external readers, and remote reader endpoints. It is designed for users who need more control over profile operations, transport choices, and card visibility than a typical carrier app exposes.

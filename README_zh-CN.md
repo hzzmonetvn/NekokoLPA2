@@ -6,7 +6,7 @@
 [![Get it on Google Play](https://img.shields.io/badge/Google%20Play-Download-34A853?logo=googleplay&logoColor=white&style=for-the-badge)](https://play.google.com/store/apps/details?id=ee.nekoko.nlpa)
 
 
-**Language:** [English](./README.md) | [日本語](./README_ja-JP.md) | **简体中文**
+**Language:** [English](./README.md) | [Tiếng Việt](./README_vi-VN.md) | [日本語](./README_ja-JP.md) | **简体中文**
 
 
 NekokoLPA2 是一款跨平台 eSIM 管理应用，可操作本机 eUICC、外置读卡器以及远程读卡器端点。它面向需要比运营商自带应用更精细地掌控配置文件操作、传输方式和卡片可见性的用户。
