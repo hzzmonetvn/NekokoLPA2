@@ -7,7 +7,6 @@ import '../theme/app_theme.dart';
 import '../settings/app_settings.dart';
 import '../services/deep_link_service.dart';
 import '../logic/signing_logic.dart';
-import '../utils/platform_adapter.dart';
 import 'dart:convert';
 
 import 'package:logging/logging.dart';

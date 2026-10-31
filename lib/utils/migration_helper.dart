@@ -3,7 +3,6 @@ import 'dart:io' as io;
 import 'package:logging/logging.dart';
 import 'package:sqflite/sqflite.dart';
 import '../services/database_service.dart';
-import 'platform_adapter.dart';
 
 // We need path_provider only if not web, dealing with that is tricky in single file
 // if path_provider exports are platform dependent.

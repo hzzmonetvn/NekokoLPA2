@@ -6,8 +6,6 @@ import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../settings/app_settings.dart';
 import '../plugins/plugin_manager.dart';
-import 'package:flutter/foundation.dart';
-import '../utils/platform_adapter.dart';
 import '../widgets/lazy_tab_body.dart';
 
 class MainTabScreen extends StatefulWidget {

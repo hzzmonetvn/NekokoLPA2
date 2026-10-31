@@ -8,12 +8,7 @@ import '../services/operator_icon_service.dart';
 import '../utils/profile_tag_utils.dart';
 import '../utils/iccid_formatter.dart';
 import 'dart:math';
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
-import '../utils/platform_adapter.dart';
-import '../l10n/app_localizations.dart';
-import '../settings/app_settings.dart';
-import '../utils/locale_utils.dart';
 
 class LocalNotificationService {
   static final LocalNotificationService _instance =

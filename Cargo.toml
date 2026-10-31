@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "rust",
     "rust/core",
     "rust/ui",
 ]

@@ -6,7 +6,6 @@ import '../adapter/euicc_adapter.dart';
 import 'build_plugin_registry.dart';
 import '../models/euicc_profile.dart';
 import '../models/profile_card_bottom_data.dart';
-import '../settings/app_settings.dart';
 
 class PluginManager extends ChangeNotifier {
   static final Logger _log = Logger('PluginManager');

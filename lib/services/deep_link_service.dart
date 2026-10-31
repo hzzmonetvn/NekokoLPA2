@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
-import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../logic/signing_logic.dart';
 import '../adapter/composite_adapter.dart';
-import '../utils/platform_adapter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart'; // To get navigatorKey
 

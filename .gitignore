@@ -38,6 +38,9 @@ coverage/
 /mobilecore/build/
 /mobilecore/third_party/opencore-amr/prebuilt/
 
+# Rust build output
+target/
+
 # Symbolication related
 app.*.symbols
 
