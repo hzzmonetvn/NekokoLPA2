@@ -51,3 +51,13 @@
 - **Alternatives Considered:** Leaving Rust UI as an incomplete mockup without modals or dialogues.
 - **Reasoning:** Full native Rust UI capabilities ensure modularity, memory safety, and direct compilation to native code or webview integration with zero overhead, styled with the `#000000` AMOLED token design.
 
+## 10. Unslopping & Telecommunications Interface Craft Pass
+- **Choice:** Executed a systematic 9-pass design refactoring on the native Dioxus UI:
+  - Enforced a strict 4px grid across all margins, paddings, and control heights.
+  - Replaced harsh saturated button backgrounds with telecommunications signal dots (`#2EA043` for active profiles, `#484F58` for inactive) and subtle hairline borders (`#202020`).
+  - Adopted structured dual typography: system interface typography for text and `ui-monospace` / `Roboto Mono` with 4-digit grouped formatting for EID, ICCID, and APDU hex byte streams.
+  - Grouped reader tags (`USB`, `SYS`, `NET`, `MDM`) and nested border radii (modal 12px, cards 8px, tags 4px) to present an industrial, precise, and battery-efficient visual hierarchy.
+- **Alternatives Considered:** Leaving template-style UI components with standard web buttons and unformatted hexadecimal strings.
+- **Reasoning:** Low-level modem and eSIM management tools require clear visual restraint, exact cryptographic string readability, and maximum battery conservation on AMOLED displays without distracting aesthetic clutter.
+
+

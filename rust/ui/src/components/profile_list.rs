@@ -12,8 +12,8 @@ pub fn ProfileList(
     if profiles.is_empty() {
         return rsx! {
             div {
-                style: "padding: 32px; text-align: center; color: {AMOLED_PALETTE.text_secondary};",
-                "Chưa có cấu hình eSIM nào được cài đặt."
+                style: "padding: 32px 16px; text-align: center; color: {AMOLED_PALETTE.text_muted}; background-color: {AMOLED_PALETTE.surface}; border: 1px dashed {AMOLED_PALETTE.surface_border}; border-radius: 8px; font-size: 13px;",
+                "Không có cấu hình eSIM trên eUICC hiện tại"
             }
         };
     }

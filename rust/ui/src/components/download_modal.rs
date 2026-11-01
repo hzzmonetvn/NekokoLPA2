@@ -15,29 +15,29 @@ pub fn DownloadProfileModal(
         div {
             style: "position: fixed; inset: 0; background-color: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;",
             div {
-                style: "background-color: {AMOLED_PALETTE.surface}; border: 1px solid {AMOLED_PALETTE.surface_variant}; border-radius: 16px; width: 100%; max-width: 480px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.9);",
+                style: "background-color: {AMOLED_PALETTE.surface}; border: 1px solid {AMOLED_PALETTE.surface_border}; border-radius: 12px; width: 100%; max-width: 440px; padding: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.95);",
                 div {
-                    style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;",
+                    style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid {AMOLED_PALETTE.surface_border};",
                     h3 {
-                        style: "margin: 0; font-size: 18px; font-weight: bold; color: {AMOLED_PALETTE.text_primary};",
-                        "Tải xuống cấu hình eSIM"
+                        style: "margin: 0; font-size: 15px; font-weight: 600; color: {AMOLED_PALETTE.text_primary}; letter-spacing: -0.2px;",
+                        "Cài đặt hồ sơ eSIM mới"
                     }
                     button {
-                        style: "background: transparent; border: none; color: {AMOLED_PALETTE.text_secondary}; font-size: 18px; cursor: pointer;",
+                        style: "background: transparent; border: none; color: {AMOLED_PALETTE.text_muted}; font-size: 16px; cursor: pointer; padding: 4px; line-height: 1;",
                         onclick: move |_| on_cancel.call(()),
                         "✕"
                     }
                 }
                 div {
-                    style: "display: flex; flex-direction: column; gap: 14px;",
+                    style: "display: flex; flex-direction: column; gap: 12px;",
                     div {
                         style: "display: flex; flex-direction: column; gap: 4px;",
                         label {
-                            style: "color: {AMOLED_PALETTE.text_secondary}; font-size: 12px; font-weight: 500;",
-                            "Chuỗi mã kích hoạt LPA (LPA:1$...)"
+                            style: "color: {AMOLED_PALETTE.text_secondary}; font-size: 11px; font-weight: 500;",
+                            "Mã kích hoạt GSMA (LPA:1$...)"
                         }
                         input {
-                            style: "background-color: {AMOLED_PALETTE.background}; border: 1px solid {AMOLED_PALETTE.surface_variant}; border-radius: 8px; padding: 10px 12px; color: {AMOLED_PALETTE.text_primary}; font-family: monospace; font-size: 13px;",
+                            style: "background-color: {AMOLED_PALETTE.surface_elevated}; border: 1px solid {AMOLED_PALETTE.surface_border}; border-radius: 6px; padding: 8px 10px; color: {AMOLED_PALETTE.text_primary}; font-family: ui-monospace, 'Roboto Mono', monospace; font-size: 12px; outline: none;",
                             placeholder: "LPA:1$smdp.example.com$MATCHING-ID",
                             value: "{lpa_string}",
                             oninput: move |e| lpa_string.set(e.value()),
@@ -46,12 +46,12 @@ pub fn DownloadProfileModal(
                     div {
                         style: "display: flex; flex-direction: column; gap: 4px;",
                         label {
-                            style: "color: {AMOLED_PALETTE.text_secondary}; font-size: 12px; font-weight: 500;",
-                            "Mã xác nhận (Nếu nhà mạng yêu cầu)"
+                            style: "color: {AMOLED_PALETTE.text_secondary}; font-size: 11px; font-weight: 500;",
+                            "Mã xác nhận bảo mật (tùy chọn)"
                         }
                         input {
-                            style: "background-color: {AMOLED_PALETTE.background}; border: 1px solid {AMOLED_PALETTE.surface_variant}; border-radius: 8px; padding: 10px 12px; color: {AMOLED_PALETTE.text_primary}; font-size: 13px;",
-                            placeholder: "Mã bí mật từ nhà mạng",
+                            style: "background-color: {AMOLED_PALETTE.surface_elevated}; border: 1px solid {AMOLED_PALETTE.surface_border}; border-radius: 6px; padding: 8px 10px; color: {AMOLED_PALETTE.text_primary}; font-size: 12px; outline: none;",
+                            placeholder: "Nhập mã nếu nhà mạng yêu cầu",
                             value: "{confirmation_code}",
                             oninput: move |e| confirmation_code.set(e.value()),
                         }
@@ -59,39 +59,39 @@ pub fn DownloadProfileModal(
                     div {
                         style: "display: flex; flex-direction: column; gap: 4px;",
                         label {
-                            style: "color: {AMOLED_PALETTE.text_secondary}; font-size: 12px; font-weight: 500;",
-                            "IMEI / TAC thiết bị (Tùy chọn)"
+                            style: "color: {AMOLED_PALETTE.text_secondary}; font-size: 11px; font-weight: 500;",
+                            "Mã TAC / IMEI thiết bị (tùy chọn)"
                         }
                         input {
-                            style: "background-color: {AMOLED_PALETTE.background}; border: 1px solid {AMOLED_PALETTE.surface_variant}; border-radius: 8px; padding: 10px 12px; color: {AMOLED_PALETTE.text_primary}; font-size: 13px;",
-                            placeholder: "35383741...",
+                            style: "background-color: {AMOLED_PALETTE.surface_elevated}; border: 1px solid {AMOLED_PALETTE.surface_border}; border-radius: 6px; padding: 8px 10px; color: {AMOLED_PALETTE.text_primary}; font-family: ui-monospace, monospace; font-size: 12px; outline: none;",
+                            placeholder: "IMEI 15 chữ số",
                             value: "{imei}",
                             oninput: move |e| imei.set(e.value()),
                         }
                     }
                 }
                 div {
-                    style: "display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;",
+                    style: "margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;",
                     button {
-                        style: "background-color: transparent; color: {AMOLED_PALETTE.text_secondary}; border: 1px solid {AMOLED_PALETTE.surface_variant}; border-radius: 8px; padding: 8px 16px; font-weight: 500; cursor: pointer;",
+                        style: "background-color: transparent; color: {AMOLED_PALETTE.text_secondary}; border: 1px solid {AMOLED_PALETTE.surface_border}; border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer;",
                         onclick: move |_| on_cancel.call(()),
                         "Hủy"
                     }
                     button {
-                        style: "background-color: {AMOLED_PALETTE.accent}; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer;",
+                        style: "background-color: {AMOLED_PALETTE.accent}; color: #FFFFFF; border: none; border-radius: 6px; padding: 6px 16px; font-size: 12px; font-weight: 500; cursor: pointer;",
                         onclick: move |_| {
-                            let lpa = lpa_string.read().trim().to_string();
-                            if !lpa.is_empty() {
-                                let conf = confirmation_code.read().trim().to_string();
+                            let lpa_val = lpa_string.read().trim().to_string();
+                            if !lpa_val.is_empty() {
+                                let cc = confirmation_code.read().trim().to_string();
                                 let imei_val = imei.read().trim().to_string();
                                 on_submit.call(ActivationCodeInput {
-                                    lpa,
-                                    confirmation_code: if conf.is_empty() { None } else { Some(conf) },
+                                    lpa: lpa_val,
+                                    confirmation_code: if cc.is_empty() { None } else { Some(cc) },
                                     imei: if imei_val.is_empty() { None } else { Some(imei_val) },
                                 });
                             }
                         },
-                        "Bắt đầu tải xuống"
+                        "Tải hồ sơ"
                     }
                 }
             }

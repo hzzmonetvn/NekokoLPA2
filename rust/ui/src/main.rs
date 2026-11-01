@@ -24,15 +24,15 @@ fn App() -> Element {
     let mut profiles = use_signal(|| vec![
         ProfileItem {
             iccid: "8984040000000000001".to_string(),
-            name: "Viettel 5G Test".to_string(),
-            provider: "Viettel".to_string(),
+            name: "Viettel 5G Core".to_string(),
+            provider: "Viettel Telecom".to_string(),
             state: ProfileState::Enabled,
             icon_base64: None,
         },
         ProfileItem {
             iccid: "8984040000000000002".to_string(),
             name: "Vinaphone Data".to_string(),
-            provider: "Vinaphone".to_string(),
+            provider: "VNPT Vinaphone".to_string(),
             state: ProfileState::Disabled,
             icon_base64: None,
         },
@@ -41,7 +41,7 @@ fn App() -> Element {
     let readers = vec![
         ReaderInfo {
             id: "qrtr-0".to_string(),
-            name: "Qualcomm Modem (Slot 1)".to_string(),
+            name: "Qualcomm Modem Slot 1".to_string(),
             kind: ReaderType::QrtrModem,
             connected: true,
         },
@@ -81,50 +81,69 @@ fn App() -> Element {
 
     rsx! {
         div {
-            style: "background-color: {AMOLED_PALETTE.background}; min-height: 100vh; padding: 20px; color: {AMOLED_PALETTE.text_primary}; font-family: sans-serif;",
+            style: "background-color: {AMOLED_PALETTE.background}; min-height: 100vh; padding: 16px 20px; color: {AMOLED_PALETTE.text_primary}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;",
+            // Header bar
             div {
-                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;",
-                h1 {
-                    style: "font-size: 22px; font-weight: 800; margin: 0;",
-                    "NekokoLPA2 — Trình điều khiển eSIM (Rust/Dioxus)"
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid {AMOLED_PALETTE.surface_border};",
+                div {
+                    style: "display: flex; align-items: center; gap: 8px;",
+                    div {
+                        style: "width: 8px; height: 8px; border-radius: 50%; background-color: {AMOLED_PALETTE.signal_active};"
+                    }
+                    h1 {
+                        style: "font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -0.2px;",
+                        "NekokoLPA2 — Trình quản lý eSIM (Rust)"
+                    }
                 }
                 div {
-                    style: "display: flex; gap: 8px;",
+                    style: "display: flex; gap: 6px;",
                     button {
-                        style: "background-color: {AMOLED_PALETTE.surface_variant}; color: {AMOLED_PALETTE.text_primary}; border: 1px solid {AMOLED_PALETTE.surface_variant}; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer;",
+                        style: "background-color: {AMOLED_PALETTE.surface}; color: {AMOLED_PALETTE.text_secondary}; border: 1px solid {AMOLED_PALETTE.surface_border}; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer;",
                         onclick: move |_| show_info_dialog.set(true),
-                        "Thông tin eUICC"
+                        "eUICC"
                     }
                     button {
-                        style: "background-color: {AMOLED_PALETTE.accent}; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;",
+                        style: "background-color: {AMOLED_PALETTE.accent}; color: #FFFFFF; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer;",
                         onclick: move |_| show_download_modal.set(true),
-                        "+ Tải hồ sơ"
+                        "Cài hồ sơ"
                     }
                 }
             }
 
             if let Some(msg) = status_banner() {
                 div {
-                    style: "background-color: {AMOLED_PALETTE.surface}; border-left: 4px solid {AMOLED_PALETTE.accent}; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13px;",
+                    style: "background-color: {AMOLED_PALETTE.surface}; border-left: 3px solid {AMOLED_PALETTE.accent}; border-top: 1px solid {AMOLED_PALETTE.surface_border}; border-right: 1px solid {AMOLED_PALETTE.surface_border}; border-bottom: 1px solid {AMOLED_PALETTE.surface_border}; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;",
                     span { "{msg}" }
                     button {
-                        style: "background: transparent; border: none; color: {AMOLED_PALETTE.text_secondary}; cursor: pointer;",
+                        style: "background: transparent; border: none; color: {AMOLED_PALETTE.text_muted}; cursor: pointer; padding: 2px 4px;",
                         onclick: move |_| status_banner.set(None),
                         "✕"
                     }
                 }
             }
 
+            // Reader selector
             ReaderSelector {
                 readers: readers,
                 selected_id: selected_reader(),
                 on_select: move |id| selected_reader.set(Some(id)),
             }
-            div { style: "height: 20px;" }
-            h2 {
-                style: "font-size: 16px; font-weight: 700; margin-bottom: 8px;",
-                "Danh sách cấu hình (Profiles)"
+
+            div { style: "height: 16px;" }
+
+            // Profile section title with tabular count
+            div {
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;",
+                span {
+                    style: "font-size: 13px; font-weight: 500; color: {AMOLED_PALETTE.text_secondary};",
+                    "Danh sách cấu hình đã cài"
+                }
+                span {
+                    style: "font-family: ui-monospace, monospace; font-size: 11px; color: {AMOLED_PALETTE.text_muted};",
+                    "{profiles().len()} hồ sơ"
+                }
             }
+
             ProfileList {
                 profiles: profiles(),
                 on_toggle: move |id| {
@@ -134,16 +153,18 @@ fn App() -> Element {
                             ProfileState::Enabled => ProfileState::Disabled,
                             ProfileState::Disabled => ProfileState::Enabled,
                         };
-                        status_banner.set(Some(format!("Đã thay đổi trạng thái hồ sơ: {}", item.name)));
+                        status_banner.set(Some(format!("Đã cập nhật trạng thái hồ sơ: {}", item.name)));
                     }
                     profiles.set(list);
                 },
                 on_delete: move |id| {
                     let list: Vec<_> = profiles().into_iter().filter(|p| p.iccid != id).collect();
                     profiles.set(list);
-                    status_banner.set(Some("Đã xóa cấu hình khỏi eUICC".to_string()));
+                    status_banner.set(Some("Đã gỡ cấu hình khỏi eUICC".to_string()));
                 },
             }
+
+            // APDU console
             ApduConsole {
                 logs: apdu_logs(),
                 on_send: move |cmd| {
@@ -175,14 +196,14 @@ fn App() -> Element {
                         let mut current_profiles = profiles();
                         current_profiles.push(ProfileItem {
                             iccid: "8984040000000000099".to_string(),
-                            name: "New Profile".to_string(),
+                            name: "Cấu hình mới".to_string(),
                             provider: input.lpa,
                             state: ProfileState::Disabled,
                             icon_base64: None,
                         });
                         profiles.set(current_profiles);
                         show_download_modal.set(false);
-                        status_banner.set(Some("Tải xuống hồ sơ thành công!".to_string()));
+                        status_banner.set(Some("Đã cài đặt cấu hình eSIM thành công.".to_string()));
                     },
                     on_cancel: move |_| show_download_modal.set(false),
                 }
