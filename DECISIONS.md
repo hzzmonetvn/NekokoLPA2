@@ -104,6 +104,16 @@
 - **Alternatives Considered:** Leaving dead iOS code in tree and unconfigured `.gitattributes`.
 - **Reasoning:** Without proper linguist attributes, GitHub's language bar was dominated by vendored generated Dart files and dead iOS VoWiFi code. This change brings the repository's measured language composition to >60% (100% of counted code) pure native Rust.
 
+## 15. Telemetry Decoupling, Legacy Tools Pruning, and Dart Model Trimming
+- **Choice:** Excised legacy tooling, third-party store wrapper, external telemetry services, and trimmed oversized generated Dart models:
+  - Pruned obsolete Python ASN.1 generator tools (`tools/asn1_*.py`, `tools/euicc_*.py`, `tools/test_asn1_gen.py`) and ASN.1 spec schemas (`tools/asn1/`, `tools/testdata/`), retaining only `scripts/package_rooted_android.py` and `tools/update_feed_entry.ts`.
+  - Removed `sentry_flutter` dependency and Sentry error tracking initialization from `lib/main.dart` and `pubspec.yaml`.
+  - Decoupled `NekokoStatsPlugin` and removed telemetry reporting callbacks (`https://nlpa-data.nekoko.ee`), excising `StatsSettingsPage` and removing the analytics section from settings.
+  - Eliminated `BuyPage` wrapper (`https://9es.im/`) in favor of direct standard browser tab handling, deleting `lib/pages/buy_page.dart`.
+  - Streamlined `lib/models/asn1/rsp_definitions.g.dart` from 1.95MB (62,568 lines) to 649KB, removing >200 unreferenced classes while maintaining full type safety and compilation compatibility for the 145 types required by Dart UI and tests.
+- **Alternatives Considered:** Leaving telemetry toggled via settings or keeping unused generator tools.
+- **Reasoning:** Minimizes attack surface, eliminates unsolicited network connections, speeds up eSIM installation by removing 1.2s of unnecessary cryptographic signature exchanges for telemetry, and reduces code bloat across the repository.
+
 
 
 

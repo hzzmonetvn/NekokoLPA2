@@ -14,7 +14,6 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'notification_history_page.dart';
 import 'settings/aid_settings_page.dart';
 import 'settings/notifications_settings_page.dart';
-import 'settings/stats_settings_page.dart';
 import 'settings/display_settings_page.dart';
 import 'settings/redaction_settings_page.dart';
 import 'settings/reader_types_settings_page.dart';
@@ -332,11 +331,6 @@ class SettingsPage extends StatelessWidget {
                       _buildMssSlider(context, width),
                     ],
                   ],
-                ),
-                _buildSection(
-                  context,
-                  title: l10n.analytics,
-                  children: [_buildStatsLink(context, width)],
                 ),
                 _buildSection(
                   context,
@@ -1451,37 +1445,6 @@ class SettingsPage extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AidSettingsPage()),
-      ),
-    );
-  }
-
-  Widget _buildStatsLink(BuildContext context, double screenWidth) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return _buildResponsiveTile(
-      context,
-      screenWidth: screenWidth,
-      icon: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.teal.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.analytics_outlined,
-          size: 20,
-          color: Colors.teal,
-        ),
-      ),
-      title: l10n.nekokoCloud,
-      subtitle: l10n.nekokoCloudSubtitle,
-      child: Icon(
-        Icons.chevron_right,
-        color: AppTheme.onSurfaceVerySubtle(context),
-      ),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const StatsSettingsPage()),
       ),
     );
   }

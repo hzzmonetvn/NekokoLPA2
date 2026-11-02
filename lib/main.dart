@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'l10n/app_localizations.dart';
 
 import 'config.dart';
@@ -30,31 +28,10 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
-const String _sentryDsn = String.fromEnvironment('SENTRY_DSN');
-const String _sentryTracesSampleRateValue = String.fromEnvironment(
-  'SENTRY_TRACES_SAMPLE_RATE',
-  defaultValue: '0.0',
-);
-final double _sentryTracesSampleRate =
-    double.tryParse(_sentryTracesSampleRateValue) ?? 0.0;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initRust();
-
-  final packageInfo = await PackageInfo.fromPlatform();
-  final version = packageInfo.version;
-  final versionParts = version.split('.');
-  final isCandidate = versionParts.length >= 3 && versionParts[2] != '0';
-
-  if (isCandidate && _sentryDsn.isNotEmpty) {
-    await SentryFlutter.init((options) {
-      options.dsn = _sentryDsn;
-      options.tracesSampleRate = _sentryTracesSampleRate;
-    }, appRunner: () => _runMain());
-  } else {
-    _runMain();
-  }
+  _runMain();
 }
 
 /// Load the Rust library, on the platform that has it.

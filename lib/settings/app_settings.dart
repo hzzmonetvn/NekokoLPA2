@@ -245,9 +245,6 @@ class AppSettings extends ChangeNotifier {
   bool _forceDeviceDropdown = false;
   bool get forceDeviceDropdown => _forceDeviceDropdown;
 
-  bool _enableNekokoStats = true;
-  bool get enableNekokoStats => _enableNekokoStats;
-
   bool _estimateProfileSize = true;
   bool get estimateProfileSize => _estimateProfileSize;
 
@@ -583,7 +580,6 @@ class AppSettings extends ChangeNotifier {
     _lastSelectedReader = _prefs?.getString('lastSelectedReader');
     _remoCardPassword = _prefs?.getString('remoCardPassword');
     _forceDeviceDropdown = _prefs?.getBool('forceDeviceDropdown') ?? false;
-    _enableNekokoStats = _prefs?.getBool('enableNekokoStats') ?? true;
     _estimateProfileSize = _prefs?.getBool('estimateProfileSize') ?? true;
     _enableProfileStatusEnhancer =
         _prefs?.getBool('enableProfileStatusEnhancer') ?? true;
@@ -1021,12 +1017,6 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setEnableNekokoStats(bool value) async {
-    _enableNekokoStats = value;
-    await _prefs?.setBool('enableNekokoStats', value);
-    notifyListeners();
-  }
-
   Future<void> setEstimateProfileSize(bool value) async {
     _estimateProfileSize = value;
     await _prefs?.setBool('estimateProfileSize', value);
@@ -1229,17 +1219,6 @@ class AppSettings extends ChangeNotifier {
       await _prefs?.setBool('tab_enabled_$url', value);
       notifyListeners();
     }
-  }
-
-  String get buyPageUrl {
-    const envUrl = String.fromEnvironment('BUY_PAGE_URL');
-    if (envUrl.isNotEmpty) return envUrl;
-
-    if (variant == 'esim9') {
-      return 'https://9es.im/';
-    }
-
-    return 'https://n.lpa.ee/products';
   }
 
   Future<void> setLocale(String? value) async {

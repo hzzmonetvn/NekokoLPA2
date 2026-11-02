@@ -944,87 +944,12 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
           }
         }
 
-        // Post-installation: Get updated free space.
-        //
-        // The eUICC will report its free space to a plain ES10b GetEUICCInfo2,
-        // which is one APDU. The ES9+ round trip below exists only to get that
-        // same figure *signed* by the eUICC, as evidence for the size
-        // statistics; measured against a real SM-DP+ it costs about 1.2 s. With
-        // statistics off nothing consumes the signature, so take the cheap path
-        // -- the consumed size is still recorded locally either way.
-        final wantsSignedInfo2 = AppSettings().enableNekokoStats;
-        if (_euiccInfo1Bytes != null && wantsSignedInfo2 && !_isHalDownload) {
-          try {
-             if (mounted) {
-               setState(() => _statusMessage = AppLocalizations.of(context)!.finalizing);
-             }
-             // Start a new logical sequence to get fresh eUICCInfo2
-             
-             // 1. Get new challenge
-             final newChallenge = await widget.profileManager.getEuiccChallenge(useChannel: channel);
-             
-             // 2. Initiate Authentication (using stored EuiccInfo1 + new Challenge)
-             // We can reuse the original download session object logic or create a temp one 
-             // but we just need the request parameters.
-             final tempSession = ProfileDownloadSession(
-                smdpAddress: activationCode.smdpAddress,
-                matchingId: activationCode.matchingId,
-             );
-             tempSession.processEuiccInfo1(_euiccInfo1Bytes!);
-             tempSession.processEuiccChallenge(newChallenge);
-             
-             final initAuthReq = tempSession.getInitiateAuthenticationRequest();
-             
-             final initAuthResp = await Es9PlusService().initiateAuthentication(
-                smdpAddress: activationCode.smdpAddress,
-                euiccChallenge: base64Encode(initAuthReq.euiccChallenge!), 
-                euiccInfo1: base64Encode(initAuthReq.euiccInfo1!.encode()),
-                clientTransactionId: "1" // Use different transaction ID
-             );
-             
-             if (initAuthResp['serverSigned1'] != null && 
-                 initAuthResp['serverSignature1'] != null && 
-                 initAuthResp['euiccCiPKIdToBeUsed'] != null && 
-                 initAuthResp['serverCertificate'] != null) {
-                   
-                 final serverSigned1 = _decodeEs9Base64(initAuthResp['serverSigned1'], 'serverSigned1');
-                 final serverSignature1 = _decodeEs9Base64(initAuthResp['serverSignature1'], 'serverSignature1');
-                 final euiccCiPKId = _decodeEs9Base64(initAuthResp['euiccCiPKIdToBeUsed'], 'euiccCiPKIdToBeUsed');
-                 final serverCert = _decodeEs9Base64(initAuthResp['serverCertificate'], 'serverCertificate');
-                 
-                 // 3. AuthenticateServer to get fresh eUICCInfo2
-                 final finalAuthResp = await widget.profileManager.authenticateServer(
-                    serverSigned1: serverSigned1,
-                    serverSignature1: serverSignature1,
-                    euiccCiPKIdToBeUsed: euiccCiPKId,
-                    serverCertificate: serverCert,
-                    matchingId: activationCode.matchingId,
-                    useChannel: channel
-                 );
-                 _finalEuiccInfo2 = finalAuthResp.euiccSigned1?.euiccInfo2;
-                 _authServer2Response = finalAuthResp;
-             } else {
-                 _log.warning("Final InitiateAuthentication failed: missing fields");
-                 _finalEuiccInfo2 = await widget.profileManager.getEuiccInfo2(useChannel: channel);
-             }
-          } catch (e) {
-             _log.warning("Failed to fetch final eUICC Info 2 via ES9+: $e");
-             // Fallback
-             try {
-                _finalEuiccInfo2 = await widget.profileManager.getEuiccInfo2(useChannel: channel);
-             } catch (e2) {
-                _log.warning("Fallback getEuiccInfo2 failed: $e2");
-             }
-          }
-        } else {
-           // Reached when statistics are off, or when no EUICCInfo1 was kept.
-           // One APDU, unsigned, which is all the local size record needs.
-           try {
-             _finalEuiccInfo2 = await widget.profileManager.getEuiccInfo2(useChannel: channel);
-           } catch (e) {
-             _log.warning("Failed to fetch final eUICC Info 2: $e");
-           }
-         }
+        // Post-installation: Get updated free space via plain ES10b GetEUICCInfo2.
+        try {
+          _finalEuiccInfo2 = await widget.profileManager.getEuiccInfo2(useChannel: channel);
+        } catch (e) {
+          _log.warning("Failed to fetch final eUICC Info 2: $e");
+        }
 
           // Calculate and save consumed space
          if (_installedIccid != null && _authServerResponse?.euiccSigned1?.euiccInfo2?.extCardResource != null && _finalEuiccInfo2?.extCardResource != null) {
