@@ -1,10 +1,11 @@
 use core::time::Duration;
 use rm_client_core::{LocalUim, SlotState};
 use rm_qmi::{LocalQrtrSocket, QrtrAddress, QrtrTransport};
-use std::pin::Pin;
 use std::future::Future;
+use std::pin::Pin;
 
 /// One card the modem sees.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModemSlot {
     pub slot: u8,
     pub present: bool,
@@ -14,7 +15,7 @@ pub struct ModemSlot {
 }
 
 impl ModemSlot {
-    fn new(slot: u8, state: SlotState) -> Self {
+    pub fn new(slot: u8, state: SlotState) -> Self {
         Self {
             slot,
             present: state.present,
@@ -26,12 +27,14 @@ impl ModemSlot {
 }
 
 /// Where a datagram is going, or came from: a node and a port on the bus.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct QrtrSocketAddress {
     pub node: u32,
     pub port: u32,
 }
 
 /// One datagram on the bus.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QrtrSocketDatagram {
     pub node: u32,
     pub port: u32,
@@ -40,9 +43,18 @@ pub struct QrtrSocketDatagram {
 
 /// A socket abstraction for transport.
 pub trait TransportSocket: Send + Sync {
-    fn address(&mut self) -> Pin<Box<dyn Future<Output = Result<QrtrSocketAddress, String>> + Send + '_>>;
-    fn send(&mut self, to: QrtrSocketAddress, datagram: Vec<u8>) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send + '_>>;
-    fn receive(&mut self, timeout: Duration) -> Pin<Box<dyn Future<Output = Result<Option<QrtrSocketDatagram>, String>> + Send + '_>>;
+    fn address(
+        &mut self,
+    ) -> Pin<Box<dyn Future<Output = Result<QrtrSocketAddress, String>> + Send + '_>>;
+    fn send(
+        &mut self,
+        to: QrtrSocketAddress,
+        datagram: Vec<u8>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send + '_>>;
+    fn receive(
+        &mut self,
+        timeout: Duration,
+    ) -> Pin<Box<dyn Future<Output = Result<Option<QrtrSocketDatagram>, String>> + Send + '_>>;
 }
 
 type QrtrQmi = rm_qmi::QmiClient<QrtrTransport<DartQrtrSocket>>;
@@ -52,6 +64,13 @@ pub struct ModemSession {
 }
 
 impl ModemSession {
+    pub fn new(transport: Box<dyn TransportSocket>) -> Self {
+        let socket = DartQrtrSocket { transport };
+        Self {
+            client: rm_qmi::QmiClient::new(QrtrTransport::new(socket)),
+        }
+    }
+
     pub async fn state(&mut self) -> Result<Vec<ModemSlot>, String> {
         let states = self.client.state().await.map_err(describe)?;
 
@@ -89,12 +108,12 @@ impl ModemSession {
     }
 }
 
-struct DartQrtrSocket {
-    transport: Box<dyn TransportSocket>,
+pub struct DartQrtrSocket {
+    pub transport: Box<dyn TransportSocket>,
 }
 
-#[derive(Debug)]
-pub struct QrtrSocketError(String);
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QrtrSocketError(pub String);
 
 impl core::fmt::Display for QrtrSocketError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -116,7 +135,16 @@ impl LocalQrtrSocket for DartQrtrSocket {
     }
 
     async fn send(&mut self, to: QrtrAddress, datagram: &[u8]) -> Result<(), Self::Error> {
-        self.transport.send(QrtrSocketAddress { node: to.node, port: to.port }, datagram.to_vec()).await.map_err(QrtrSocketError)
+        self.transport
+            .send(
+                QrtrSocketAddress {
+                    node: to.node,
+                    port: to.port,
+                },
+                datagram.to_vec(),
+            )
+            .await
+            .map_err(QrtrSocketError)
     }
 
     async fn receive(
@@ -124,7 +152,11 @@ impl LocalQrtrSocket for DartQrtrSocket {
         buffer: &mut [u8],
         timeout: Duration,
     ) -> Result<Option<(usize, QrtrAddress)>, Self::Error> {
-        let Some(datagram) = self.transport.receive(timeout).await.map_err(QrtrSocketError)?
+        let Some(datagram) = self
+            .transport
+            .receive(timeout)
+            .await
+            .map_err(QrtrSocketError)?
         else {
             return Ok(None);
         };

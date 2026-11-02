@@ -60,4 +60,30 @@
 - **Alternatives Considered:** Leaving template-style UI components with standard web buttons and unformatted hexadecimal strings.
 - **Reasoning:** Low-level modem and eSIM management tools require clear visual restraint, exact cryptographic string readability, and maximum battery conservation on AMOLED displays without distracting aesthetic clutter.
 
+## 11. Core Rust Modem Unit Testing & In-Memory Transport Mocking
+- **Choice:** Added comprehensive asynchronous unit and characterization tests for `nlpa_core` in `rust/core/tests/modem_test.rs`, backed by a thread-safe `MockTransportSocket`:
+  - Verified `ModemSlot` conversions across full and empty `SlotState` records.
+  - Verified `QrtrSocketError` formatting and display behavior.
+  - Verified `DartQrtrSocket` address resolution, send queuing, and receive buffer slicing/error propagation under asynchronous conditions without requiring physical Qualcomm modem hardware.
+  - Verified `ModemSession` instantiation with boxed `TransportSocket`.
+- **Alternatives Considered:** Relying solely on real device execution or leaving the Rust test suite empty.
+- **Reasoning:** As noted in `PORTING.md`, having a passing `cargo test` with 0 tests created a false verification signal. By mocking the QRTR transport layer in memory, the Rust core modem abstractions can be continuously and deterministically verified in automated CI and local development without root/Shizuku or hardware dependencies.
+
+## 12. Native Telecommunications Logic Port to `nlpa_core`
+- **Choice:** Ported essential low-level telecommunication routines and data models from Dart (`lib/utils/` and `lib/models/`) to native Rust (`nlpa_core`):
+  - `hex`: Zero-overhead hexadecimal byte conversion, whitespace-tolerant parser, odd nibble padding, and `as_chunks::<2>()` nibble swap without superfluous string allocations.
+  - `activation_code`: Parser and formatter for GSMA SGP.22 Activation Codes (`LPA:1$<SMDP>$<MatchingId>[$<SMDP_OID>][$<CC>]`) with typed `ActivationCodeError`.
+  - `iccid`: Strict BCD trailing filler stripper (`iccid_for_display`) and 4-digit grouped industrial formatter.
+  - `apdu`: ISO/IEC 7816 & GSMA SGP.22 status word validator mapping `(SW1, SW2)` to semantic `ApduError` enum variants.
+  - `imei`: 3GPP Luhn checksum calculator and packed 8-byte BCD decoder/encoder.
+  - `asn1`: Complete ASN.1 DER Tag-Length-Value (TLV) reader and node hierarchy (`Asn1Reader`, `Asn1Node`) for decoding GSMA SGP.22 eSIM profile metadata structures and cryptographic envelopes.
+  - `profile`: Core `EuiccProfile` representation distinguishing raw addressable ICCID from formatted display ICCID with deterministic display-name resolution.
+  - Bridge: Exposed all routines via `rust_lib_nlpa2::api::telecom` for Flutter Rust Bridge integration.
+  - Verified with 10 comprehensive integration tests in `rust/core/tests/telecom_test.rs`.
+- **Alternatives Considered:** Leaving low-level byte and string parsing in Dart.
+- **Reasoning:** Processing large APDU responses, SIM activation payloads, and cryptographic profile packages in Dart incurs garbage collection pressure and runtime overhead. Porting this logic to pure Rust guarantees memory safety, eliminates GC pauses, maximizes native Rust code density, and follows the `beautiful-rust:rust-best-practices` guidelines.
+
+
+
+
 

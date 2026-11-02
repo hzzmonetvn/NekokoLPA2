@@ -21,22 +21,24 @@ fn App() -> Element {
     let mut show_info_dialog = use_signal(|| false);
     let mut status_banner = use_signal(|| None::<String>);
 
-    let mut profiles = use_signal(|| vec![
-        ProfileItem {
-            iccid: "8984040000000000001".to_string(),
-            name: "Viettel 5G Core".to_string(),
-            provider: "Viettel Telecom".to_string(),
-            state: ProfileState::Enabled,
-            icon_base64: None,
-        },
-        ProfileItem {
-            iccid: "8984040000000000002".to_string(),
-            name: "Vinaphone Data".to_string(),
-            provider: "VNPT Vinaphone".to_string(),
-            state: ProfileState::Disabled,
-            icon_base64: None,
-        },
-    ]);
+    let mut profiles = use_signal(|| {
+        vec![
+            ProfileItem {
+                iccid: "8984040000000000001".to_string(),
+                name: "Viettel 5G Core".to_string(),
+                provider: "Viettel Telecom".to_string(),
+                state: ProfileState::Enabled,
+                icon_base64: None,
+            },
+            ProfileItem {
+                iccid: "8984040000000000002".to_string(),
+                name: "Vinaphone Data".to_string(),
+                provider: "VNPT Vinaphone".to_string(),
+                state: ProfileState::Disabled,
+                icon_base64: None,
+            },
+        ]
+    });
 
     let readers = vec![
         ReaderInfo {
@@ -66,18 +68,20 @@ fn App() -> Element {
         spec_version: Some("SGP.22 v2.2.2".to_string()),
     };
 
-    let mut apdu_logs = use_signal(|| vec![
-        ApduLogEntry {
-            is_tx: true,
-            data: "00A4040007A0000005591010".to_string(),
-            sw: None,
-        },
-        ApduLogEntry {
-            is_tx: false,
-            data: "611A".to_string(),
-            sw: Some("9000".to_string()),
-        },
-    ]);
+    let mut apdu_logs = use_signal(|| {
+        vec![
+            ApduLogEntry {
+                is_tx: true,
+                data: "00A4040007A0000005591010".to_string(),
+                sw: None,
+            },
+            ApduLogEntry {
+                is_tx: false,
+                data: "611A".to_string(),
+                sw: Some("9000".to_string()),
+            },
+        ]
+    });
 
     rsx! {
         div {

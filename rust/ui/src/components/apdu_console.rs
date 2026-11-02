@@ -1,12 +1,9 @@
-use dioxus::prelude::*;
 use crate::models::ApduLogEntry;
 use crate::theme::AMOLED_PALETTE;
+use dioxus::prelude::*;
 
 #[component]
-pub fn ApduConsole(
-    logs: Vec<ApduLogEntry>,
-    on_send: EventHandler<String>,
-) -> Element {
+pub fn ApduConsole(logs: Vec<ApduLogEntry>, on_send: EventHandler<String>) -> Element {
     let mut input_text = use_signal(String::new);
 
     rsx! {

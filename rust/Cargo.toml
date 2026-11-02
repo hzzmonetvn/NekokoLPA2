@@ -9,6 +9,7 @@ crate-type = ["cdylib", "staticlib"]
 [dependencies]
 anyhow = "1"
 flutter_rust_bridge = "=2.13.0"
+nlpa_core = { path = "core" }
 # Published crates: nothing here may point outside this repository, or a clean
 # checkout has nothing to resolve. `qrtr` is the only feature wanted, and with
 # it `rm-qmi` pulls in no USB: those sit behind its `usb` feature.

@@ -8,3 +8,7 @@ anyhow = "1"
 rm-client-core = "0.1.0"
 rm-qmi = { version = "0.1.0", features = ["qrtr"] }
 flutter_rust_bridge = "=2.13.0"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+

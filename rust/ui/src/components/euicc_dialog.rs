@@ -1,12 +1,9 @@
-use dioxus::prelude::*;
 use crate::models::EuiccDetails;
 use crate::theme::AMOLED_PALETTE;
+use dioxus::prelude::*;
 
 #[component]
-pub fn EuiccInfoDialog(
-    details: EuiccDetails,
-    on_close: EventHandler<()>,
-) -> Element {
+pub fn EuiccInfoDialog(details: EuiccDetails, on_close: EventHandler<()>) -> Element {
     // Group EID into 4-character blocks for industrial legibility: 8904 9032 ...
     let formatted_eid = details
         .eid

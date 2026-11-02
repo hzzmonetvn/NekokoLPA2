@@ -1,6 +1,6 @@
-use dioxus::prelude::*;
 use crate::models::{ReaderInfo, ReaderType};
 use crate::theme::AMOLED_PALETTE;
+use dioxus::prelude::*;
 
 #[component]
 pub fn ReaderSelector(

@@ -1,7 +1,7 @@
-use dioxus::prelude::*;
 use crate::components::profile_card::ProfileCard;
 use crate::models::ProfileItem;
 use crate::theme::AMOLED_PALETTE;
+use dioxus::prelude::*;
 
 #[component]
 pub fn ProfileList(
