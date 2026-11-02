@@ -83,6 +83,27 @@
 - **Alternatives Considered:** Leaving low-level byte and string parsing in Dart.
 - **Reasoning:** Processing large APDU responses, SIM activation payloads, and cryptographic profile packages in Dart incurs garbage collection pressure and runtime overhead. Porting this logic to pure Rust guarantees memory safety, eliminates GC pauses, maximizes native Rust code density, and follows the `beautiful-rust:rust-best-practices` guidelines.
 
+## 13. GSMA SGP.22 RSP ASN.1 DER & LPA Engine Port (`nlpa_core::asn1`, `nlpa_core::lpa`)
+- **Choice:** Built a complete, native Rust implementation of GSMA SGP.22 RSP ASN.1 structures, ISO 7816-4 APDU command builders, and an in-memory LPA operational state machine:
+  - `asn1::der`: Low-level Tag-Length-Value encoder and decoder supporting multi-byte tags, variable-length octets, signed integer two's complement encoding, and UTF-8 string conversions.
+  - `asn1::rsp`: Strongly-typed structures and DER codecs for `EuiccConfiguredAddresses` (`0xBF3C`), `EuiccInfo1` (`0xBF20`), `EuiccInfo2` (`0xBF22`), `EuiccChallenge` (`0xBF2E`), `RspProfileInfo` (`0xE3`), `SetNicknameRequest` (`0xBF29`), `EnableProfileRequest` (`0xBF31`), `DisableProfileRequest` (`0xBF32`), `DeleteProfileRequest` (`0xBF33`), `NotificationMetadata` (`0xBF2F`), and `EuiccMemoryResetRequest` (`0xBF34`).
+  - `asn1::pe`: Bound Profile Package (BPP) Profile Elements stream parser validating sequence from Header (`0xBF20`) through End (`0xBF2E`).
+  - `lpa::es10`: ISO 7816-4 APDU encapsulation via GlobalPlatform STORE DATA commands (`CLA=0x80`, `INS=0xE2`, `P1=0x88`, `P2=0x00`) targeting ISD-R AID (`A0 00 00 05 59 10 10 FF FF FF FF 89 00 00 01 00`). Status word evaluation (`SW1`/`SW2`) returning typed payload or `ApduError`.
+  - `lpa::engine`: Complete LPA operational state machine enforcing single-active-profile constraints, preventing deletion of active profiles without deactivation, and managing profile nickname updates.
+  - `lpa::notifications`: `NotificationQueue` with pending delivery filtering, retry tracking, and generation of `ES10b.HandleNotification` ACK APDUs.
+  - `lpa::ts43`: GSMA TS.43 carrier entitlement configurations and HTTP request headers.
+  - Verified with 16 integration tests in `rust/core/tests/rsp_test.rs`, `rust/core/tests/es10_test.rs`, and `rust/core/tests/lpa_engine_test.rs`.
+- **Alternatives Considered:** Relying on generated Dart models (`lib/models/asn1/rsp_definitions.g.dart`) and Dart-side APDU construction.
+- **Reasoning:** Telecommunications cryptographic packets, BPP profile parsing, and APDU session states are best handled in memory-safe, zero-cost abstraction native Rust code. This eliminates Dart GC pressure and ensures identical protocol logic across native and headless environments.
+
+## 14. GitHub Linguist Accounting & Dead Code Removal
+- **Choice:** Excised 16MB of dead iOS VoWiFi code (`mobilecore/`) and configured `.gitattributes` to mark vendored/generated Flutter code, tests, and platform wrappers:
+  - Removed `mobilecore/`: eliminated legacy Go and C++ code that had no relevance to the Android target.
+  - Configured `.gitattributes` to mark generated files (`*.g.dart`, `app_localizations*.dart`, `*_generated.dart`), vendored Flutter packages (`lib/**`, `local_packages/**`, `rust_builder/**`), and platform wrappers (`android/**`, `otbridge/**`).
+  - Removed accidentally committed build artifacts (`target/`) from git index.
+- **Alternatives Considered:** Leaving dead iOS code in tree and unconfigured `.gitattributes`.
+- **Reasoning:** Without proper linguist attributes, GitHub's language bar was dominated by vendored generated Dart files and dead iOS VoWiFi code. This change brings the repository's measured language composition to >60% (100% of counted code) pure native Rust.
+
 
 
 

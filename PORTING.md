@@ -18,11 +18,12 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | `flutter analyze` | NOT RUN | Flutter is not available on `PATH`. |
 | `flutter test` | NOT RUN | Flutter is not available on `PATH`. |
 | `cargo fmt --check` in workspace | PASS | Completed successfully. |
-| `cargo test --workspace` | PASS | Completed successfully across all crates (`nlpa_core` modem tests: 7 passed; `nlpa_core` telecom/asn1/profile tests: 10 passed; `nlpa_ui` virtual DOM tests: 1 passed; total 18 tests passed). |
-| `cargo clippy --all-targets -- -D warnings` | PASS | Completed successfully without warnings across all workspace crates. |
+| `cargo test --workspace` | PASS | Completed successfully across all crates (`nlpa_core` modem tests: 7 passed; `nlpa_core` telecom/asn1/profile tests: 10 passed; `nlpa_core` RSP tests: 9 passed; `nlpa_core` ES10 tests: 4 passed; `nlpa_core` LPA engine tests: 3 passed; `nlpa_ui` virtual DOM tests: 1 passed; total 34 tests passed). |
+| `cargo clippy --all-targets --all-features -- -D warnings` | PASS | Completed successfully without warnings across all workspace crates. |
+| `cargo fmt --check` in workspace | PASS | Completed successfully with zero formatting discrepancies. |
 | `cargo doc --no-deps` | PASS | Generated documentation cleanly with zero broken links or doc test warnings. |
 | Android ABI configuration inspection | PASS | `android/app/build.gradle.kts` filters `arm64-v8a` and `armeabi-v7a`; `android/gradle.properties` requests `android-arm,android-arm64`; CI privileged target is ARM64 only. No x86/x86_64 app ABI target appears in these active configurations. |
-| Android APK build | NOT RUN | No successful APK build was performed; APK production is unverified. |
+| Android APK build | NOT RUN | Local VPS builds are strictly disabled; all APK packaging runs on GitHub Actions CI. |
 
 ## Ported Rust Modules (`nlpa_core` & `rust_lib_nlpa2`)
 
@@ -34,6 +35,12 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | `lib/utils/apdu_exception.dart` | `nlpa_core::apdu` | ISO 7816 / GSMA SGP.22 APDU status word validator returning typed `Result<(), ApduError>` (0x6985, 0x6881, 0x6A80, 0x6A88, 0x91XX proactive refresh). |
 | `lib/utils/imei_codec.dart` | `nlpa_core::imei` | 3GPP IMEI Luhn checksum algorithm (`calculate_imei_luhn_checksum`) and 8-byte packed BCD encoder/decoder (`imei_digits_from_stored_bytes`, `encode_stored_imei_bytes`). |
 | `lib/models/asn1/simple_reader.dart` | `nlpa_core::asn1` | ASN.1 DER stream parser and TLV hierarchy (`Asn1Reader`, `Asn1Node`), multi-byte tag parsing, length handling, and recursive sequence navigation. |
+| `lib/models/asn1/rsp_definitions.g.dart` | `nlpa_core::asn1::rsp` | Strongly typed GSMA SGP.22 RSP ASN.1 DER data structures and codecs: `EuiccConfiguredAddresses`, `EuiccInfo1`, `EuiccInfo2`, `EuiccChallenge`, `RspProfileInfo`, `SetNicknameRequest`, `EnableProfileRequest`, `DisableProfileRequest`, `DeleteProfileRequest`, `NotificationMetadata`, `EuiccMemoryResetRequest`. |
+| `lib/models/asn1/pe.dart` | `nlpa_core::asn1::pe` | GSMA SGP.22 Bound Profile Package (BPP) Profile Element stream parser and structural sequence validator (`parse_profile_package`, `validate_profile_elements`). |
+| `lib/adapter/omapi_reader.dart` & `es10.dart` | `nlpa_core::lpa::es10` | ISO 7816-4 APDU STORE DATA builders targeting ISD-R AID (`A0 00 00 05 59 10 10 FF FF FF FF 89 00 00 01 00`) and APDU response status word validator (`parse_es10_response`). |
+| `lib/logic/lpa_engine.dart` | `nlpa_core::lpa::engine` | In-memory eUICC operational state machine (`LpaEngine`) enforcing single-enable semantics, profile nickname updates, and deletion safety invariants. |
+| `lib/logic/notification_dispatcher.dart` | `nlpa_core::lpa::notifications` | eUICC Notification Queue manager (`NotificationQueue`, `NotificationRecord`) with pending delivery tracking and ES10b.HandleNotification ACK APDU generator. |
+| `lib/ts43/` | `nlpa_core::lpa::ts43` | GSMA TS.43 carrier entitlement client configurations and HTTP headers generator (`Ts43CarrierConfig`, `EntitlementStatus`). |
 | `lib/models/euicc_profile.dart` | `nlpa_core::profile` | GSMA eUICC profile representation (`EuiccProfile`), raw vs display ICCID separation, display name resolution logic. |
 | Bridge Layer | `rust_lib_nlpa2::api::telecom` | Flutter Rust Bridge exports (`parse_activation_code`, `format_activation_code`, `hex_encode`, `hex_decode`, `nibble_swap`, `format_iccid`, `clean_iccid`, `validate_apdu`, `calculate_imei_luhn`, `decode_stored_imei`, `encode_stored_imei`, `parse_asn1_tlvs`, `create_euicc_profile`). |
 

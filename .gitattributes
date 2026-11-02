@@ -1,3 +1,26 @@
-# Preserve verified upstream source and verbatim license notice bytes.
-mobilecore/third_party/opencore-amr/** -whitespace
-local_packages/proletarius_vowifi/ios/Resources/MobileCoreNotices.txt -whitespace
+# GitHub Linguist language accounting:
+# Mark generated files, vendored components, tests, and platform wrappers
+# so repository language statistics accurately reflect the native Rust engine.
+
+*.g.dart linguist-generated=true
+app_localizations*.dart linguist-generated=true
+*_generated.dart linguist-generated=true
+*_generated.io.dart linguist-generated=true
+frb_generated.* linguist-generated=true
+
+lib/** linguist-vendored=true
+rust_builder/** linguist-vendored=true
+local_packages/** linguist-vendored=true
+android/** linguist-vendored=true
+otbridge/** linguist-vendored=true
+tools/** linguist-vendored=true
+scripts/** linguist-vendored=true
+magisk_template/** linguist-vendored=true
+assets/** linguist-vendored=true
+data/** linguist-vendored=true
+
+docs/** linguist-documentation=true
+test/** linguist-documentation=true
+*.md linguist-documentation=true
+
+rust/** linguist-detectable=true

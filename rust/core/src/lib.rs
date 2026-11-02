@@ -4,17 +4,35 @@ pub mod asn1;
 pub mod hex;
 pub mod iccid;
 pub mod imei;
+pub mod lpa;
 pub mod modem;
 pub mod profile;
 
 pub use activation_code::{ActivationCode, ActivationCodeError};
 pub use apdu::{validate_apdu_sw, ApduError};
-pub use asn1::{Asn1Error, Asn1Node, Asn1Reader};
+pub use asn1::{
+    decode_integer, decode_utf8_string, encode_integer, encode_length, encode_octet_string,
+    encode_sequence, encode_tag, encode_tlv, encode_utf8_string, parse_profile_package,
+    validate_profile_elements, Asn1Error, Asn1Node, Asn1Reader, DeleteProfileRequest,
+    DisableProfileRequest, EnableProfileRequest, EuiccChallenge, EuiccConfiguredAddresses,
+    EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest, NotificationMetadata, PeType, ProfileElement,
+    RspProfileInfo, SetNicknameRequest,
+};
 pub use hex::{bytes_to_hex, hex_to_bytes, swap_nibbles, HexError};
 pub use iccid::{format_iccid_grouped, iccid_for_display};
 pub use imei::{
     calculate_imei_luhn_checksum, encode_stored_imei_bytes, imei_digits_from_stored_bytes,
     ImeiError,
+};
+pub use lpa::{
+    build_delete_profile_apdu, build_disable_profile_apdu, build_enable_profile_apdu,
+    build_euicc_memory_reset_apdu, build_get_euicc_challenge_apdu,
+    build_get_euicc_configured_addresses_apdu, build_get_euicc_info1_apdu,
+    build_get_euicc_info2_apdu, build_get_profiles_info_apdu, build_list_notifications_apdu,
+    build_remove_notification_apdu, build_select_isdr_apdu, build_set_nickname_apdu,
+    parse_es10_response, wrap_store_data_apdu, EntitlementStatus, LpaEngine, LpaError,
+    NotificationQueue, NotificationRecord, ProfileOperation, Ts43CarrierConfig, Ts43Error,
+    ISDR_AID,
 };
 pub use modem::*;
 pub use profile::EuiccProfile;
