@@ -66,6 +66,8 @@ fn test_parse_json_structures() {
         "name": "NekokoLPA2",
         "version": 2.5,
         "active": true,
+        "carrier_vi": "Viettel 5G Việt Nam - Thẻ eSIM",
+        "greeting": "Xin chào thế giới! 🇻🇳",
         "features": ["esim", "omapi", "qrtr"],
         "metadata": {
             "vendor": "GSMA"
@@ -73,6 +75,7 @@ fn test_parse_json_structures() {
     }"#;
     let json = parse_json(raw).expect("should parse json");
     assert_eq!(json.get_str("name"), Some("NekokoLPA2"));
+    assert_eq!(json.get_str("greeting"), Some("Xin chào thế giới! 🇻🇳"));
     assert_eq!(
         json.get("metadata").and_then(|m| m.get_str("vendor")),
         Some("GSMA")

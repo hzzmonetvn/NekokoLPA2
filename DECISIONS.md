@@ -164,6 +164,9 @@
     - SGP.22 function execution status verification extracting standard `subjectCode` and `reasonCode`.
     - Typed response parsers with automatic base64 ASN.1 payload decoding.
   - `rust_lib_nlpa2::api::lpa`: Exposed zero-cost bridge functions connecting APDU framing, channel mapping, and ES9+ request/response handling directly to Flutter.
+  - Peer-Review Quality Hardening:
+    - Addressed UTF-8 multi-byte sequence preservation in `nlpa_core::es9::JsonParser::parse_string`, replacing byte-by-byte char casting with UTF-8 slice windowing to safeguard international carrier names, Vietnamese diacritics, and emoji characters.
+    - Added MSS clamping (`if mss == 0 || mss > 255 { 255 }`) in `nlpa_core::channel::chain_apdu_request` to prevent short APDU `Lc` byte cast truncation on non-standard MSS inputs.
   - Verified with 14 new integration tests in `rust/core/tests/channel_test.rs` and `rust/core/tests/es9_test.rs` (total 68 workspace tests passing).
 - **Alternatives Considered:** Keeping APDU chaining and HTTP ES9+ payload serialization in Dart.
 - **Reasoning:** Managing low-level APDU framing, logical channel bitmasking, and response reassembly in native Rust guarantees strict ISO 7816-4 conformance, zero memory allocations during segmenting, and immunity against channel state corruption. Decoding ES9+ structures in Rust provides compile-time memory safety for cryptographic certificates and bound profile packages.

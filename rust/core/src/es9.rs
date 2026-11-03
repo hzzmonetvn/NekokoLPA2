@@ -256,14 +256,25 @@ impl<'a> JsonParser<'a> {
     fn parse_string(&mut self) -> Result<String, Es9Error> {
         self.pos += 1; // skip initial '"'
         let mut s = String::new();
+        let mut segment_start = self.pos;
 
         while self.pos < self.chars.len() {
             let b = self.chars[self.pos];
             if b == b'"' {
+                if segment_start < self.pos {
+                    let segment = std::str::from_utf8(&self.chars[segment_start..self.pos])
+                        .map_err(|e| Es9Error::InvalidJson(e.to_string()))?;
+                    s.push_str(segment);
+                }
                 self.pos += 1;
                 return Ok(s);
             }
             if b == b'\\' {
+                if segment_start < self.pos {
+                    let segment = std::str::from_utf8(&self.chars[segment_start..self.pos])
+                        .map_err(|e| Es9Error::InvalidJson(e.to_string()))?;
+                    s.push_str(segment);
+                }
                 self.pos += 1;
                 if self.pos >= self.chars.len() {
                     return Err(Es9Error::InvalidJson("trailing escape in string".into()));
@@ -284,8 +295,8 @@ impl<'a> JsonParser<'a> {
                     }
                 }
                 self.pos += 1;
+                segment_start = self.pos;
             } else {
-                s.push(b as char);
                 self.pos += 1;
             }
         }

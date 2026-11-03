@@ -163,7 +163,7 @@ pub fn chain_apdu_request(
     le: Option<usize>,
     mss: usize,
 ) -> Vec<Vec<u8>> {
-    let effective_mss = if mss == 0 { 255 } else { mss };
+    let effective_mss = if mss == 0 || mss > 255 { 255 } else { mss };
     if data.len() <= effective_mss {
         return vec![frame_apdu_command(cla, ins, p1, p2, Some(data), le)];
     }
