@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:pointycastle/export.dart';
+import '../utils/aes_cipher.dart';
 import '../adapter/euicc_adapter.dart';
 import '../plugins/session_plugin.dart';
 import '../utils/hex_utils.dart';
@@ -300,15 +300,7 @@ class GmPlugin extends SessionPlugin {
   }
 
   Uint8List _aesCbcEncrypt(Uint8List key, Uint8List iv, Uint8List data) {
-    final engine = AESEngine();
-    final cipher = CBCBlockCipher(engine);
-    cipher.init(true, ParametersWithIV(KeyParameter(key), iv));
-    final out = Uint8List(data.length);
-    var offset = 0;
-    while (offset < data.length) {
-      offset += cipher.processBlock(data, offset, out, offset);
-    }
-    return out;
+    return AesCipher.cbcEncrypt(key, iv, data);
   }
 
   Uint8List _calcHostMac(Uint8List sessionKey, Uint8List challenge) {

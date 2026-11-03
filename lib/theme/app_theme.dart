@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../settings/app_settings.dart';
 
 const Color kPrimaryColor = Color(0xFF3276CD);
@@ -56,9 +55,8 @@ class AppTheme {
           seedColor: kPrimaryColor,
           brightness: isDark ? Brightness.dark : Brightness.light,
         ),
-        textTheme: GoogleFonts.interTextTheme(
-          isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
-        ),
+        textTheme: (isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme)
+            .apply(fontFamily: 'sans-serif'),
         // Eliminating borders for MD3 stock theme as requested
         inputDecorationTheme: const InputDecorationTheme(
           border: InputBorder.none,
@@ -544,20 +542,21 @@ class AppTheme {
     double? letterSpacing,
     double? height,
   }) {
-    return GoogleFonts.googleSans(
-      textStyle: textStyle,
-      color: color,
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      letterSpacing: letterSpacing,
-      height: height,
+    final style = textStyle ?? const TextStyle();
+    return style.copyWith(
+      fontFamily: 'sans-serif',
+      color: color ?? style.color,
+      fontSize: fontSize ?? style.fontSize,
+      fontWeight: fontWeight ?? style.fontWeight,
+      letterSpacing: letterSpacing ?? style.letterSpacing,
+      height: height ?? style.height,
     );
   }
 
   static TextTheme defaultFontTextTheme(TextTheme base) {
-    return GoogleFonts.googleSansTextTheme(base);
+    return base.apply(fontFamily: 'sans-serif');
   }
 
   static TextStyle mono([TextStyle? base]) =>
-      GoogleFonts.ibmPlexMono(textStyle: base);
+      (base ?? const TextStyle()).copyWith(fontFamily: 'monospace');
 }

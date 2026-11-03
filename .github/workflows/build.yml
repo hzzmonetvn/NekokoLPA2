@@ -83,7 +83,7 @@ jobs:
             args+=(--dart-define=APP_VARIANT=open)
           fi
           # Build Flutter app to bundle Dart/Flutter assets and Rust binaries via Cargokit
-          flutter build apk "${args[@]}" --dart-define=GM_PSK_URL="$GM_PSK_URL"
+          flutter build apk "${args[@]}" --obfuscate --split-debug-info=build/app/outputs/symbols --dart-define=GM_PSK_URL="$GM_PSK_URL"
           # Run Gradle directly to produce ABI split and universal APKs reliably
           cap_flavor="$(tr '[:lower:]' '[:upper:]' <<< "${BUILD_FLAVOR:0:1}")${BUILD_FLAVOR:1}"
           cd android && ./gradlew "assemble${cap_flavor}Release" && cd ..

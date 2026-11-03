@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
-import 'package:pointycastle/export.dart';
 import 'package:logging/logging.dart';
+import 'aes_cipher.dart';
 
 class CryptoUtils {
   static final Logger _log = Logger('CryptoUtils');
@@ -63,16 +63,9 @@ class CryptoUtils {
         iv[i] = random.nextInt(256);
       }
 
-      final params = PaddedBlockCipherParameters(
-        ParametersWithIV(KeyParameter(key), iv),
-        null,
-      );
-
-      final cipher = PaddedBlockCipher('AES/CBC/PKCS7');
-      cipher.init(true, params);
-
       final input = Uint8List.fromList(utf8.encode(plaintext));
-      final encrypted = cipher.process(input);
+      final padded = AesCipher.pkcs7Pad(input);
+      final encrypted = AesCipher.cbcEncrypt(key, iv, padded);
 
       final combined = Uint8List(iv.length + encrypted.length);
       combined.setAll(0, iv);
@@ -94,19 +87,15 @@ class CryptoUtils {
   static String decryptAESWithKey(String ciphertext, Uint8List key) {
     try {
       final combined = base64Decode(ciphertext);
-      final iv = combined.sublist(0, 16);
-      final encrypted = combined.sublist(16);
+      if (combined.length < 32 || (combined.length - 16) % 16 != 0) {
+        throw const FormatException('Invalid ciphertext payload length');
+      }
+      final iv = Uint8List.sublistView(combined, 0, 16);
+      final encrypted = Uint8List.sublistView(combined, 16);
 
-      final params = PaddedBlockCipherParameters(
-        ParametersWithIV(KeyParameter(key), iv),
-        null,
-      );
-
-      final cipher = PaddedBlockCipher('AES/CBC/PKCS7');
-      cipher.init(false, params);
-
-      final decrypted = cipher.process(encrypted);
-      return utf8.decode(decrypted);
+      final decrypted = AesCipher.cbcDecrypt(key, iv, encrypted);
+      final unpadded = AesCipher.pkcs7Unpad(decrypted);
+      return utf8.decode(unpadded);
     } catch (e) {
       throw Exception('Decryption failed: $e');
     }

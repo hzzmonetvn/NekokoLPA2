@@ -27,7 +27,6 @@ dependencies:
     sdk: flutter
 
   crypto: ^3.0.6
-  pointycastle: ^4.0.0
   ccid:
     path: local_packages/ccid
   shared_preferences: ^2.5.4
@@ -48,7 +47,6 @@ dependencies:
   flutter_local_notifications: ^20.0.0
   flutter_localizations:
     sdk: flutter
-  google_fonts: ^8.0.0
   cached_network_image: ^3.4.1
   app_links: ^7.0.0
   webview_flutter: ^4.13.1
@@ -91,6 +89,5 @@ flutter:
     - assets/variant_tabs.yaml
     - assets/turtle.webp
     - data/reference_sizes_simple.json
-    - assets/fonts/static/
     - assets/ts43/entitlement.json
     - assets/ts43/odsa_service_flow.js

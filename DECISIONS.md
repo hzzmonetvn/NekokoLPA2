@@ -112,14 +112,14 @@
 - **Alternatives Considered:** Retaining flag PNGs and leaving unused strings in ARB files.
 - **Reasoning:** Removing dead assets reduces repository size and clone times; pruning dead translation strings prevents translation drift and ensures `flutter gen-l10n` generates only active code.
 
-## 17. Native Rust Business Logic Port (`nlpa_core::cat`, `crypto`, `mcc`, `notification_address`)
-- **Choice:** Ported remaining telecommunications and cryptographic business logic modules from Dart to native Rust in `nlpa_core`:
-  - `cat`: ETSI TS 102 221 / TS 102 223 / 3GPP TS 31.111 Card Application Toolkit proactive command encoder/decoder (`STATUS`, `FETCH`, `TERMINAL RESPONSE`), BER-TLV / COMPREHENSION-TLV parser, and eUICC `REFRESH` decision engine (`AcknowledgeSuccess`, `RestartNaaSession`, `DeclineUnableToProcess`, `RequiresCardReset`).
-  - `crypto`: Safe, zero-dependency, pure Rust implementation of standard SHA-256 (RFC 6234) and GSMA SGP.22 Confirmation Code hash computation: `HashCc = SHA256(SHA256(ConfirmationCode) || TransactionID)`.
-  - `mcc`: ITU-T E.212 Mobile Country Code mapping to ISO 3166-1 alpha-2 codes (Europe, Americas, Asia, Oceania, Africa), Unicode regional indicator symbol flag emoji generation, and 3-byte 3GPP PLMN decoder (`mcc`/`mnc`).
-  - `notification_address`: Strict GSMA SGP.22 notification server FQDN validation protecting against corrupted card metadata.
-  - Test Coverage: Added 13 integration tests in `rust/core/tests/` (`cat_test.rs`, `crypto_test.rs`, `mcc_test.rs`, `notification_address_test.rs`), bringing workspace test coverage to 47 passing tests.
-- **Alternatives Considered:** Keeping business logic in Dart.
-- **Reasoning:** Porting to native Rust guarantees memory safety, eliminates GC pauses during critical profile downloads and proactive SIM refresh sessions, enables deterministic unit testing without a Flutter engine, and pushes repository code composition higher toward native Rust.
+## 18. Zero-Cost Cryptography, R8 Shrinking & APK Size Optimization
+- **Choice:** Drastically reduced release APK size and eliminated heavy cryptographic runtime dependencies:
+  - `crypto`: Expanded `nlpa_core::crypto` with pure safe Rust implementations of FIPS 197 AES-128 and AES-256 block ciphers, CBC mode, PKCS#7 padding/unpadding, standard Base64 codec, and GSMA/Telecom GM host MAC calculation.
+  - Excised `pointycastle`: Replaced heavy PointyCastle cryptography (~MBs of unused ciphers and ASN.1 engines) with a dedicated lightweight, zero-dependency `AesCipher` and native Rust primitives, removing `pointycastle: ^4.0.0` from `pubspec.yaml`.
+  - Excised 6.1MB Static Fonts: Completely removed un-subsetted TTF fonts (`GoogleSans-*.ttf` and `IBMPlexMono-Regular.ttf`) from disk and `pubspec.yaml`, switching `AppTheme` to hardware-accelerated Android system fonts (`sans-serif` and `monospace`), and removing `google_fonts: ^8.0.0`.
+  - R8 Minification & Resource Shrinking: Enabled `isMinifyEnabled = true` and `isShrinkResources = true` in `android/app/build.gradle.kts` with ProGuard rules safeguarding JNI methods, Shizuku, Cargokit, SQLite, and Flutter engine plugins.
+  - Dart AOT Symbol Stripping: Added `--obfuscate --split-debug-info=build/app/outputs/symbols` to `flutter build apk` in CI to strip symbol tables from `libapp.so`.
+- **Alternatives Considered:** Keeping PointyCastle and bundled static fonts.
+- **Reasoning:** Telecommunication utilities on mobile need minimal download size, rapid installation, and instant cold startup. Bundling 6MB of fonts and megabytes of unused PointyCastle classes bloated the APK needlessly when native Android system fonts and pure Rust/Dart crypto provide identical cryptographic correctness with zero overhead.
 
 

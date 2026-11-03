@@ -18,7 +18,7 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | `flutter analyze` | NOT RUN | Flutter is not available on `PATH`. |
 | `flutter test` | NOT RUN | Flutter is not available on `PATH`. |
 | `cargo fmt --check` in workspace | PASS | Completed successfully. |
-| `cargo test --workspace` | PASS | Completed successfully across all crates (`nlpa_core` modem tests: 7 passed; `nlpa_core` telecom/asn1/profile tests: 10 passed; `nlpa_core` RSP tests: 9 passed; `nlpa_core` ES10 tests: 4 passed; `nlpa_core` LPA engine tests: 3 passed; `nlpa_ui` virtual DOM tests: 1 passed; total 34 tests passed). |
+| `cargo test --workspace` | PASS | Completed successfully across all crates (`nlpa_core` modem tests: 7 passed; `nlpa_core` telecom/asn1/profile tests: 10 passed; `nlpa_core` RSP tests: 9 passed; `nlpa_core` ES10 tests: 4 passed; `nlpa_core` LPA engine tests: 3 passed; `nlpa_core` CAT tests: 6 passed; `nlpa_core` crypto tests: 9 passed; `nlpa_core` MCC/PLMN tests: 3 passed; `nlpa_core` notification address tests: 2 passed; `nlpa_ui` virtual DOM tests: 1 passed; total 55 tests passed). |
 | `cargo clippy --all-targets --all-features -- -D warnings` | PASS | Completed successfully without warnings across all workspace crates. |
 | `cargo fmt --check` in workspace | PASS | Completed successfully with zero formatting discrepancies. |
 | `cargo doc --no-deps` | PASS | Generated documentation cleanly with zero broken links or doc test warnings. |
@@ -42,6 +42,10 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | `lib/logic/notification_dispatcher.dart` | `nlpa_core::lpa::notifications` | eUICC Notification Queue manager (`NotificationQueue`, `NotificationRecord`) with pending delivery tracking and ES10b.HandleNotification ACK APDU generator. |
 | `lib/ts43/` | `nlpa_core::lpa::ts43` | GSMA TS.43 carrier entitlement client configurations and HTTP headers generator (`Ts43CarrierConfig`, `EntitlementStatus`). |
 | `lib/models/euicc_profile.dart` | `nlpa_core::profile` | GSMA eUICC profile representation (`EuiccProfile`), raw vs display ICCID separation, display name resolution logic. |
+| `lib/utils/cat_proactive.dart` | `nlpa_core::cat` | ETSI TS 102 221 / TS 102 223 / 3GPP TS 31.111 Card Application Toolkit proactive command encoder/decoder (`STATUS`, `FETCH`, `TERMINAL RESPONSE`), BER-TLV / COMPREHENSION-TLV parser, and eUICC `REFRESH` decision engine. |
+| `lib/utils/crypto_utils.dart` | `nlpa_core::crypto` | Standard SHA-256 (RFC 6234), GSMA SGP.22 `HashCc` computation, FIPS 197 AES-128/256 block cipher, CBC mode, PKCS#7 padding/unpadding, Base64 codec, and Telecom GM host MAC calculation. |
+| `lib/utils/mcc_utils.dart` | `nlpa_core::mcc` | ITU-T E.212 Mobile Country Code mapping to ISO 3166-1 alpha-2, Unicode regional indicator flag emojis, and 3-byte 3GPP PLMN decoder. |
+| `lib/utils/notification_address_validator.dart` | `nlpa_core::notification_address` | Strict GSMA SGP.22 notification server address validator guarding against malformed card metadata. |
 | Bridge Layer | `rust_lib_nlpa2::api::telecom` | Flutter Rust Bridge exports (`parse_activation_code`, `format_activation_code`, `hex_encode`, `hex_decode`, `nibble_swap`, `format_iccid`, `clean_iccid`, `validate_apdu`, `calculate_imei_luhn`, `decode_stored_imei`, `encode_stored_imei`, `parse_asn1_tlvs`, `create_euicc_profile`). |
 
 ## Remaining issues

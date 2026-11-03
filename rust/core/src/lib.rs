@@ -26,7 +26,11 @@ pub use cat::{
     CatProactive, CatProactiveError, CatResponseDecision, ProactiveCommandDetails, RESULT_SUCCESS,
     RESULT_UNABLE_TO_PROCESS,
 };
-pub use crypto::{compute_hash_cc, sha256};
+pub use crypto::{
+    aes_cbc_decrypt, aes_cbc_encrypt, base64_decode, base64_encode, calc_host_mac, compute_hash_cc,
+    decrypt_aes_256_cbc_with_key, encrypt_aes_256_cbc_with_key, key_from_password, pkcs7_pad,
+    pkcs7_unpad, sha256, AesCipher, CryptoError,
+};
 pub use hex::{bytes_to_hex, hex_to_bytes, swap_nibbles, HexError};
 pub use iccid::{format_iccid_grouped, iccid_for_display};
 pub use imei::{

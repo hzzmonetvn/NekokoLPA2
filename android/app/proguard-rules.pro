@@ -23,6 +23,10 @@
 -keep class com.cargokit.** { *; }
 -keep class flutter_rust_bridge.** { *; }
 
+# Flutter engine & plugin bindings
+-keep class io.flutter.** { *; }
+-keep class com.tekartik.sqflite.** { *; }
+
 # Desugaring and core AndroidX
 -dontwarn java.awt.**
 -dontwarn javax.annotation.**
