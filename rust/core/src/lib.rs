@@ -17,10 +17,11 @@ pub use apdu::{validate_apdu_sw, ApduError};
 pub use asn1::{
     decode_integer, decode_utf8_string, encode_integer, encode_length, encode_octet_string,
     encode_sequence, encode_tag, encode_tlv, encode_utf8_string, parse_profile_package,
-    validate_profile_elements, Asn1Error, Asn1Node, Asn1Reader, DeleteProfileRequest,
-    DisableProfileRequest, EnableProfileRequest, EuiccChallenge, EuiccConfiguredAddresses,
-    EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest, NotificationMetadata, PeType, ProfileElement,
-    RspProfileInfo, SetNicknameRequest,
+    validate_profile_elements, Asn1Error, Asn1Node, Asn1Reader, DeleteNotificationStatus,
+    DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest, EuiccChallenge,
+    EuiccConfiguredAddresses, EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest,
+    NotificationMetadata, NotificationSentResponse, PeType, ProfileElement, RspProfileInfo,
+    SetNicknameRequest,
 };
 pub use cat::{
     CatProactive, CatProactiveError, CatResponseDecision, ProactiveCommandDetails, RESULT_SUCCESS,
@@ -44,9 +45,13 @@ pub use lpa::{
     build_get_euicc_info2_apdu, build_get_profiles_info_apdu, build_list_notifications_apdu,
     build_remove_notification_apdu, build_select_isdr_apdu, build_set_nickname_apdu,
     parse_es10_response, wrap_store_data_apdu, DownloadSessionError, EntitlementStatus, LpaEngine,
-    LpaError, NotificationQueue, NotificationRecord, ProfileDownloadSession, ProfileOperation,
-    ProfileStateTransition, ProfileStateTransitionResult, StateTransitionError, Ts43CarrierConfig,
-    Ts43Error, ISDR_AID,
+    LpaError, NotificationAction, NotificationJob, NotificationPolicy, NotificationQueue,
+    NotificationRecord, NotificationStatus, NotificationSyncPlan, ProfileDownloadSession,
+    ProfileOperation, ProfileStateTransition, ProfileStateTransitionResult, StateTransitionError,
+    StoredNotification, Ts43CarrierConfig, Ts43Error, ISDR_AID, NOTIFICATION_INSTALL,
+    NOTIFICATION_LOAD_RPM_PACKAGE, NOTIFICATION_LOCAL_DELETE, NOTIFICATION_LOCAL_DISABLE,
+    NOTIFICATION_LOCAL_ENABLE, NOTIFICATION_RPM_DELETE, NOTIFICATION_RPM_DISABLE,
+    NOTIFICATION_RPM_ENABLE,
 };
 pub use mcc::{get_flag_emoji, mcc_to_country_code, parse_operator_id};
 pub use modem::*;

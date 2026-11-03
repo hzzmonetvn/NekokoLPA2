@@ -130,5 +130,16 @@
 - **Alternatives Considered:** Keeping download session state handling and retry logic in Dart.
 - **Reasoning:** State transitions over telecommunication modem buses are susceptible to silent resets and channel drops. Managing SGP.22 download sessions and idempotent state convergence in native Rust guarantees protocol correctness, eliminates GC overhead, and ensures robust error recovery.
 
+## 20. Pure Rust GSMA SGP.22 Notification Dispatcher, Policy Engine & Sync Planner
+- **Choice:** Ported GSMA SGP.22 notification lifecycle dispatching, automation policy evaluation, and synchronization planning to native Rust (`nlpa_core::lpa::notifications`, `nlpa_core::asn1::rsp`):
+  - `NotificationPolicy` & `NotificationAction`: Granular automation rules evaluating operations (`Install`, `Enable`, `Disable`, `Delete`) against user preferences for `auto_send`, `auto_remove`, and `delete_without_sending`.
+  - `NotificationSyncPlan`: Robust synchronization planner determining stale DB record pruning (when records are removed from card), counting un-sent notifications, grouping outbound jobs by SM-DP+ FQDN for parallel or batch delivery, and scheduling immediate card removals.
+  - `NotificationSentResponse` & `DeleteNotificationStatus`: SGP.22 ES10b APDU response codec (`Tag 0xBF30`) decoding eUICC deletion statuses (`Ok`, `NothingToDelete`, `UndefinedError`).
+  - `NotificationJob`: Formatter generating exact SGP.22 ES9+ `handleNotification` JSON payloads (`{"pendingNotification": "<base64>"}`).
+  - Verified with 5 integration tests in `rust/core/tests/notifications_test.rs`.
+- **Alternatives Considered:** Keeping notification decision logic, pruning calculations, and JSON formatting in Dart.
+- **Reasoning:** Processing notification queues and synchronization in native Rust guarantees deterministic policy evaluation, avoids GC latency during large notification batch cleanups, and ensures memory-safe telecom operations.
+
+
 
 

@@ -10,7 +10,7 @@ pub use der::{
 };
 pub use pe::{parse_profile_package, validate_profile_elements, PeType, ProfileElement};
 pub use rsp::{
-    DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest, EuiccChallenge,
-    EuiccConfiguredAddresses, EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest,
-    NotificationMetadata, RspProfileInfo, SetNicknameRequest,
+    DeleteNotificationStatus, DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest,
+    EuiccChallenge, EuiccConfiguredAddresses, EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest,
+    NotificationMetadata, NotificationSentResponse, RspProfileInfo, SetNicknameRequest,
 };

@@ -800,3 +800,90 @@ impl EuiccMemoryResetRequest {
         Ok(Self { reset_options: opt })
     }
 }
+
+/// Status code returned by eUICC after an ES10b.RemoveNotificationFromList operation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeleteNotificationStatus {
+    Ok,
+    NothingToDelete,
+    UndefinedError,
+    Other(i64),
+}
+
+impl From<i64> for DeleteNotificationStatus {
+    fn from(code: i64) -> Self {
+        match code {
+            0 => Self::Ok,
+            1 => Self::NothingToDelete,
+            127 => Self::UndefinedError,
+            other => Self::Other(other),
+        }
+    }
+}
+
+impl DeleteNotificationStatus {
+    #[must_use]
+    pub const fn to_code(self) -> i64 {
+        match self {
+            Self::Ok => 0,
+            Self::NothingToDelete => 1,
+            Self::UndefinedError => 127,
+            Self::Other(c) => c,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_ok(self) -> bool {
+        matches!(self, Self::Ok)
+    }
+}
+
+/// SGP.22 ES10b.NotificationSentResponse (Tag 0xBF30).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NotificationSentResponse {
+    pub delete_notification_status: DeleteNotificationStatus,
+}
+
+impl NotificationSentResponse {
+    #[must_use]
+    pub fn new(status: DeleteNotificationStatus) -> Self {
+        Self {
+            delete_notification_status: status,
+        }
+    }
+
+    /// Encodes to ASN.1 DER Tag 0xBF30.
+    #[must_use]
+    pub fn encode(&self) -> Vec<u8> {
+        let status_bytes = encode_integer(self.delete_notification_status.to_code());
+        encode_tlv(TAG_REMOVE_NOTIFICATION, &status_bytes)
+    }
+
+    /// Decodes from an ASN.1 node.
+    ///
+    /// # Errors
+    /// Returns [`Asn1Error`] on tag mismatch or missing deleteNotificationStatus integer.
+    pub fn decode(node: &Asn1Node) -> Result<Self, Asn1Error> {
+        if !node.is_tag(TAG_REMOVE_NOTIFICATION) {
+            return Err(Asn1Error::UnexpectedTag {
+                expected: TAG_REMOVE_NOTIFICATION,
+                actual: node.tag,
+            });
+        }
+
+        let status_code = if let Some(child) = node.find_child(0x02) {
+            decode_integer(&child.value)?
+        } else if !node.value.is_empty() {
+            decode_integer(&node.value)?
+        } else {
+            return Err(Asn1Error::MissingField {
+                tag: 0x02,
+                name: "deleteNotificationStatus",
+            });
+        };
+
+        Ok(Self {
+            delete_notification_status: DeleteNotificationStatus::from(status_code),
+        })
+    }
+}
