@@ -122,4 +122,13 @@
 - **Alternatives Considered:** Keeping PointyCastle and bundled static fonts.
 - **Reasoning:** Telecommunication utilities on mobile need minimal download size, rapid installation, and instant cold startup. Bundling 6MB of fonts and megabytes of unused PointyCastle classes bloated the APK needlessly when native Android system fonts and pure Rust/Dart crypto provide identical cryptographic correctness with zero overhead.
 
+## 19. Pure Rust GSMA SGP.22 Download Session & Convergence State Controller
+- **Choice:** Ported GSMA SGP.22 profile download lifecycle management and modem state convergence to native Rust (`nlpa_core::lpa::download_session` and `nlpa_core::lpa::state_transition`):
+  - `ProfileDownloadSession`: Complete protocol session flow managing `EUICCInfo1` (`0xBF20`) and `EuiccChallenge` (`0xBF2E`) ingestion, SM-DP+ `InitiateAuthentication` response processing with 1..=16 octet normalization and exact hex string preservation, SGP.22 `HashCc` computation (`SHA256(SHA256(CC) || TransactionID)`), and `AuthenticateClient` verification.
+  - `ProfileStateTransition`: Idempotent convergence controller coordinating profile enable, disable, and delete operations across modem resets with independent verification reads, bounded transient error tolerance, and non-convergence error diagnostics.
+  - Verified with 7 integration tests in `rust/core/tests/download_session_test.rs` and `rust/core/tests/state_transition_test.rs`.
+- **Alternatives Considered:** Keeping download session state handling and retry logic in Dart.
+- **Reasoning:** State transitions over telecommunication modem buses are susceptible to silent resets and channel drops. Managing SGP.22 download sessions and idempotent state convergence in native Rust guarantees protocol correctness, eliminates GC overhead, and ensures robust error recovery.
+
+
 

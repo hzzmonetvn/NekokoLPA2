@@ -43,9 +43,10 @@ pub use lpa::{
     build_get_euicc_configured_addresses_apdu, build_get_euicc_info1_apdu,
     build_get_euicc_info2_apdu, build_get_profiles_info_apdu, build_list_notifications_apdu,
     build_remove_notification_apdu, build_select_isdr_apdu, build_set_nickname_apdu,
-    parse_es10_response, wrap_store_data_apdu, EntitlementStatus, LpaEngine, LpaError,
-    NotificationQueue, NotificationRecord, ProfileOperation, Ts43CarrierConfig, Ts43Error,
-    ISDR_AID,
+    parse_es10_response, wrap_store_data_apdu, DownloadSessionError, EntitlementStatus, LpaEngine,
+    LpaError, NotificationQueue, NotificationRecord, ProfileDownloadSession, ProfileOperation,
+    ProfileStateTransition, ProfileStateTransitionResult, StateTransitionError, Ts43CarrierConfig,
+    Ts43Error, ISDR_AID,
 };
 pub use mcc::{get_flag_emoji, mcc_to_country_code, parse_operator_id};
 pub use modem::*;
