@@ -140,6 +140,16 @@
 - **Alternatives Considered:** Keeping notification decision logic, pruning calculations, and JSON formatting in Dart.
 - **Reasoning:** Processing notification queues and synchronization in native Rust guarantees deterministic policy evaluation, avoids GC latency during large notification batch cleanups, and ensures memory-safe telecom operations.
 
+## 21. GSMA SGP.22 Activation Code Fuzzy Extractor & Flutter Rust Bridge LPA Subsystem
+- **Choice:** Implemented fuzzy activation code extraction and bridged notification synchronization to Flutter (`nlpa_core::activation_code`, `rust_lib_nlpa2::api::lpa`, `rust_lib_nlpa2::api::telecom`):
+  - `ActivationCode::extract_from_text`: Robust parser extracting embedded GSMA `LPA:1$...` activation codes from QR scanning text, onboarding URLs (`https://.../?code=LPA:1$...`), and clipboard buffers.
+  - SGP.22 Section 4.1.2 confirmation code required flag detection and FQDN validation via `is_valid_smdp_address`.
+  - `rust_lib_nlpa2::api::lpa`: Exposed zero-cost bridge functions (`plan_notification_sync`, `evaluate_notification_action`, `build_handle_notification_json`, `compute_sgp22_hash_cc`) connecting the native notification sync engine directly to Flutter UI.
+  - `rust_lib_nlpa2::api::telecom`: Exposed `extract_activation_code` and updated `ActivationCodeDto` with confirmation code metadata.
+  - Verified with comprehensive integration tests in `rust/core/tests/telecom_test.rs` and `rust/core/tests/notifications_test.rs`.
+- **Alternatives Considered:** Keeping activation code parsing and notification planning in Dart.
+- **Reasoning:** QR scanners and deep links frequently introduce surrounding whitespace or URL wrapper parameters. Handling extraction and synchronization in native Rust guarantees zero-allocation performance, resilience against malformed inputs, and strict cryptographic memory safety.
+
 
 
 

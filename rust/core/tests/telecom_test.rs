@@ -72,6 +72,32 @@ fn test_activation_code_parser_minimal() {
 }
 
 #[test]
+fn test_activation_code_extraction_and_validation() {
+    // 1. Extract from URI query string
+    let url =
+        "https://lpa.example.com/download?code=LPA:1$smdp.example.com$MATCH-99&carrier=telecom";
+    let extracted = ActivationCode::extract_from_text(url).expect("extract from url");
+    assert_eq!(extracted.smdp_address, "smdp.example.com");
+    assert_eq!(extracted.matching_id, "MATCH-99");
+    assert!(extracted.is_valid_smdp_address());
+
+    // 2. Extract from informal text with lowercase prefix
+    let text =
+        "Scan this profile: lpa:1$rsp.truphone.com$ABCDEF123456$1.2.3$1$4321 on your device.";
+    let extracted2 = ActivationCode::extract_from_text(text).expect("extract from text");
+    assert_eq!(extracted2.smdp_address, "rsp.truphone.com");
+    assert_eq!(extracted2.matching_id, "ABCDEF123456");
+    assert_eq!(extracted2.smdp_oid.as_deref(), Some("1.2.3"));
+    assert!(extracted2.confirmation_code_required);
+    assert_eq!(extracted2.confirmation_code.as_deref(), Some("4321"));
+    assert!(extracted2.is_valid_smdp_address());
+
+    // 3. Invalid SMDP address detection
+    let bad_ac = ActivationCode::new("bad address with spaces", "MATCH", None, None);
+    assert!(!bad_ac.is_valid_smdp_address());
+}
+
+#[test]
 fn test_iccid_formatting() {
     let raw = "8984040000000000001F";
     let display = iccid_for_display(raw);

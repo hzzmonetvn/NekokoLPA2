@@ -17,6 +17,7 @@ pub struct ActivationCodeDto {
     pub matching_id: String,
     pub smdp_oid: Option<String>,
     pub confirmation_code: Option<String>,
+    pub confirmation_code_required: bool,
 }
 
 #[frb]
@@ -48,6 +49,19 @@ pub fn parse_activation_code(code: String) -> Result<ActivationCodeDto, String> 
         matching_id: parsed.matching_id,
         smdp_oid: parsed.smdp_oid,
         confirmation_code: parsed.confirmation_code,
+        confirmation_code_required: parsed.confirmation_code_required,
+    })
+}
+
+#[frb]
+pub fn extract_activation_code(raw_text: String) -> Option<ActivationCodeDto> {
+    CoreActivationCode::extract_from_text(&raw_text).map(|parsed| ActivationCodeDto {
+        format: parsed.format,
+        smdp_address: parsed.smdp_address,
+        matching_id: parsed.matching_id,
+        smdp_oid: parsed.smdp_oid,
+        confirmation_code: parsed.confirmation_code,
+        confirmation_code_required: parsed.confirmation_code_required,
     })
 }
 
