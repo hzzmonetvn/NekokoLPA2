@@ -150,6 +150,24 @@
 - **Alternatives Considered:** Keeping activation code parsing and notification planning in Dart.
 - **Reasoning:** QR scanners and deep links frequently introduce surrounding whitespace or URL wrapper parameters. Handling extraction and synchronization in native Rust guarantees zero-allocation performance, resilience against malformed inputs, and strict cryptographic memory safety.
 
+## 22. APDU Channel Transport Engine & GSMA SGP.22 ES9+ Protocol Codec
+- **Choice:** Ported the full ISO/IEC 7816-4 APDU transport engine and GSMA SGP.22 ES9+ protocol subsystem to native Rust (`nlpa_core::channel`, `nlpa_core::es9`, `rust_lib_nlpa2::api::lpa`):
+  - `nlpa_core::channel`:
+    - ISO/IEC 7816-4 logical channel mapping supporting both basic channels (0..=3) and extended logical channels (4..=19).
+    - MANAGE CHANNEL Open (`[0x00, 0x70, 0x00, 0x00, 0x01]`) and Close (`[0x00, 0x70, 0x80, ch, 0x00]`) builders with basic channel protection.
+    - `chain_apdu_request` handling request chaining over Maximum Segment Size (MSS) for both `STORE DATA` (INS 0xE2 with P1 bit 7 and block counter) and standard ISO commands (CLA bit 4 chaining).
+    - `ResponseReassembler` state machine processing multi-frame responses with `GET RESPONSE` (SW1 0x61) and automatic Le reissue (SW1 0x6C).
+    - `OmapiChannelTracker` and `OmapiSafetyLatch` preventing stale handle reuse and guarding against corrupted modem bus states.
+  - `nlpa_core::es9`:
+    - GSMA SGP.22 ES9+ protocol endpoints (`initiateAuthentication`, `authenticateClient`, `getBoundProfilePackage`, `cancelSession`, `handleNotification`) and standard headers (`gsma-rsp-lpad`, `gsma/rsp/v2.2.0`).
+    - Deterministic request serialization and zero-dependency JSON parser (`JsonValue`).
+    - SGP.22 function execution status verification extracting standard `subjectCode` and `reasonCode`.
+    - Typed response parsers with automatic base64 ASN.1 payload decoding.
+  - `rust_lib_nlpa2::api::lpa`: Exposed zero-cost bridge functions connecting APDU framing, channel mapping, and ES9+ request/response handling directly to Flutter.
+  - Verified with 14 new integration tests in `rust/core/tests/channel_test.rs` and `rust/core/tests/es9_test.rs` (total 68 workspace tests passing).
+- **Alternatives Considered:** Keeping APDU chaining and HTTP ES9+ payload serialization in Dart.
+- **Reasoning:** Managing low-level APDU framing, logical channel bitmasking, and response reassembly in native Rust guarantees strict ISO 7816-4 conformance, zero memory allocations during segmenting, and immunity against channel state corruption. Decoding ES9+ structures in Rust provides compile-time memory safety for cryptographic certificates and bound profile packages.
+
 
 
 

@@ -2,7 +2,9 @@ pub mod activation_code;
 pub mod apdu;
 pub mod asn1;
 pub mod cat;
+pub mod channel;
 pub mod crypto;
+pub mod es9;
 pub mod hex;
 pub mod iccid;
 pub mod imei;
@@ -27,10 +29,25 @@ pub use cat::{
     CatProactive, CatProactiveError, CatResponseDecision, ProactiveCommandDetails, RESULT_SUCCESS,
     RESULT_UNABLE_TO_PROCESS,
 };
+pub use channel::{
+    build_manage_channel_close_apdu, build_manage_channel_open_apdu, chain_apdu_request,
+    frame_apdu_command, map_logical_channel_cla, ChannelError, OmapiChannelTracker,
+    OmapiSafetyLatch, ReassemblyAction, ResponseReassembler,
+};
 pub use crypto::{
     aes_cbc_decrypt, aes_cbc_encrypt, base64_decode, base64_encode, calc_host_mac, compute_hash_cc,
     decrypt_aes_256_cbc_with_key, encrypt_aes_256_cbc_with_key, key_from_password, pkcs7_pad,
     pkcs7_unpad, sha256, AesCipher, CryptoError,
+};
+pub use es9::{
+    build_authenticate_client_body, build_cancel_session_body, build_es9_headers,
+    build_get_bound_profile_package_body, build_handle_notification_body,
+    build_initiate_authentication_body, parse_authenticate_client_response,
+    parse_get_bound_profile_package_response, parse_initiate_authentication_response, parse_json,
+    verify_es9_header, AuthenticateClientResponse, Es9Error, GetBoundProfilePackageResponse,
+    InitiateAuthenticationResponse, JsonValue, ENDPOINT_AUTHENTICATE_CLIENT,
+    ENDPOINT_CANCEL_SESSION, ENDPOINT_GET_BOUND_PROFILE_PACKAGE, ENDPOINT_HANDLE_NOTIFICATION,
+    ENDPOINT_INITIATE_AUTHENTICATION,
 };
 pub use hex::{bytes_to_hex, hex_to_bytes, swap_nibbles, HexError};
 pub use iccid::{format_iccid_grouped, iccid_for_display};
