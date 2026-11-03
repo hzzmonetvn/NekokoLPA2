@@ -26,8 +26,11 @@
 # Flutter engine & plugin bindings
 -keep class io.flutter.** { *; }
 -keep class com.tekartik.sqflite.** { *; }
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**
+-dontwarn com.google.android.play.core.**
 
 # Desugaring and core AndroidX
 -dontwarn java.awt.**
 -dontwarn javax.annotation.**
+-dontwarn org.bouncycastle.**
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
