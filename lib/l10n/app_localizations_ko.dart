@@ -148,13 +148,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteReadersSubtitle => 'RemoCard 컴패니언 앱 구성';
-
-  @override
-  String get enableBle => '블루투스 커넥터';
-
-  @override
-  String get enableBleSubtitle => '블루투스 리더 스캔 및 연결 활성화';
-
   @override
   String get enableCcid => 'USB CCID 커넥터';
 
@@ -198,13 +191,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get ccidReaderSubtitle => 'USB 스마트 카드 리더 및 PC/SC 장치';
-
-  @override
-  String get bluetoothReaderTitle => '블루투스';
-
-  @override
-  String get bluetoothReaderSubtitle => '블루투스 LE 스마트 카드 리더 및 라이터';
-
   @override
   String get remoteReadersTitle => '원격 리더';
 
@@ -336,22 +322,8 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get reconnect => '재연결';
-
-  @override
-  String get bluetoothNotConnected => '블루투스가 연결되지 않았습니다';
-
-  @override
-  String get bluetoothNotConnectedSubtitle =>
-      '블루투스가 활성화되어 있고 기기가 근처에 있는지 확인하세요. \'연결\'을 탭하여 기기 사용을 시작하세요.';
-
   @override
   String get bluetoothConnectionFailed => '블루투스 연결에 실패했습니다';
-
-  @override
-  String bluetoothConnectionFailedSubtitle(Object error) {
-    return '블루투스 기기 연결에 실패했습니다.\n\n$error';
-  }
-
   @override
   String get removeDevice => '원격 기기';
 
@@ -381,11 +353,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get connectCompatibleReader => '시작하려면 호환되는 리더를 연결하세요.';
-
-  @override
-  String get connectReaderMessageBle =>
-      '블루투스 지원 eUICC가 있는 경우 호환되는 블루투스 기기를 스캔할 수도 있습니다.';
-
   @override
   String get connectReaderMessageNoBle => 'CCID 리더가 컴퓨터에 연결되어 있는지 확인하세요.';
 
@@ -395,10 +362,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get smartCardExtensionMessage =>
       '이 브라우저에서 USB CCID 리더에 액세스하려면 확장 프로그램이 필요합니다.';
-
-  @override
-  String get scanForBluetooth => '블루투스 스캔';
-
   @override
   String get connectRemote => '원격 연결';
 
@@ -778,11 +741,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get connectReader => '시작하려면 호환되는 리더를 연결하세요.';
-
-  @override
-  String get connectReaderSubtitleBle =>
-      '블루투스 지원 eUICC가 있는 경우 호환되는 블루투스 기기를 스캔할 수도 있습니다.';
-
   @override
   String get connectReaderSubtitleCcid => 'CCID 리더가 컴퓨터에 연결되어 있는지 확인하세요.';
 
@@ -835,14 +793,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get useRemoteIcon => '원격 아이콘 사용';
-
-  @override
-  String get bleDisconnectedTitle => '블루투스 연결 끊김';
-
-  @override
-  String get bleDisconnectedMessage =>
-      '카드 리더와의 연결이 갑자기 끊어졌습니다. 기기가 근처에 있고 켜져 있는지 확인해 주세요.';
-
   @override
   String get cardStuckRefreshingMessage =>
       '프로파일 상태 변경이 진행 중입니다 - 멈춘 경우 SIM 카드를 수동으로 다시 꽂아 보세요.';
@@ -1081,10 +1031,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get noReadersFoundMessage =>
       '호환되는 리더를 연결하거나 BLE 기기를 스캔하여 eSIM 프로파일을 관리하세요.';
-
-  @override
-  String get scanBle => 'BLE 스캔';
-
   @override
   String get reminderDetails => '리마인더 세부 정보';
 
@@ -1561,10 +1507,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get refreshDevices => '기기 새로고침';
-
-  @override
-  String get scanBluetooth => '블루투스 스캔';
-
   @override
   String get lessThan1Kb => '< 1 KB';
 
@@ -2008,20 +1950,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String defaultPasswordWillChangeMessage(String password) {
     return '이 기기는 기본 비밀번호로 연결되어 있습니다. 이름을 변경하면 비밀번호가 $password(으)로 설정됩니다. 다시 연결하기 전에 이 비밀번호를 저장하세요.';
   }
-
-  @override
-  String get savedBleDevices => '이전에 연결한 BLE 기기';
-
-  @override
-  String get savedBleDevicesSubtitle => '이 기기에 저장된 기기 이름과 비밀번호를 확인합니다';
-
-  @override
-  String get savedBleDevicesDescription =>
-      '각 항목은 로컬에 저장된 NBLESim 비밀번호입니다. 기본 비밀번호도 함께 저장됩니다.';
-
-  @override
-  String get noSavedBleDevices => '이전에 연결한 BLE 기기가 없습니다.';
-
   @override
   String get deviceName => '기기 이름';
 
@@ -2431,10 +2359,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get voWifiUSBCCIDSmartCardReader => 'USB CCID smart-card reader';
-
-  @override
-  String get voWifiBluetoothSIMReader => 'Bluetooth SIM reader';
-
   @override
   String get voWifiMyNumber => 'My number';
 

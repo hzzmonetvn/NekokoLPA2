@@ -160,14 +160,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get remoteReadersSubtitle => 'RemoCard-Begleit-Apps konfigurieren';
-
-  @override
-  String get enableBle => 'Bluetooth-Anschluss';
-
-  @override
-  String get enableBleSubtitle =>
-      'Scannen und Verbinden mit Bluetooth-Lesern aktivieren';
-
   @override
   String get enableCcid => 'USB-CCID-Anschluss';
 
@@ -214,14 +206,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ccidReaderSubtitle => 'USB-Smartcard-Leser und PC/SC-Geräte';
-
-  @override
-  String get bluetoothReaderTitle => 'Bluetooth';
-
-  @override
-  String get bluetoothReaderSubtitle =>
-      'Bluetooth LE Smartcard-Leser und -Schreiber';
-
   @override
   String get remoteReadersTitle => 'Remote-Leser';
 
@@ -365,22 +349,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reconnect => 'Erneut verbinden';
-
-  @override
-  String get bluetoothNotConnected => 'Bluetooth nicht verbunden';
-
-  @override
-  String get bluetoothNotConnectedSubtitle =>
-      'Stellen Sie sicher, dass Bluetooth aktiviert ist und das Gerät in der Nähe ist. Tippen Sie auf Verbinden, um dieses Gerät zu verwenden.';
-
   @override
   String get bluetoothConnectionFailed => 'Bluetooth-Verbindung fehlgeschlagen';
-
-  @override
-  String bluetoothConnectionFailedSubtitle(Object error) {
-    return 'Verbindung zum Bluetooth-Gerät fehlgeschlagen.\n\n$error';
-  }
-
   @override
   String get removeDevice => 'Gerät entfernen';
 
@@ -413,11 +383,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get connectCompatibleReader =>
       'Verbinden Sie ein kompatibles Lesegerät, um zu beginnen.';
-
-  @override
-  String get connectReaderMessageBle =>
-      'Sie können auch nach kompatiblen Bluetooth-Geräten suchen, wenn Sie eine eUICC mit Bluetooth-Unterstützung haben.';
-
   @override
   String get connectReaderMessageNoBle =>
       'Stellen Sie sicher, dass Ihr CCID-Leser an Ihren Computer angeschlossen ist.';
@@ -429,10 +394,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get smartCardExtensionMessage =>
       'Die Erweiterung ist erforderlich, um in diesem Browser auf USB-CCID-Leser zuzugreifen.';
-
-  @override
-  String get scanForBluetooth => 'Nach Bluetooth scannen';
-
   @override
   String get connectRemote => 'Remote verbinden';
 
@@ -827,11 +788,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get connectReader =>
       'Verbinden Sie ein kompatibles Lesegerät, um zu beginnen.';
-
-  @override
-  String get connectReaderSubtitleBle =>
-      'Sie können auch nach kompatiblen Bluetooth-Geräten suchen, wenn Sie eine eUICC mit Bluetooth-Unterstützung haben.';
-
   @override
   String get connectReaderSubtitleCcid =>
       'Stellen Sie sicher, dass Ihr CCID-Leser an Ihren Computer angeschlossen ist.';
@@ -886,14 +842,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get useRemoteIcon => 'Remote-Icon verwenden';
-
-  @override
-  String get bleDisconnectedTitle => 'Bluetooth-Verbindung verloren';
-
-  @override
-  String get bleDisconnectedMessage =>
-      'Die Verbindung zum Kartenlesegerät wurde unerwartet unterbrochen. Bitte stelle sicher, dass dieser sich in der Nähe befindet und eingeschalten ist.';
-
   @override
   String get cardStuckRefreshingMessage =>
       'Profilstatus wird gerade geändert – falls es hängen bleibt, die SIM-Karte manuell neu einstecken.';
@@ -1136,10 +1084,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get noReadersFoundMessage =>
       'Schließen Sie ein kompatibles Lesegerät an oder scannen Sie nach BLE-Geräten, um Ihre eSIM-Profile zu verwalten.';
-
-  @override
-  String get scanBle => 'Nach BLE scannen';
-
   @override
   String get reminderDetails => 'Erinnerungsdetails';
 
@@ -1634,10 +1578,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get refreshDevices => 'Geräte aktualisieren';
-
-  @override
-  String get scanBluetooth => 'Bluetooth scannen';
-
   @override
   String get lessThan1Kb => '< 1 KB';
 
@@ -2094,21 +2034,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String defaultPasswordWillChangeMessage(String password) {
     return 'Dieses Gerät ist mit seinem Standardpasswort verbunden. Beim Umbenennen wird das Passwort auf $password gesetzt. Speichern Sie dieses Passwort, bevor Sie sich erneut verbinden.';
   }
-
-  @override
-  String get savedBleDevices => 'Zuvor verbundene BLE-Geräte';
-
-  @override
-  String get savedBleDevicesSubtitle =>
-      'Auf diesem Gerät gespeicherte Gerätenamen und Passwörter anzeigen';
-
-  @override
-  String get savedBleDevicesDescription =>
-      'Jeder Eintrag ist ein lokal gespeichertes NBLESim-Passwort. Standardpasswörter werden ebenfalls gespeichert.';
-
-  @override
-  String get noSavedBleDevices => 'Keine zuvor verbundenen BLE-Geräte.';
-
   @override
   String get deviceName => 'Gerätename';
 
@@ -2524,10 +2449,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get voWifiUSBCCIDSmartCardReader => 'USB CCID smart-card reader';
-
-  @override
-  String get voWifiBluetoothSIMReader => 'Bluetooth SIM reader';
-
   @override
   String get voWifiMyNumber => 'My number';
 

@@ -1,11 +1,15 @@
 pub mod activation_code;
 pub mod apdu;
 pub mod asn1;
+pub mod cat;
+pub mod crypto;
 pub mod hex;
 pub mod iccid;
 pub mod imei;
 pub mod lpa;
+pub mod mcc;
 pub mod modem;
+pub mod notification_address;
 pub mod profile;
 
 pub use activation_code::{ActivationCode, ActivationCodeError};
@@ -18,6 +22,11 @@ pub use asn1::{
     EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest, NotificationMetadata, PeType, ProfileElement,
     RspProfileInfo, SetNicknameRequest,
 };
+pub use cat::{
+    CatProactive, CatProactiveError, CatResponseDecision, ProactiveCommandDetails, RESULT_SUCCESS,
+    RESULT_UNABLE_TO_PROCESS,
+};
+pub use crypto::{compute_hash_cc, sha256};
 pub use hex::{bytes_to_hex, hex_to_bytes, swap_nibbles, HexError};
 pub use iccid::{format_iccid_grouped, iccid_for_display};
 pub use imei::{
@@ -34,5 +43,7 @@ pub use lpa::{
     NotificationQueue, NotificationRecord, ProfileOperation, Ts43CarrierConfig, Ts43Error,
     ISDR_AID,
 };
+pub use mcc::{get_flag_emoji, mcc_to_country_code, parse_operator_id};
 pub use modem::*;
+pub use notification_address::is_valid_notification_address;
 pub use profile::EuiccProfile;

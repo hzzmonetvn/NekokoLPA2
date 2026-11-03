@@ -145,7 +145,6 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
   }
   EUICCInfo2? _finalEuiccInfo2;
   Channel? _sessionChannel;
-  Uint8List? _euiccInfo1Bytes;
 
   @override
   void initState() {
@@ -499,8 +498,7 @@ class _DownloadProfilePageState extends State<DownloadProfilePage> {
           }
           final challengeBytes = await widget.profileManager.getEuiccChallenge(useChannel: channel);
           final info1Bytes = await widget.profileManager.getEuiccInfo1(useChannel: channel);
-          _euiccInfo1Bytes = info1Bytes;
-          
+
           String? currentEid;
           try {
             currentEid = await widget.profileManager.getEid(useChannel: channel);

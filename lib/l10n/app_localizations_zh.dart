@@ -148,13 +148,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteReadersSubtitle => '配置 RemoCard 配件应用';
-
-  @override
-  String get enableBle => '蓝牙连接器';
-
-  @override
-  String get enableBleSubtitle => '启用扫描和连接蓝牙读卡器';
-
   @override
   String get enableCcid => 'USB CCID 连接器';
 
@@ -196,13 +189,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ccidReaderSubtitle => 'USB智能卡读卡器和PC/SC设备';
-
-  @override
-  String get bluetoothReaderTitle => '蓝牙';
-
-  @override
-  String get bluetoothReaderSubtitle => '蓝牙LE智能卡读卡器和写卡器';
-
   @override
   String get remoteReadersTitle => '远程读卡器';
 
@@ -334,21 +320,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reconnect => '重新连接';
-
-  @override
-  String get bluetoothNotConnected => '蓝牙未连接';
-
-  @override
-  String get bluetoothNotConnectedSubtitle => '请确保蓝牙已开启且设备在附近。点击连接以开始使用此设备。';
-
   @override
   String get bluetoothConnectionFailed => '蓝牙连接失败';
-
-  @override
-  String bluetoothConnectionFailedSubtitle(Object error) {
-    return '无法连接到蓝牙设备。\n\n$error';
-  }
-
   @override
   String get removeDevice => '移除设备';
 
@@ -378,10 +351,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get connectCompatibleReader => '请连接兼容的读卡器以开始。';
-
-  @override
-  String get connectReaderMessageBle => '如果您有支持蓝牙的 eUICC，也可以扫描蓝牙设备。';
-
   @override
   String get connectReaderMessageNoBle => '请确保您的 CCID 读卡器已连接到电脑。';
 
@@ -390,10 +359,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get smartCardExtensionMessage => '此浏览器需要扩展程序才能访问 USB CCID 读卡器。';
-
-  @override
-  String get scanForBluetooth => '扫描蓝牙设备';
-
   @override
   String get connectRemote => '连接远程设备';
 
@@ -772,10 +737,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get connectReader => '连接兼容的读卡器以开始。';
-
-  @override
-  String get connectReaderSubtitleBle => '如果您有支持蓝牙的 eUICC，也可以扫描兼容的蓝牙设备。';
-
   @override
   String get connectReaderSubtitleCcid => '请确保您的 CCID 读卡器已连接到电脑。';
 
@@ -824,13 +785,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get useRemoteIcon => '使用远程图标';
-
-  @override
-  String get bleDisconnectedTitle => '蓝牙连接丢失';
-
-  @override
-  String get bleDisconnectedMessage => '与卡片阅读器的连接突然丢失。请确保它在附近并已开启。';
-
   @override
   String get cardStuckRefreshingMessage => '配置文件状态正在更改——如果卡住，请手动将SIM卡重新插入。';
 
@@ -1065,10 +1019,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noReadersFoundMessage => '插入兼容的读取器或扫描蓝牙设备以管理您的 eSIM 配置。';
-
-  @override
-  String get scanBle => '扫描蓝牙';
-
   @override
   String get reminderDetails => '提醒详情';
 
@@ -1536,10 +1486,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get refreshDevices => '刷新设备';
-
-  @override
-  String get scanBluetooth => '扫描蓝牙';
-
   @override
   String get lessThan1Kb => '< 1 KB';
 
@@ -1983,19 +1929,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String defaultPasswordWillChangeMessage(String password) {
     return '此设备正使用默认密码连接。重命名后密码将变为 $password。请在重新连接前保存该密码。';
   }
-
-  @override
-  String get savedBleDevices => '曾连接的 BLE 设备';
-
-  @override
-  String get savedBleDevicesSubtitle => '查看保存在本设备上的设备名称和密码';
-
-  @override
-  String get savedBleDevicesDescription => '每条记录都是本地保存的 NBLESim 密码，默认密码也会被保存。';
-
-  @override
-  String get noSavedBleDevices => '没有曾连接的 BLE 设备。';
-
   @override
   String get deviceName => '设备名称';
 
@@ -2401,10 +2334,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get voWifiUSBCCIDSmartCardReader => 'USB CCID smart-card reader';
-
-  @override
-  String get voWifiBluetoothSIMReader => 'Bluetooth SIM reader';
-
   @override
   String get voWifiMyNumber => 'My number';
 
@@ -3120,13 +3049,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteReadersSubtitle => '配置 RemoCard 配件應用';
-
-  @override
-  String get enableBle => '藍牙連接器';
-
-  @override
-  String get enableBleSubtitle => '啟用掃描和連接藍牙讀卡器';
-
   @override
   String get enableCcid => 'USB CCID 連接器';
 
@@ -3168,13 +3090,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get ccidReaderSubtitle => 'USB智慧卡讀卡機和PC/SC裝置';
-
-  @override
-  String get bluetoothReaderTitle => '藍牙';
-
-  @override
-  String get bluetoothReaderSubtitle => '藍牙LE智慧卡讀卡機和寫卡機';
-
   @override
   String get remoteReadersTitle => '遠端讀卡機';
 
@@ -3306,21 +3221,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get reconnect => '重新連線';
-
-  @override
-  String get bluetoothNotConnected => '藍牙未連接';
-
-  @override
-  String get bluetoothNotConnectedSubtitle => '請確保藍牙已開啟且設備在附近。點擊連接以開始使用此設備。';
-
   @override
   String get bluetoothConnectionFailed => '藍牙連接失敗';
-
-  @override
-  String bluetoothConnectionFailedSubtitle(Object error) {
-    return '無法連接到藍牙設備。\n\n$error';
-  }
-
   @override
   String get removeDevice => '移除設備';
 
@@ -3350,10 +3252,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get connectCompatibleReader => '請連接相容的讀卡機以開始。';
-
-  @override
-  String get connectReaderMessageBle => '如果您有支援藍牙的 eUICC，也可以掃描藍牙裝置。';
-
   @override
   String get connectReaderMessageNoBle => '請確保您的 CCID 讀卡機已連接到電腦。';
 
@@ -3362,10 +3260,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get smartCardExtensionMessage => '此瀏覽器需要擴充功能才能存取 USB CCID 讀卡機。';
-
-  @override
-  String get scanForBluetooth => '掃描藍牙裝置';
-
   @override
   String get connectRemote => '連接遠端裝置';
 
@@ -3714,10 +3608,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get connectReader => '連接相容的讀卡機以開始。';
-
-  @override
-  String get connectReaderSubtitleBle => '如果您有支援藍牙的 eUICC，也可以掃描相容的藍牙設備。';
-
   @override
   String get connectReaderSubtitleCcid => '請確保您的 CCID 讀卡機已連接到電腦。';
 
@@ -3767,13 +3657,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get useRemoteIcon => '使用遠端圖示';
-
-  @override
-  String get bleDisconnectedTitle => '藍牙連線中斷';
-
-  @override
-  String get bleDisconnectedMessage => '與讀卡機的連線突然中斷。請確認它在附近並已開啟。';
-
   @override
   String get cardStuckRefreshingMessage => '設定檔狀態正在更改——如果卡住，請手動將SIM卡重新插入。';
 
@@ -4008,10 +3891,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noReadersFoundMessage => '插入兼容的讀取器或掃描藍牙設備以管理您的 eSIM 配置。';
-
-  @override
-  String get scanBle => '掃描藍牙';
-
   @override
   String get reminderDetails => '提醒詳情';
 
@@ -4479,10 +4358,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get refreshDevices => '刷新設備';
-
-  @override
-  String get scanBluetooth => '掃描藍牙';
-
   @override
   String get lessThan1Kb => '< 1 KB';
 
@@ -4926,19 +4801,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String defaultPasswordWillChangeMessage(String password) {
     return '此裝置正使用預設密碼連接。重新命名後密碼將變為 $password。請在重新連接前儲存該密碼。';
   }
-
-  @override
-  String get savedBleDevices => '曾連接的 BLE 裝置';
-
-  @override
-  String get savedBleDevicesSubtitle => '檢視儲存在本裝置上的裝置名稱和密碼';
-
-  @override
-  String get savedBleDevicesDescription => '每條記錄都是本地儲存的 NBLESim 密碼，預設密碼也會被儲存。';
-
-  @override
-  String get noSavedBleDevices => '沒有曾連接的 BLE 裝置。';
-
   @override
   String get deviceName => '裝置名稱';
 

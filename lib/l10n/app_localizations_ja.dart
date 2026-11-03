@@ -148,13 +148,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get remoteReadersSubtitle => 'RemoCard コンパニオンアプリを構成します';
-
-  @override
-  String get enableBle => 'Bluetooth コネクター';
-
-  @override
-  String get enableBleSubtitle => 'Bluetooth リーダーのスキャンと接続を有効化します';
-
   @override
   String get enableCcid => 'USB CCID コネクター';
 
@@ -198,13 +191,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get ccidReaderSubtitle => 'USB スマートカードリーダーと PC/SC デバイス';
-
-  @override
-  String get bluetoothReaderTitle => 'Bluetooth';
-
-  @override
-  String get bluetoothReaderSubtitle => 'Bluetooth LE スマートカードリーダーとライター';
-
   @override
   String get remoteReadersTitle => 'リモートリーダー';
 
@@ -336,22 +322,8 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reconnect => '再接続';
-
-  @override
-  String get bluetoothNotConnected => 'Bluetooth が未接続です';
-
-  @override
-  String get bluetoothNotConnectedSubtitle =>
-      'Bluetooth が有効になっていることと、デバイスが近くにあるか確認してください。「接続」をタップして、デバイスの使用を開始してください。';
-
   @override
   String get bluetoothConnectionFailed => 'Bluetooth の接続に失敗しました';
-
-  @override
-  String bluetoothConnectionFailedSubtitle(Object error) {
-    return 'Bluetooth デバイスの接続に失敗しました。\n\n$error';
-  }
-
   @override
   String get removeDevice => 'リモートデバイス';
 
@@ -382,11 +354,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get connectCompatibleReader => '開始するには互換性のあるリーダーを接続してください。';
-
-  @override
-  String get connectReaderMessageBle =>
-      'Bluetooth 対応の eUICC を持っている場合は、互換性のある Bluetooth デバイスをスキャンすることもできます。';
-
   @override
   String get connectReaderMessageNoBle => 'CCID リーダーがコンピューターに接続されているか確認してください。';
 
@@ -396,10 +363,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get smartCardExtensionMessage =>
       'このブラウザで USB CCID リーダーにアクセスするには拡張機能が必要です。';
-
-  @override
-  String get scanForBluetooth => 'Bluetooth でスキャン';
-
   @override
   String get connectRemote => 'リモートに接続';
 
@@ -779,11 +742,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get connectReader => '開始するには、互換性のあるリーダーを接続してください。';
-
-  @override
-  String get connectReaderSubtitleBle =>
-      'Bluetooth 対応の eUICC を持っている場合は、互換性のある Bluetooth デバイスをスキャンすることもできます。';
-
   @override
   String get connectReaderSubtitleCcid =>
       'CCID リーダーがコンピューターに接続されていることを確認してください。';
@@ -837,14 +795,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get useRemoteIcon => 'リモートアイコンを使用';
-
-  @override
-  String get bleDisconnectedTitle => 'Bluetooth が切断されました';
-
-  @override
-  String get bleDisconnectedMessage =>
-      'カードリーダーとの接続が突然切断されました。カードリーダーが近くにある、または電源が入っているか確認してください。';
-
   @override
   String get cardStuckRefreshingMessage =>
       'プロファイルの状態を変更中です - 動作しない場合は手動で再接続してください。';
@@ -1083,10 +1033,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get noReadersFoundMessage =>
       '互換性のあるリーダーを接続するか、BLE デバイスをスキャンで eSIM プロファイルを管理します。';
-
-  @override
-  String get scanBle => 'BLE をスキャン';
-
   @override
   String get reminderDetails => 'リマインダーの詳細';
 
@@ -1564,10 +1510,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get refreshDevices => 'デバイスを更新';
-
-  @override
-  String get scanBluetooth => 'Bluetooth をスキャン';
-
   @override
   String get lessThan1Kb => '< 1 KB';
 
@@ -2011,20 +1953,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String defaultPasswordWillChangeMessage(String password) {
     return 'このデバイスは既定のパスワードで接続されています。名前を変更すると、パスワードは $password に設定されます。再接続する前にこのパスワードを保存してください。';
   }
-
-  @override
-  String get savedBleDevices => '以前に接続した BLE デバイス';
-
-  @override
-  String get savedBleDevicesSubtitle => 'この端末に保存されているデバイス名とパスワードを表示します';
-
-  @override
-  String get savedBleDevicesDescription =>
-      '各項目はローカルに保存された NBLESim のパスワードです。既定のパスワードも保存されます。';
-
-  @override
-  String get noSavedBleDevices => '以前に接続した BLE デバイスはありません。';
-
   @override
   String get deviceName => 'デバイス名';
 
@@ -2434,10 +2362,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get voWifiUSBCCIDSmartCardReader => 'USB CCID smart-card reader';
-
-  @override
-  String get voWifiBluetoothSIMReader => 'Bluetooth SIM reader';
-
   @override
   String get voWifiMyNumber => 'My number';
 

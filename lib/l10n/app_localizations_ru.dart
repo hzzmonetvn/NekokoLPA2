@@ -158,14 +158,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get remoteReadersSubtitle => 'Приложение RemoCard';
-
-  @override
-  String get enableBle => 'Bluetooth-ридер';
-
-  @override
-  String get enableBleSubtitle =>
-      'Включить сканирование и подключение к Bluetooth-ридерам';
-
   @override
   String get enableCcid => 'USB CCID ридер';
 
@@ -212,13 +204,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get ccidReaderSubtitle =>
       'USB смарт-карты считыватели и PC/SC устройства';
-
-  @override
-  String get bluetoothReaderTitle => 'Bluetooth';
-
-  @override
-  String get bluetoothReaderSubtitle => 'Bluetooth LE кард ридеры';
-
   @override
   String get remoteReadersTitle => 'Удаленные считыватели';
 
@@ -362,23 +347,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reconnect => 'Переподключить';
-
-  @override
-  String get bluetoothNotConnected => 'Bluetooth не подключён';
-
-  @override
-  String get bluetoothNotConnectedSubtitle =>
-      'Убедитесь, что Bluetooth включён и устройство находится рядом. Нажмите «Подключить», чтобы начать работу с этим устройством.';
-
   @override
   String get bluetoothConnectionFailed =>
       'Не удалось подключиться по Bluetooth';
-
-  @override
-  String bluetoothConnectionFailedSubtitle(Object error) {
-    return 'Не удалось подключиться к устройству Bluetooth.\n\n$error';
-  }
-
   @override
   String get removeDevice => 'Удалить устройство';
 
@@ -412,11 +383,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get connectCompatibleReader =>
       'Подключите совместимый считыватель, чтобы начать.';
-
-  @override
-  String get connectReaderMessageBle =>
-      'Также можно выполнить поиск совместимых устройств Bluetooth, если у вас есть eUICC с поддержкой Bluetooth.';
-
   @override
   String get connectReaderMessageNoBle =>
       'Убедитесь, что считыватель CCID подключён к компьютеру.';
@@ -428,10 +394,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get smartCardExtensionMessage =>
       'Расширение необходимо для доступа к USB-считывателям CCID в этом браузере.';
-
-  @override
-  String get scanForBluetooth => 'Искать по Bluetooth';
-
   @override
   String get connectRemote => 'Подключить удалённый';
 
@@ -820,11 +782,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get connectReader =>
       'Подключите совместимый считыватель, чтобы начать.';
-
-  @override
-  String get connectReaderSubtitleBle =>
-      'Также можно выполнить поиск совместимых устройств Bluetooth, если у вас есть eUICC с поддержкой Bluetooth.';
-
   @override
   String get connectReaderSubtitleCcid =>
       'Убедитесь, что считыватель CCID подключён к компьютеру.';
@@ -879,14 +836,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get useRemoteIcon => 'Использовать значок из сети';
-
-  @override
-  String get bleDisconnectedTitle => 'Соединение Bluetooth потеряно';
-
-  @override
-  String get bleDisconnectedMessage =>
-      'Связь со считывателем неожиданно прервалась. Убедитесь, что он находится рядом и включён.';
-
   @override
   String get cardStuckRefreshingMessage =>
       'Идёт смена состояния профиля — если процесс завис, попробуйте вручную переустановить SIM-карту.';
@@ -1131,10 +1080,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get noReadersFoundMessage =>
       'Подключите совместимый считыватель или выполните поиск BLE-устройств, чтобы управлять профилями eSIM.';
-
-  @override
-  String get scanBle => 'Искать BLE';
-
   @override
   String get reminderDetails => 'Сведения о напоминании';
 
@@ -1633,10 +1578,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get refreshDevices => 'Обновить список устройств';
-
-  @override
-  String get scanBluetooth => 'Искать по Bluetooth';
-
   @override
   String get lessThan1Kb => '< 1 КБ';
 
@@ -2093,21 +2034,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String defaultPasswordWillChangeMessage(String password) {
     return 'Это устройство подключено со стандартным паролем. После переименования пароль станет $password. Сохраните его перед повторным подключением.';
   }
-
-  @override
-  String get savedBleDevices => 'Ранее подключённые BLE-устройства';
-
-  @override
-  String get savedBleDevicesSubtitle =>
-      'Просмотр имён и паролей устройств, сохранённых на этом устройстве';
-
-  @override
-  String get savedBleDevicesDescription =>
-      'Каждая запись — локально сохранённый пароль NBLESim. Стандартные пароли также сохраняются.';
-
-  @override
-  String get noSavedBleDevices => 'Ранее подключённых BLE-устройств нет.';
-
   @override
   String get deviceName => 'Имя устройства';
 
@@ -2522,10 +2448,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get voWifiUSBCCIDSmartCardReader => 'USB CCID smart-card reader';
-
-  @override
-  String get voWifiBluetoothSIMReader => 'Bluetooth SIM reader';
-
   @override
   String get voWifiMyNumber => 'My number';
 

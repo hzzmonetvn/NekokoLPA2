@@ -104,17 +104,22 @@
 - **Alternatives Considered:** Leaving dead iOS code in tree and unconfigured `.gitattributes`.
 - **Reasoning:** Without proper linguist attributes, GitHub's language bar was dominated by vendored generated Dart files and dead iOS VoWiFi code. This change brings the repository's measured language composition to >60% (100% of counted code) pure native Rust.
 
-## 15. Telemetry Decoupling, Legacy Tools Pruning, and Dart Model Trimming
-- **Choice:** Excised legacy tooling, third-party store wrapper, external telemetry services, and trimmed oversized generated Dart models:
-  - Pruned obsolete Python ASN.1 generator tools (`tools/asn1_*.py`, `tools/euicc_*.py`, `tools/test_asn1_gen.py`) and ASN.1 spec schemas (`tools/asn1/`, `tools/testdata/`), retaining only `scripts/package_rooted_android.py` and `tools/update_feed_entry.ts`.
-  - Removed `sentry_flutter` dependency and Sentry error tracking initialization from `lib/main.dart` and `pubspec.yaml`.
-  - Decoupled `NekokoStatsPlugin` and removed telemetry reporting callbacks (`https://nlpa-data.nekoko.ee`), excising `StatsSettingsPage` and removing the analytics section from settings.
-  - Eliminated `BuyPage` wrapper (`https://9es.im/`) in favor of direct standard browser tab handling, deleting `lib/pages/buy_page.dart`.
-  - Streamlined `lib/models/asn1/rsp_definitions.g.dart` from 1.95MB (62,568 lines) to 649KB, removing >200 unreferenced classes while maintaining full type safety and compilation compatibility for the 145 types required by Dart UI and tests.
-- **Alternatives Considered:** Leaving telemetry toggled via settings or keeping unused generator tools.
-- **Reasoning:** Minimizes attack surface, eliminates unsolicited network connections, speeds up eSIM installation by removing 1.2s of unnecessary cryptographic signature exchanges for telemetry, and reduces code bloat across the repository.
+## 16. Unused Asset Excising and Obsolete BLE Localization Pruning
+- **Choice:** Excised 231 unreferenced country flag PNG assets (`assets/flags/`, ~1MB) and pruned 19 obsolete BLE localization keys across all 11 supported locales (`l10n/app_*.arb` and `lib/l10n/`):
+  - Removed `assets/flags/`: Country flags were never bundled in `pubspec.yaml` `assets:` (eSIM profiles use Unicode regional indicator emojis or dynamic CDN paths).
+  - Pruned obsolete BLE keys: `enableBle`, `enableBleSubtitle`, `bluetoothReaderTitle`, `bluetoothReaderSubtitle`, `bluetoothNotConnected`, `bluetoothNotConnectedSubtitle`, `bluetoothConnectionFailedSubtitle`, `connectReaderMessageBle`, `scanForBluetooth`, `connectReaderSubtitleBle`, `bleDisconnectedTitle`, `bleDisconnectedMessage`, `scanBle`, `scanBluetooth`, `savedBleDevices`, `savedBleDevicesSubtitle`, `savedBleDevicesDescription`, `noSavedBleDevices`, and `voWifiBluetoothSIMReader`.
+  - Maintained CI build stability by restoring critical ASN.1 enum `NotificationSentResponse_deleteNotificationStatus` and `SubjectKeyIdentifier` in `rsp_definitions.g.dart` and cleaning unreferenced `_euiccInfo1Bytes` in `download_profile_page.dart`.
+- **Alternatives Considered:** Retaining flag PNGs and leaving unused strings in ARB files.
+- **Reasoning:** Removing dead assets reduces repository size and clone times; pruning dead translation strings prevents translation drift and ensures `flutter gen-l10n` generates only active code.
 
-
-
+## 17. Native Rust Business Logic Port (`nlpa_core::cat`, `crypto`, `mcc`, `notification_address`)
+- **Choice:** Ported remaining telecommunications and cryptographic business logic modules from Dart to native Rust in `nlpa_core`:
+  - `cat`: ETSI TS 102 221 / TS 102 223 / 3GPP TS 31.111 Card Application Toolkit proactive command encoder/decoder (`STATUS`, `FETCH`, `TERMINAL RESPONSE`), BER-TLV / COMPREHENSION-TLV parser, and eUICC `REFRESH` decision engine (`AcknowledgeSuccess`, `RestartNaaSession`, `DeclineUnableToProcess`, `RequiresCardReset`).
+  - `crypto`: Safe, zero-dependency, pure Rust implementation of standard SHA-256 (RFC 6234) and GSMA SGP.22 Confirmation Code hash computation: `HashCc = SHA256(SHA256(ConfirmationCode) || TransactionID)`.
+  - `mcc`: ITU-T E.212 Mobile Country Code mapping to ISO 3166-1 alpha-2 codes (Europe, Americas, Asia, Oceania, Africa), Unicode regional indicator symbol flag emoji generation, and 3-byte 3GPP PLMN decoder (`mcc`/`mnc`).
+  - `notification_address`: Strict GSMA SGP.22 notification server FQDN validation protecting against corrupted card metadata.
+  - Test Coverage: Added 13 integration tests in `rust/core/tests/` (`cat_test.rs`, `crypto_test.rs`, `mcc_test.rs`, `notification_address_test.rs`), bringing workspace test coverage to 47 passing tests.
+- **Alternatives Considered:** Keeping business logic in Dart.
+- **Reasoning:** Porting to native Rust guarantees memory safety, eliminates GC pauses during critical profile downloads and proactive SIM refresh sessions, enables deterministic unit testing without a Flutter engine, and pushes repository code composition higher toward native Rust.
 
 

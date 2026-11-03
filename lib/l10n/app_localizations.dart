@@ -399,19 +399,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configure RemoCard companion apps'**
   String get remoteReadersSubtitle;
-
-  /// No description provided for @enableBle.
-  ///
-  /// In en, this message translates to:
-  /// **'Bluetooth Connector'**
-  String get enableBle;
-
-  /// No description provided for @enableBleSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable scanning and connecting to Bluetooth readers'**
-  String get enableBleSubtitle;
-
   /// No description provided for @enableCcid.
   ///
   /// In en, this message translates to:
@@ -495,19 +482,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'USB smart card readers and PC/SC devices'**
   String get ccidReaderSubtitle;
-
-  /// No description provided for @bluetoothReaderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Bluetooth'**
-  String get bluetoothReaderTitle;
-
-  /// No description provided for @bluetoothReaderSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Bluetooth LE smart card readers and writers'**
-  String get bluetoothReaderSubtitle;
-
   /// No description provided for @remoteReadersTitle.
   ///
   /// In en, this message translates to:
@@ -771,31 +745,11 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reconnect'**
   String get reconnect;
-
-  /// No description provided for @bluetoothNotConnected.
-  ///
-  /// In en, this message translates to:
-  /// **'Bluetooth Not Connected'**
-  String get bluetoothNotConnected;
-
-  /// No description provided for @bluetoothNotConnectedSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Ensure Bluetooth is enabled and the device is nearby. Tap Connect to start using this device.'**
-  String get bluetoothNotConnectedSubtitle;
-
   /// No description provided for @bluetoothConnectionFailed.
   ///
   /// In en, this message translates to:
   /// **'Bluetooth Connection Failed'**
   String get bluetoothConnectionFailed;
-
-  /// No description provided for @bluetoothConnectionFailedSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to connect to Bluetooth device.\n\n{error}'**
-  String bluetoothConnectionFailedSubtitle(Object error);
-
   /// No description provided for @removeDevice.
   ///
   /// In en, this message translates to:
@@ -849,13 +803,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect a compatible reader to start.'**
   String get connectCompatibleReader;
-
-  /// No description provided for @connectReaderMessageBle.
-  ///
-  /// In en, this message translates to:
-  /// **'You can also scan for compatible Bluetooth devices if you have a Bluetooth-enabled eUICC.'**
-  String get connectReaderMessageBle;
-
   /// No description provided for @connectReaderMessageNoBle.
   ///
   /// In en, this message translates to:
@@ -873,13 +820,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The extension is required to access USB CCID readers in this browser.'**
   String get smartCardExtensionMessage;
-
-  /// No description provided for @scanForBluetooth.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan for Bluetooth'**
-  String get scanForBluetooth;
-
   /// No description provided for @connectRemote.
   ///
   /// In en, this message translates to:
@@ -1593,13 +1533,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect a compatible reader to start.'**
   String get connectReader;
-
-  /// No description provided for @connectReaderSubtitleBle.
-  ///
-  /// In en, this message translates to:
-  /// **'You can also scan for compatible Bluetooth devices if you have a Bluetooth-enabled eUICC.'**
-  String get connectReaderSubtitleBle;
-
   /// No description provided for @connectReaderSubtitleCcid.
   ///
   /// In en, this message translates to:
@@ -1695,19 +1628,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use Remote Icon'**
   String get useRemoteIcon;
-
-  /// No description provided for @bleDisconnectedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Bluetooth Connection Lost'**
-  String get bleDisconnectedTitle;
-
-  /// No description provided for @bleDisconnectedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'The connection to the card reader was suddenly lost. Please ensure it is nearby and turned on.'**
-  String get bleDisconnectedMessage;
-
   /// No description provided for @cardStuckRefreshingMessage.
   ///
   /// In en, this message translates to:
@@ -2169,13 +2089,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Insert a compatible reader or scan for BLE devices to manage your eSIM profiles.'**
   String get noReadersFoundMessage;
-
-  /// No description provided for @scanBle.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan BLE'**
-  String get scanBle;
-
   /// No description provided for @reminderDetails.
   ///
   /// In en, this message translates to:
@@ -3063,13 +2976,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh devices'**
   String get refreshDevices;
-
-  /// No description provided for @scanBluetooth.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan Bluetooth'**
-  String get scanBluetooth;
-
   /// No description provided for @lessThan1Kb.
   ///
   /// In en, this message translates to:
@@ -3891,31 +3797,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This device is connected with its default password. Renaming it will set the password to {password}. Save this password before reconnecting.'**
   String defaultPasswordWillChangeMessage(String password);
-
-  /// No description provided for @savedBleDevices.
-  ///
-  /// In en, this message translates to:
-  /// **'Previously connected BLE devices'**
-  String get savedBleDevices;
-
-  /// No description provided for @savedBleDevicesSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'View device names and passwords saved on this device'**
-  String get savedBleDevicesSubtitle;
-
-  /// No description provided for @savedBleDevicesDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Each entry is a locally saved NBLESim password. Default passwords are saved too.'**
-  String get savedBleDevicesDescription;
-
-  /// No description provided for @noSavedBleDevices.
-  ///
-  /// In en, this message translates to:
-  /// **'No previously connected BLE devices.'**
-  String get noSavedBleDevices;
-
   /// No description provided for @deviceName.
   ///
   /// In en, this message translates to:
@@ -4677,13 +4558,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'USB CCID smart-card reader'**
   String get voWifiUSBCCIDSmartCardReader;
-
-  /// No description provided for @voWifiBluetoothSIMReader.
-  ///
-  /// In en, this message translates to:
-  /// **'Bluetooth SIM reader'**
-  String get voWifiBluetoothSIMReader;
-
   /// No description provided for @voWifiMyNumber.
   ///
   /// In en, this message translates to:
