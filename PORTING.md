@@ -4,6 +4,10 @@
 
 The current changes keep NekokoLPA2 Android-focused for this porting phase, retain the Rust backend, constrain Android packaging to ARM, add Vietnamese localization source assets, and add an AMOLED theme option. The community Android build targets ARMv7 and ARM64; the privileged app build is ARM64-only. The active CI workflows in this checkout include Android build/release and update-feed publication plus the separate `otbridge` Android APK. Removed workflows include iOS VoWiFi and web publishing. The `build.yml` workflow has no web, Linux, or Windows app build jobs. This does not imply every Rust helper or dependency is Android-specific.
 
+## Flutter Rust Bridge bindings
+
+Generated Flutter Rust Bridge 2.13.0 bindings are committed under `lib/src/rust` and `rust/src/frb_generated.rs`. The GitHub Actions Android job regenerates them after `flutter pub get` and fails if tracked outputs drift or new generated files are untracked. The generated API now includes the Rust ES11 discovery, profile-size prediction, telecom, and CCID bridge functions.
+
 ## Verification results
 
 Run from `/home/opc/lpa/NekokoLPA2` unless noted.

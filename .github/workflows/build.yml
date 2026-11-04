@@ -73,6 +73,11 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
+      - name: Verify generated Rust bridge bindings
+        run: |
+          flutter_rust_bridge_codegen generate
+          git diff --exit-code -- lib/src/rust rust/src/frb_generated.rs
+          test -z "$(git ls-files --others --exclude-standard -- lib/src/rust rust/src/frb_generated.rs)"
       - run: flutter gen-l10n
       - run: dart analyze
         if: matrix.flavor == 'community'

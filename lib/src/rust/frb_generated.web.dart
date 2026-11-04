@@ -6,7 +6,10 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/ccid.dart';
+import 'api/lpa.dart';
 import 'api/modem.dart';
+import 'api/telecom.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -70,16 +73,99 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  ActivationCodeDto dco_decode_activation_code_dto(dynamic raw);
+
+  @protected
+  Asn1NodeDto dco_decode_asn_1_node_dto(dynamic raw);
+
+  @protected
+  AuthenticateClientResponseDto dco_decode_authenticate_client_response_dto(
+    dynamic raw,
+  );
+
+  @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  ActivationCodeDto dco_decode_box_autoadd_activation_code_dto(dynamic raw);
+
+  @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw);
+
+  @protected
+  DownloadSessionStateDto dco_decode_box_autoadd_download_session_state_dto(
+    dynamic raw,
+  );
+
+  @protected
+  PlatformInt64 dco_decode_box_autoadd_i_64(dynamic raw);
+
+  @protected
+  NotificationPolicyDto dco_decode_box_autoadd_notification_policy_dto(
+    dynamic raw,
+  );
+
+  @protected
+  OperatorIdDto dco_decode_box_autoadd_operator_id_dto(dynamic raw);
 
   @protected
   QrtrSocketDatagram dco_decode_box_autoadd_qrtr_socket_datagram(dynamic raw);
 
   @protected
+  int dco_decode_box_autoadd_u_16(dynamic raw);
+
+  @protected
+  BigInt dco_decode_box_autoadd_usize(dynamic raw);
+
+  @protected
+  CertificateDetailsDto dco_decode_certificate_details_dto(dynamic raw);
+
+  @protected
+  DiscoveredEventDto dco_decode_discovered_event_dto(dynamic raw);
+
+  @protected
+  DownloadSessionStateDto dco_decode_download_session_state_dto(dynamic raw);
+
+  @protected
+  EuiccProfileDto dco_decode_euicc_profile_dto(dynamic raw);
+
+  @protected
+  GetBppResponseDto dco_decode_get_bpp_response_dto(dynamic raw);
+
+  @protected
+  PlatformInt64 dco_decode_i_64(dynamic raw);
+
+  @protected
+  InitiateAuthResponseDto dco_decode_initiate_auth_response_dto(dynamic raw);
+
+  @protected
   PlatformInt64 dco_decode_isize(dynamic raw);
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<Asn1NodeDto> dco_decode_list_asn_1_node_dto(dynamic raw);
+
+  @protected
+  List<DiscoveredEventDto> dco_decode_list_discovered_event_dto(dynamic raw);
+
+  @protected
+  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw);
+
+  @protected
   List<ModemSlot> dco_decode_list_modem_slot(dynamic raw);
+
+  @protected
+  List<NotificationJobDto> dco_decode_list_notification_job_dto(dynamic raw);
+
+  @protected
+  List<NotificationRecordDto> dco_decode_list_notification_record_dto(
+    dynamic raw,
+  );
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
 
   @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
@@ -88,15 +174,61 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<StoredNotificationDto> dco_decode_list_stored_notification_dto(
+    dynamic raw,
+  );
+
+  @protected
+  List<VerificationReadDto> dco_decode_list_verification_read_dto(dynamic raw);
+
+  @protected
   ModemSlot dco_decode_modem_slot(dynamic raw);
+
+  @protected
+  NotificationActionDto dco_decode_notification_action_dto(dynamic raw);
+
+  @protected
+  NotificationJobDto dco_decode_notification_job_dto(dynamic raw);
+
+  @protected
+  NotificationPolicyDto dco_decode_notification_policy_dto(dynamic raw);
+
+  @protected
+  NotificationRecordDto dco_decode_notification_record_dto(dynamic raw);
+
+  @protected
+  NotificationSyncPlanDto dco_decode_notification_sync_plan_dto(dynamic raw);
+
+  @protected
+  OperatorIdDto dco_decode_operator_id_dto(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  ActivationCodeDto? dco_decode_opt_box_autoadd_activation_code_dto(
+    dynamic raw,
+  );
+
+  @protected
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
+
+  @protected
+  PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
+
+  @protected
+  OperatorIdDto? dco_decode_opt_box_autoadd_operator_id_dto(dynamic raw);
+
+  @protected
   QrtrSocketDatagram? dco_decode_opt_box_autoadd_qrtr_socket_datagram(
     dynamic raw,
   );
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw);
 
   @protected
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
@@ -106,6 +238,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   QrtrSocketDatagram dco_decode_qrtr_socket_datagram(dynamic raw);
+
+  @protected
+  Scp03AuthResultDto dco_decode_scp_03_auth_result_dto(dynamic raw);
+
+  @protected
+  StateTransitionResultDto dco_decode_state_transition_result_dto(dynamic raw);
+
+  @protected
+  StoredNotificationDto dco_decode_stored_notification_dto(dynamic raw);
+
+  @protected
+  int dco_decode_u_16(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -118,6 +262,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  VerificationReadDto dco_decode_verification_read_dto(dynamic raw);
 
   @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
@@ -147,7 +294,46 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  ActivationCodeDto sse_decode_activation_code_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  Asn1NodeDto sse_decode_asn_1_node_dto(SseDeserializer deserializer);
+
+  @protected
+  AuthenticateClientResponseDto sse_decode_authenticate_client_response_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  ActivationCodeDto sse_decode_box_autoadd_activation_code_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
+  DownloadSessionStateDto sse_decode_box_autoadd_download_session_state_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PlatformInt64 sse_decode_box_autoadd_i_64(SseDeserializer deserializer);
+
+  @protected
+  NotificationPolicyDto sse_decode_box_autoadd_notification_policy_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OperatorIdDto sse_decode_box_autoadd_operator_id_dto(
+    SseDeserializer deserializer,
+  );
 
   @protected
   QrtrSocketDatagram sse_decode_box_autoadd_qrtr_socket_datagram(
@@ -155,10 +341,78 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  int sse_decode_box_autoadd_u_16(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer);
+
+  @protected
+  CertificateDetailsDto sse_decode_certificate_details_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DiscoveredEventDto sse_decode_discovered_event_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DownloadSessionStateDto sse_decode_download_session_state_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EuiccProfileDto sse_decode_euicc_profile_dto(SseDeserializer deserializer);
+
+  @protected
+  GetBppResponseDto sse_decode_get_bpp_response_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
+
+  @protected
+  InitiateAuthResponseDto sse_decode_initiate_auth_response_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
 
   @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<Asn1NodeDto> sse_decode_list_asn_1_node_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<DiscoveredEventDto> sse_decode_list_discovered_event_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<ModemSlot> sse_decode_list_modem_slot(SseDeserializer deserializer);
+
+  @protected
+  List<NotificationJobDto> sse_decode_list_notification_job_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<NotificationRecordDto> sse_decode_list_notification_record_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
 
   @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
@@ -167,15 +421,75 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<StoredNotificationDto> sse_decode_list_stored_notification_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<VerificationReadDto> sse_decode_list_verification_read_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ModemSlot sse_decode_modem_slot(SseDeserializer deserializer);
+
+  @protected
+  NotificationActionDto sse_decode_notification_action_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NotificationJobDto sse_decode_notification_job_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NotificationPolicyDto sse_decode_notification_policy_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NotificationRecordDto sse_decode_notification_record_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NotificationSyncPlanDto sse_decode_notification_sync_plan_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OperatorIdDto sse_decode_operator_id_dto(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  ActivationCodeDto? sse_decode_opt_box_autoadd_activation_code_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
+  PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer);
+
+  @protected
+  OperatorIdDto? sse_decode_opt_box_autoadd_operator_id_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   QrtrSocketDatagram? sse_decode_opt_box_autoadd_qrtr_socket_datagram(
     SseDeserializer deserializer,
   );
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_16(SseDeserializer deserializer);
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer);
 
   @protected
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -191,6 +505,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  Scp03AuthResultDto sse_decode_scp_03_auth_result_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  StateTransitionResultDto sse_decode_state_transition_result_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  StoredNotificationDto sse_decode_stored_notification_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int sse_decode_u_16(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
@@ -201,6 +533,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  VerificationReadDto sse_decode_verification_read_dto(
+    SseDeserializer deserializer,
+  );
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -259,7 +596,55 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_activation_code_dto(
+    ActivationCodeDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_asn_1_node_dto(Asn1NodeDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_authenticate_client_response_dto(
+    AuthenticateClientResponseDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_activation_code_dto(
+    ActivationCodeDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_download_session_state_dto(
+    DownloadSessionStateDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_i_64(
+    PlatformInt64 self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_notification_policy_dto(
+    NotificationPolicyDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_operator_id_dto(
+    OperatorIdDto self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_qrtr_socket_datagram(
@@ -268,11 +653,95 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_u_16(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_certificate_details_dto(
+    CertificateDetailsDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_discovered_event_dto(
+    DiscoveredEventDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_download_session_state_dto(
+    DownloadSessionStateDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_euicc_profile_dto(
+    EuiccProfileDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_get_bpp_response_dto(
+    GetBppResponseDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_initiate_auth_response_dto(
+    InitiateAuthResponseDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_asn_1_node_dto(
+    List<Asn1NodeDto> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_discovered_event_dto(
+    List<DiscoveredEventDto> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_list_prim_u_8_strict(
+    List<Uint8List> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_modem_slot(
     List<ModemSlot> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_notification_job_dto(
+    List<NotificationJobDto> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_notification_record_dto(
+    List<NotificationRecordDto> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+    Uint32List self,
     SseSerializer serializer,
   );
 
@@ -286,16 +755,88 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_stored_notification_dto(
+    List<StoredNotificationDto> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_verification_read_dto(
+    List<VerificationReadDto> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_modem_slot(ModemSlot self, SseSerializer serializer);
 
   @protected
+  void sse_encode_notification_action_dto(
+    NotificationActionDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_notification_job_dto(
+    NotificationJobDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_notification_policy_dto(
+    NotificationPolicyDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_notification_record_dto(
+    NotificationRecordDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_notification_sync_plan_dto(
+    NotificationSyncPlanDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_operator_id_dto(OperatorIdDto self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_activation_code_dto(
+    ActivationCodeDto? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_64(
+    PlatformInt64? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_operator_id_dto(
+    OperatorIdDto? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_qrtr_socket_datagram(
     QrtrSocketDatagram? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_16(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_usize(BigInt? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_prim_u_8_strict(
@@ -316,6 +857,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_scp_03_auth_result_dto(
+    Scp03AuthResultDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_state_transition_result_dto(
+    StateTransitionResultDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_stored_notification_dto(
+    StoredNotificationDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_u_16(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
 
   @protected
@@ -326,6 +888,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_verification_read_dto(
+    VerificationReadDto self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);

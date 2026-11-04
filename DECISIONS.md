@@ -83,6 +83,11 @@
 - **Alternatives Considered:** Leaving low-level byte and string parsing in Dart.
 - **Reasoning:** Processing large APDU responses, SIM activation payloads, and cryptographic profile packages in Dart incurs garbage collection pressure and runtime overhead. Porting this logic to pure Rust guarantees memory safety, eliminates GC pauses, maximizes native Rust code density, and follows the `beautiful-rust:rust-best-practices` guidelines.
 
+## 32. Generated Flutter Rust Bridge bindings
+- **Choice:** Commit FRB 2.13.0 generated Dart and Rust bindings for the new bridge APIs, and regenerate/check them in the Android GitHub Actions job after Flutter dependency resolution.
+- **Alternatives Considered:** Manually editing generated bindings or relying on Rust-only bridge tests.
+- **Reasoning:** Generated bindings keep Dart able to call the Rust ES11, profile-size, telecom, and CCID APIs; CI drift checks catch missing or stale generated files without building APKs on the VPS.
+
 ## 13. GSMA SGP.22 RSP ASN.1 DER & LPA Engine Port (`nlpa_core::asn1`, `nlpa_core::lpa`)
 - **Choice:** Built a complete, native Rust implementation of GSMA SGP.22 RSP ASN.1 structures, ISO 7816-4 APDU command builders, and an in-memory LPA operational state machine:
   - `asn1::der`: Low-level Tag-Length-Value encoder and decoder supporting multi-byte tags, variable-length octets, signed integer two's complement encoding, and UTF-8 string conversions.

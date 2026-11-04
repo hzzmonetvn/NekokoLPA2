@@ -3,7 +3,10 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/ccid.dart';
+import 'api/lpa.dart';
 import 'api/modem.dart';
+import 'api/telecom.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -64,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 214357088;
+  int get rustContentHash => 2081020636;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -104,10 +107,282 @@ abstract class RustLibApi extends BaseApi {
     required List<int> apdu,
   });
 
+  Future<bool> crateApiCcidAtrEuiccCapabilityEnabled({required String atrHex});
+
+  Future<String> crateApiCcidAtrSetEuiccCapability({
+    required String atrHex,
+    required bool enabled,
+  });
+
+  Future<String> crateApiLpaBuildAuthenticateClientReq({
+    required String transactionId,
+    required String authServerRespB64,
+  });
+
+  Future<String> crateApiLpaBuildCancelSessionReq({
+    required String transactionId,
+    required String cancelRespB64,
+  });
+
+  Future<Uint8List> crateApiLpaBuildCloseLogicalChannelApdu({
+    required int channel,
+  });
+
+  Future<String> crateApiLpaBuildGetBppReq({
+    required String transactionId,
+    required String prepareDownloadRespB64,
+  });
+
+  Future<String> crateApiLpaBuildHandleNotificationJson({
+    required String contentBase64,
+  });
+
+  Future<String> crateApiLpaBuildInitiateAuthReq({
+    required String smdpAddress,
+    required String euiccChallengeB64,
+    required String euiccInfo1B64,
+  });
+
+  Future<Uint8List> crateApiLpaBuildOpenLogicalChannelApdu();
+
+  Future<String> crateApiLpaBuildSmdsAuthClient({
+    required String transactionId,
+    required String authServerResp,
+  });
+
+  Future<String> crateApiLpaBuildSmdsInitAuth({
+    required String smdsAddress,
+    required String challenge,
+    required String info1,
+  });
+
+  Future<int> crateApiTelecomCalculateImeiLuhn({required String bodyDigits});
+
+  Future<List<Uint8List>> crateApiLpaChainApduPackets({
+    required int cla,
+    required int ins,
+    required int p1,
+    required int p2,
+    required List<int> data,
+    BigInt? le,
+    BigInt? mss,
+  });
+
+  Future<String> crateApiTelecomCleanIccid({required String iccid});
+
+  Future<String> crateApiLpaCleanSmdsHostAddress({required String rawAddress});
+
+  Future<Uint8List> crateApiLpaComputeSgp22HashCc({
+    required String confirmationCode,
+    required List<int> transactionIdOctets,
+  });
+
+  Future<DownloadSessionStateDto> crateApiLpaCreateDownloadSession({
+    required String smdpAddress,
+    String? matchingId,
+    String? confirmationCode,
+  });
+
+  Future<EuiccProfileDto> crateApiTelecomCreateEuiccProfile({
+    required String iccid,
+    required bool enabled,
+  });
+
+  Future<String> crateApiTelecomDecodeStoredImei({required List<int> bytes});
+
+  Future<Uint8List> crateApiTelecomEncodeStoredImei({required String digits});
+
+  Future<NotificationActionDto> crateApiLpaEvaluateNotificationAction({
+    required NotificationPolicyDto policy,
+    required int operationByte,
+  });
+
+  Future<StateTransitionResultDto> crateApiLpaEvaluateProfileConvergence({
+    required bool targetEnabled,
+    required BigInt commandAttempt,
+    required List<VerificationReadDto> verificationReads,
+    BigInt? maxCommandAttempts,
+    BigInt? maxVerificationAttempts,
+    BigInt? maxTransientFailuresWithoutRead,
+  });
+
+  Future<ActivationCodeDto?> crateApiTelecomExtractActivationCode({
+    required String rawText,
+  });
+
+  Future<String> crateApiTelecomFlagEmojiForCountry({
+    required String countryCode,
+  });
+
+  Future<String> crateApiTelecomFlagUrlForCountry({
+    required String countryCode,
+  });
+
+  Future<String> crateApiTelecomFormatActivationCode({
+    required ActivationCodeDto dto,
+  });
+
+  Future<String> crateApiTelecomFormatIccid({required String iccid});
+
+  Future<Uint8List> crateApiLpaFrameApdu({
+    required int cla,
+    required int ins,
+    required int p1,
+    required int p2,
+    Uint8List? data,
+    BigInt? le,
+  });
+
+  Future<CertificateDetailsDto> crateApiLpaGetCertificateDetails({
+    required String certStr,
+  });
+
+  Future<Uint8List> crateApiTelecomHexDecode({required String hex});
+
+  Future<String> crateApiTelecomHexEncode({required List<int> bytes});
+
+  Future<Uint8List> crateApiLpaIsdpDeleteApdu({required String aidHex});
+
+  Future<Uint8List> crateApiLpaIsdpSelectApdu({required String aidHex});
+
+  Future<int> crateApiLpaMapChannelCla({
+    required int cla,
+    required int channel,
+  });
+
+  Future<String> crateApiTelecomMccToCountry({
+    required String mcc,
+    String? mnc,
+    String? iccid,
+  });
+
+  Future<String> crateApiTelecomNibbleSwap({required String input});
+
+  Future<Uint8List> crateApiCcidNineEsimEnableAtrProgrammingCommand();
+
+  Future<String> crateApiCcidNineEsimPasswordHex({required String value});
+
+  Future<Uint8List> crateApiCcidNineEsimSetAtrCommand({
+    required List<int> atrBytes,
+  });
+
+  Future<Uint8List> crateApiCcidNineEsimSetPasswordCommand({
+    required String deviceName,
+    required String password,
+  });
+
   Future<ModemSession> crateApiModemOpenQmiQrtrSession({
     required FutureOr<QrtrSocketAddress> Function() address,
     required FutureOr<void> Function(QrtrSocketDatagram) send,
     required FutureOr<QrtrSocketDatagram?> Function(int) receive,
+  });
+
+  Future<ActivationCodeDto> crateApiTelecomParseActivationCode({
+    required String code,
+  });
+
+  Future<List<Asn1NodeDto>> crateApiTelecomParseAsn1Tlvs({
+    required List<int> derBytes,
+  });
+
+  Future<AuthenticateClientResponseDto> crateApiLpaParseAuthenticateClientResp({
+    required String jsonStr,
+    int? httpStatus,
+  });
+
+  Future<GetBppResponseDto> crateApiLpaParseGetBppResp({
+    required String jsonStr,
+    int? httpStatus,
+  });
+
+  Future<InitiateAuthResponseDto> crateApiLpaParseInitiateAuthResp({
+    required String jsonStr,
+    int? httpStatus,
+  });
+
+  Future<OperatorIdDto?> crateApiTelecomParsePlmnOperatorId({
+    required List<int> data,
+  });
+
+  Future<List<DiscoveredEventDto>> crateApiLpaParseSmdsEvents({
+    required String jsonResponse,
+    int? httpStatus,
+  });
+
+  Future<NotificationSyncPlanDto> crateApiLpaPlanNotificationSync({
+    required List<NotificationRecordDto> cardNotifications,
+    required List<StoredNotificationDto> storedNotifications,
+    required NotificationPolicyDto policy,
+  });
+
+  Future<PlatformInt64?> crateApiLpaPredictProfileSize({
+    required String catalogJson,
+    String? eid,
+    String? smdpAddress,
+    String? plmn,
+    String? serviceProviderName,
+  });
+
+  Future<Scp03AuthResultDto> crateApiLpaScp03AuthenticateSession({
+    required String hostChallengeHex,
+    required String cardResponseHex,
+    required String staticEncKeyHex,
+    required String staticMacKeyHex,
+    required int securityLevel,
+  });
+
+  Future<Uint8List> crateApiLpaScp03InitializeUpdateApdu({
+    required String hostChallengeHex,
+    required int keyVersion,
+    required int keyId,
+  });
+
+  Future<Uint8List> crateApiLpaSessionComputeHashCc({
+    required DownloadSessionStateDto session,
+  });
+
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessAuthClientResp({
+    required DownloadSessionStateDto session,
+    required String status,
+    Uint8List? smdpSigned2,
+    Uint8List? smdpSignature2,
+    Uint8List? profileMetadata,
+    Uint8List? smdpCertificate,
+  });
+
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessAuthServerResp({
+    required DownloadSessionStateDto session,
+    required List<int> respBytes,
+  });
+
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessEuiccChallenge({
+    required DownloadSessionStateDto session,
+    required List<int> challenge,
+  });
+
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessEuiccInfo1({
+    required DownloadSessionStateDto session,
+    required List<int> info1,
+  });
+
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessInitiateAuthResp({
+    required DownloadSessionStateDto session,
+    required String transactionIdHex,
+    required List<int> serverCertificate,
+  });
+
+  Future<void> crateApiLpaSessionValidateInitiateAuth({
+    required DownloadSessionStateDto session,
+  });
+
+  Future<void> crateApiTelecomValidateApdu({
+    required int sw1,
+    required int sw2,
+  });
+
+  Future<bool> crateApiLpaVerifySmdpCertificate({
+    required String certStr,
+    required List<String> allowedCiPkidsHex,
   });
 
   RustArcIncrementStrongCountFnType
@@ -321,6 +596,1352 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<bool> crateApiCcidAtrEuiccCapabilityEnabled({required String atrHex}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(atrHex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiCcidAtrEuiccCapabilityEnabledConstMeta,
+        argValues: [atrHex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCcidAtrEuiccCapabilityEnabledConstMeta =>
+      const TaskConstMeta(
+        debugName: "atr_euicc_capability_enabled",
+        argNames: ["atrHex"],
+      );
+
+  @override
+  Future<String> crateApiCcidAtrSetEuiccCapability({
+    required String atrHex,
+    required bool enabled,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(atrHex, serializer);
+          sse_encode_bool(enabled, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiCcidAtrSetEuiccCapabilityConstMeta,
+        argValues: [atrHex, enabled],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCcidAtrSetEuiccCapabilityConstMeta =>
+      const TaskConstMeta(
+        debugName: "atr_set_euicc_capability",
+        argNames: ["atrHex", "enabled"],
+      );
+
+  @override
+  Future<String> crateApiLpaBuildAuthenticateClientReq({
+    required String transactionId,
+    required String authServerRespB64,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(transactionId, serializer);
+          sse_encode_String(authServerRespB64, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildAuthenticateClientReqConstMeta,
+        argValues: [transactionId, authServerRespB64],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildAuthenticateClientReqConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_authenticate_client_req",
+        argNames: ["transactionId", "authServerRespB64"],
+      );
+
+  @override
+  Future<String> crateApiLpaBuildCancelSessionReq({
+    required String transactionId,
+    required String cancelRespB64,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(transactionId, serializer);
+          sse_encode_String(cancelRespB64, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildCancelSessionReqConstMeta,
+        argValues: [transactionId, cancelRespB64],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildCancelSessionReqConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_cancel_session_req",
+        argNames: ["transactionId", "cancelRespB64"],
+      );
+
+  @override
+  Future<Uint8List> crateApiLpaBuildCloseLogicalChannelApdu({
+    required int channel,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_8(channel, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaBuildCloseLogicalChannelApduConstMeta,
+        argValues: [channel],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildCloseLogicalChannelApduConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_close_logical_channel_apdu",
+        argNames: ["channel"],
+      );
+
+  @override
+  Future<String> crateApiLpaBuildGetBppReq({
+    required String transactionId,
+    required String prepareDownloadRespB64,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(transactionId, serializer);
+          sse_encode_String(prepareDownloadRespB64, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildGetBppReqConstMeta,
+        argValues: [transactionId, prepareDownloadRespB64],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildGetBppReqConstMeta => const TaskConstMeta(
+    debugName: "build_get_bpp_req",
+    argNames: ["transactionId", "prepareDownloadRespB64"],
+  );
+
+  @override
+  Future<String> crateApiLpaBuildHandleNotificationJson({
+    required String contentBase64,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(contentBase64, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildHandleNotificationJsonConstMeta,
+        argValues: [contentBase64],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildHandleNotificationJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_handle_notification_json",
+        argNames: ["contentBase64"],
+      );
+
+  @override
+  Future<String> crateApiLpaBuildInitiateAuthReq({
+    required String smdpAddress,
+    required String euiccChallengeB64,
+    required String euiccInfo1B64,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(smdpAddress, serializer);
+          sse_encode_String(euiccChallengeB64, serializer);
+          sse_encode_String(euiccInfo1B64, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildInitiateAuthReqConstMeta,
+        argValues: [smdpAddress, euiccChallengeB64, euiccInfo1B64],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildInitiateAuthReqConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_initiate_auth_req",
+        argNames: ["smdpAddress", "euiccChallengeB64", "euiccInfo1B64"],
+      );
+
+  @override
+  Future<Uint8List> crateApiLpaBuildOpenLogicalChannelApdu() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildOpenLogicalChannelApduConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildOpenLogicalChannelApduConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_open_logical_channel_apdu",
+        argNames: [],
+      );
+
+  @override
+  Future<String> crateApiLpaBuildSmdsAuthClient({
+    required String transactionId,
+    required String authServerResp,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(transactionId, serializer);
+          sse_encode_String(authServerResp, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildSmdsAuthClientConstMeta,
+        argValues: [transactionId, authServerResp],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildSmdsAuthClientConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_smds_auth_client",
+        argNames: ["transactionId", "authServerResp"],
+      );
+
+  @override
+  Future<String> crateApiLpaBuildSmdsInitAuth({
+    required String smdsAddress,
+    required String challenge,
+    required String info1,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(smdsAddress, serializer);
+          sse_encode_String(challenge, serializer);
+          sse_encode_String(info1, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 16,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaBuildSmdsInitAuthConstMeta,
+        argValues: [smdsAddress, challenge, info1],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaBuildSmdsInitAuthConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_smds_init_auth",
+        argNames: ["smdsAddress", "challenge", "info1"],
+      );
+
+  @override
+  Future<int> crateApiTelecomCalculateImeiLuhn({required String bodyDigits}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(bodyDigits, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 17,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_8,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomCalculateImeiLuhnConstMeta,
+        argValues: [bodyDigits],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomCalculateImeiLuhnConstMeta =>
+      const TaskConstMeta(
+        debugName: "calculate_imei_luhn",
+        argNames: ["bodyDigits"],
+      );
+
+  @override
+  Future<List<Uint8List>> crateApiLpaChainApduPackets({
+    required int cla,
+    required int ins,
+    required int p1,
+    required int p2,
+    required List<int> data,
+    BigInt? le,
+    BigInt? mss,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_8(cla, serializer);
+          sse_encode_u_8(ins, serializer);
+          sse_encode_u_8(p1, serializer);
+          sse_encode_u_8(p2, serializer);
+          sse_encode_list_prim_u_8_loose(data, serializer);
+          sse_encode_opt_box_autoadd_usize(le, serializer);
+          sse_encode_opt_box_autoadd_usize(mss, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 18,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_list_prim_u_8_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaChainApduPacketsConstMeta,
+        argValues: [cla, ins, p1, p2, data, le, mss],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaChainApduPacketsConstMeta =>
+      const TaskConstMeta(
+        debugName: "chain_apdu_packets",
+        argNames: ["cla", "ins", "p1", "p2", "data", "le", "mss"],
+      );
+
+  @override
+  Future<String> crateApiTelecomCleanIccid({required String iccid}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(iccid, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 19,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomCleanIccidConstMeta,
+        argValues: [iccid],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomCleanIccidConstMeta =>
+      const TaskConstMeta(debugName: "clean_iccid", argNames: ["iccid"]);
+
+  @override
+  Future<String> crateApiLpaCleanSmdsHostAddress({required String rawAddress}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(rawAddress, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaCleanSmdsHostAddressConstMeta,
+        argValues: [rawAddress],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaCleanSmdsHostAddressConstMeta =>
+      const TaskConstMeta(
+        debugName: "clean_smds_host_address",
+        argNames: ["rawAddress"],
+      );
+
+  @override
+  Future<Uint8List> crateApiLpaComputeSgp22HashCc({
+    required String confirmationCode,
+    required List<int> transactionIdOctets,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(confirmationCode, serializer);
+          sse_encode_list_prim_u_8_loose(transactionIdOctets, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 21,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaComputeSgp22HashCcConstMeta,
+        argValues: [confirmationCode, transactionIdOctets],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaComputeSgp22HashCcConstMeta =>
+      const TaskConstMeta(
+        debugName: "compute_sgp22_hash_cc",
+        argNames: ["confirmationCode", "transactionIdOctets"],
+      );
+
+  @override
+  Future<DownloadSessionStateDto> crateApiLpaCreateDownloadSession({
+    required String smdpAddress,
+    String? matchingId,
+    String? confirmationCode,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(smdpAddress, serializer);
+          sse_encode_opt_String(matchingId, serializer);
+          sse_encode_opt_String(confirmationCode, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_download_session_state_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaCreateDownloadSessionConstMeta,
+        argValues: [smdpAddress, matchingId, confirmationCode],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaCreateDownloadSessionConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_download_session",
+        argNames: ["smdpAddress", "matchingId", "confirmationCode"],
+      );
+
+  @override
+  Future<EuiccProfileDto> crateApiTelecomCreateEuiccProfile({
+    required String iccid,
+    required bool enabled,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(iccid, serializer);
+          sse_encode_bool(enabled, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 23,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_euicc_profile_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomCreateEuiccProfileConstMeta,
+        argValues: [iccid, enabled],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomCreateEuiccProfileConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_euicc_profile",
+        argNames: ["iccid", "enabled"],
+      );
+
+  @override
+  Future<String> crateApiTelecomDecodeStoredImei({required List<int> bytes}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(bytes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 24,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomDecodeStoredImeiConstMeta,
+        argValues: [bytes],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomDecodeStoredImeiConstMeta =>
+      const TaskConstMeta(debugName: "decode_stored_imei", argNames: ["bytes"]);
+
+  @override
+  Future<Uint8List> crateApiTelecomEncodeStoredImei({required String digits}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(digits, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 25,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomEncodeStoredImeiConstMeta,
+        argValues: [digits],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomEncodeStoredImeiConstMeta =>
+      const TaskConstMeta(
+        debugName: "encode_stored_imei",
+        argNames: ["digits"],
+      );
+
+  @override
+  Future<NotificationActionDto> crateApiLpaEvaluateNotificationAction({
+    required NotificationPolicyDto policy,
+    required int operationByte,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_notification_policy_dto(policy, serializer);
+          sse_encode_u_8(operationByte, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 26,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_notification_action_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaEvaluateNotificationActionConstMeta,
+        argValues: [policy, operationByte],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaEvaluateNotificationActionConstMeta =>
+      const TaskConstMeta(
+        debugName: "evaluate_notification_action",
+        argNames: ["policy", "operationByte"],
+      );
+
+  @override
+  Future<StateTransitionResultDto> crateApiLpaEvaluateProfileConvergence({
+    required bool targetEnabled,
+    required BigInt commandAttempt,
+    required List<VerificationReadDto> verificationReads,
+    BigInt? maxCommandAttempts,
+    BigInt? maxVerificationAttempts,
+    BigInt? maxTransientFailuresWithoutRead,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(targetEnabled, serializer);
+          sse_encode_usize(commandAttempt, serializer);
+          sse_encode_list_verification_read_dto(verificationReads, serializer);
+          sse_encode_opt_box_autoadd_usize(maxCommandAttempts, serializer);
+          sse_encode_opt_box_autoadd_usize(maxVerificationAttempts, serializer);
+          sse_encode_opt_box_autoadd_usize(
+            maxTransientFailuresWithoutRead,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 27,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_state_transition_result_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaEvaluateProfileConvergenceConstMeta,
+        argValues: [
+          targetEnabled,
+          commandAttempt,
+          verificationReads,
+          maxCommandAttempts,
+          maxVerificationAttempts,
+          maxTransientFailuresWithoutRead,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaEvaluateProfileConvergenceConstMeta =>
+      const TaskConstMeta(
+        debugName: "evaluate_profile_convergence",
+        argNames: [
+          "targetEnabled",
+          "commandAttempt",
+          "verificationReads",
+          "maxCommandAttempts",
+          "maxVerificationAttempts",
+          "maxTransientFailuresWithoutRead",
+        ],
+      );
+
+  @override
+  Future<ActivationCodeDto?> crateApiTelecomExtractActivationCode({
+    required String rawText,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(rawText, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 28,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_activation_code_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomExtractActivationCodeConstMeta,
+        argValues: [rawText],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomExtractActivationCodeConstMeta =>
+      const TaskConstMeta(
+        debugName: "extract_activation_code",
+        argNames: ["rawText"],
+      );
+
+  @override
+  Future<String> crateApiTelecomFlagEmojiForCountry({
+    required String countryCode,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(countryCode, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 29,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomFlagEmojiForCountryConstMeta,
+        argValues: [countryCode],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomFlagEmojiForCountryConstMeta =>
+      const TaskConstMeta(
+        debugName: "flag_emoji_for_country",
+        argNames: ["countryCode"],
+      );
+
+  @override
+  Future<String> crateApiTelecomFlagUrlForCountry({
+    required String countryCode,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(countryCode, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 30,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomFlagUrlForCountryConstMeta,
+        argValues: [countryCode],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomFlagUrlForCountryConstMeta =>
+      const TaskConstMeta(
+        debugName: "flag_url_for_country",
+        argNames: ["countryCode"],
+      );
+
+  @override
+  Future<String> crateApiTelecomFormatActivationCode({
+    required ActivationCodeDto dto,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_activation_code_dto(dto, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 31,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomFormatActivationCodeConstMeta,
+        argValues: [dto],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomFormatActivationCodeConstMeta =>
+      const TaskConstMeta(
+        debugName: "format_activation_code",
+        argNames: ["dto"],
+      );
+
+  @override
+  Future<String> crateApiTelecomFormatIccid({required String iccid}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(iccid, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 32,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomFormatIccidConstMeta,
+        argValues: [iccid],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomFormatIccidConstMeta =>
+      const TaskConstMeta(debugName: "format_iccid", argNames: ["iccid"]);
+
+  @override
+  Future<Uint8List> crateApiLpaFrameApdu({
+    required int cla,
+    required int ins,
+    required int p1,
+    required int p2,
+    Uint8List? data,
+    BigInt? le,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_8(cla, serializer);
+          sse_encode_u_8(ins, serializer);
+          sse_encode_u_8(p1, serializer);
+          sse_encode_u_8(p2, serializer);
+          sse_encode_opt_list_prim_u_8_strict(data, serializer);
+          sse_encode_opt_box_autoadd_usize(le, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 33,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaFrameApduConstMeta,
+        argValues: [cla, ins, p1, p2, data, le],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaFrameApduConstMeta => const TaskConstMeta(
+    debugName: "frame_apdu",
+    argNames: ["cla", "ins", "p1", "p2", "data", "le"],
+  );
+
+  @override
+  Future<CertificateDetailsDto> crateApiLpaGetCertificateDetails({
+    required String certStr,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(certStr, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 34,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_certificate_details_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaGetCertificateDetailsConstMeta,
+        argValues: [certStr],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaGetCertificateDetailsConstMeta =>
+      const TaskConstMeta(
+        debugName: "get_certificate_details",
+        argNames: ["certStr"],
+      );
+
+  @override
+  Future<Uint8List> crateApiTelecomHexDecode({required String hex}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(hex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 35,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomHexDecodeConstMeta,
+        argValues: [hex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomHexDecodeConstMeta =>
+      const TaskConstMeta(debugName: "hex_decode", argNames: ["hex"]);
+
+  @override
+  Future<String> crateApiTelecomHexEncode({required List<int> bytes}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(bytes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 36,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomHexEncodeConstMeta,
+        argValues: [bytes],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomHexEncodeConstMeta =>
+      const TaskConstMeta(debugName: "hex_encode", argNames: ["bytes"]);
+
+  @override
+  Future<Uint8List> crateApiLpaIsdpDeleteApdu({required String aidHex}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(aidHex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 37,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaIsdpDeleteApduConstMeta,
+        argValues: [aidHex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaIsdpDeleteApduConstMeta =>
+      const TaskConstMeta(debugName: "isdp_delete_apdu", argNames: ["aidHex"]);
+
+  @override
+  Future<Uint8List> crateApiLpaIsdpSelectApdu({required String aidHex}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(aidHex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 38,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaIsdpSelectApduConstMeta,
+        argValues: [aidHex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaIsdpSelectApduConstMeta =>
+      const TaskConstMeta(debugName: "isdp_select_apdu", argNames: ["aidHex"]);
+
+  @override
+  Future<int> crateApiLpaMapChannelCla({
+    required int cla,
+    required int channel,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_8(cla, serializer);
+          sse_encode_u_8(channel, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 39,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_8,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaMapChannelClaConstMeta,
+        argValues: [cla, channel],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaMapChannelClaConstMeta => const TaskConstMeta(
+    debugName: "map_channel_cla",
+    argNames: ["cla", "channel"],
+  );
+
+  @override
+  Future<String> crateApiTelecomMccToCountry({
+    required String mcc,
+    String? mnc,
+    String? iccid,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(mcc, serializer);
+          sse_encode_opt_String(mnc, serializer);
+          sse_encode_opt_String(iccid, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 40,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomMccToCountryConstMeta,
+        argValues: [mcc, mnc, iccid],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomMccToCountryConstMeta =>
+      const TaskConstMeta(
+        debugName: "mcc_to_country",
+        argNames: ["mcc", "mnc", "iccid"],
+      );
+
+  @override
+  Future<String> crateApiTelecomNibbleSwap({required String input}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(input, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 41,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomNibbleSwapConstMeta,
+        argValues: [input],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomNibbleSwapConstMeta =>
+      const TaskConstMeta(debugName: "nibble_swap", argNames: ["input"]);
+
+  @override
+  Future<Uint8List> crateApiCcidNineEsimEnableAtrProgrammingCommand() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 42,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiCcidNineEsimEnableAtrProgrammingCommandConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCcidNineEsimEnableAtrProgrammingCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: "nine_esim_enable_atr_programming_command",
+        argNames: [],
+      );
+
+  @override
+  Future<String> crateApiCcidNineEsimPasswordHex({required String value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 43,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiCcidNineEsimPasswordHexConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCcidNineEsimPasswordHexConstMeta =>
+      const TaskConstMeta(
+        debugName: "nine_esim_password_hex",
+        argNames: ["value"],
+      );
+
+  @override
+  Future<Uint8List> crateApiCcidNineEsimSetAtrCommand({
+    required List<int> atrBytes,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(atrBytes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 44,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiCcidNineEsimSetAtrCommandConstMeta,
+        argValues: [atrBytes],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCcidNineEsimSetAtrCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: "nine_esim_set_atr_command",
+        argNames: ["atrBytes"],
+      );
+
+  @override
+  Future<Uint8List> crateApiCcidNineEsimSetPasswordCommand({
+    required String deviceName,
+    required String password,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(deviceName, serializer);
+          sse_encode_String(password, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 45,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiCcidNineEsimSetPasswordCommandConstMeta,
+        argValues: [deviceName, password],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCcidNineEsimSetPasswordCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: "nine_esim_set_password_command",
+        argNames: ["deviceName", "password"],
+      );
+
+  @override
   Future<ModemSession> crateApiModemOpenQmiQrtrSession({
     required FutureOr<QrtrSocketAddress> Function() address,
     required FutureOr<void> Function(QrtrSocketDatagram) send,
@@ -345,7 +1966,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 46,
             port: port_,
           );
         },
@@ -365,6 +1986,773 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: "open_qmi_qrtr_session",
         argNames: ["address", "send", "receive"],
+      );
+
+  @override
+  Future<ActivationCodeDto> crateApiTelecomParseActivationCode({
+    required String code,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(code, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 47,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_activation_code_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomParseActivationCodeConstMeta,
+        argValues: [code],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomParseActivationCodeConstMeta =>
+      const TaskConstMeta(
+        debugName: "parse_activation_code",
+        argNames: ["code"],
+      );
+
+  @override
+  Future<List<Asn1NodeDto>> crateApiTelecomParseAsn1Tlvs({
+    required List<int> derBytes,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(derBytes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 48,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_asn_1_node_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomParseAsn1TlvsConstMeta,
+        argValues: [derBytes],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomParseAsn1TlvsConstMeta =>
+      const TaskConstMeta(debugName: "parse_asn1_tlvs", argNames: ["derBytes"]);
+
+  @override
+  Future<AuthenticateClientResponseDto> crateApiLpaParseAuthenticateClientResp({
+    required String jsonStr,
+    int? httpStatus,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(jsonStr, serializer);
+          sse_encode_opt_box_autoadd_u_16(httpStatus, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 49,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_authenticate_client_response_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaParseAuthenticateClientRespConstMeta,
+        argValues: [jsonStr, httpStatus],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaParseAuthenticateClientRespConstMeta =>
+      const TaskConstMeta(
+        debugName: "parse_authenticate_client_resp",
+        argNames: ["jsonStr", "httpStatus"],
+      );
+
+  @override
+  Future<GetBppResponseDto> crateApiLpaParseGetBppResp({
+    required String jsonStr,
+    int? httpStatus,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(jsonStr, serializer);
+          sse_encode_opt_box_autoadd_u_16(httpStatus, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 50,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_get_bpp_response_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaParseGetBppRespConstMeta,
+        argValues: [jsonStr, httpStatus],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaParseGetBppRespConstMeta => const TaskConstMeta(
+    debugName: "parse_get_bpp_resp",
+    argNames: ["jsonStr", "httpStatus"],
+  );
+
+  @override
+  Future<InitiateAuthResponseDto> crateApiLpaParseInitiateAuthResp({
+    required String jsonStr,
+    int? httpStatus,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(jsonStr, serializer);
+          sse_encode_opt_box_autoadd_u_16(httpStatus, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 51,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_initiate_auth_response_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaParseInitiateAuthRespConstMeta,
+        argValues: [jsonStr, httpStatus],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaParseInitiateAuthRespConstMeta =>
+      const TaskConstMeta(
+        debugName: "parse_initiate_auth_resp",
+        argNames: ["jsonStr", "httpStatus"],
+      );
+
+  @override
+  Future<OperatorIdDto?> crateApiTelecomParsePlmnOperatorId({
+    required List<int> data,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(data, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 52,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_operator_id_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTelecomParsePlmnOperatorIdConstMeta,
+        argValues: [data],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomParsePlmnOperatorIdConstMeta =>
+      const TaskConstMeta(
+        debugName: "parse_plmn_operator_id",
+        argNames: ["data"],
+      );
+
+  @override
+  Future<List<DiscoveredEventDto>> crateApiLpaParseSmdsEvents({
+    required String jsonResponse,
+    int? httpStatus,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(jsonResponse, serializer);
+          sse_encode_opt_box_autoadd_u_16(httpStatus, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 53,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_discovered_event_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaParseSmdsEventsConstMeta,
+        argValues: [jsonResponse, httpStatus],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaParseSmdsEventsConstMeta => const TaskConstMeta(
+    debugName: "parse_smds_events",
+    argNames: ["jsonResponse", "httpStatus"],
+  );
+
+  @override
+  Future<NotificationSyncPlanDto> crateApiLpaPlanNotificationSync({
+    required List<NotificationRecordDto> cardNotifications,
+    required List<StoredNotificationDto> storedNotifications,
+    required NotificationPolicyDto policy,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_notification_record_dto(
+            cardNotifications,
+            serializer,
+          );
+          sse_encode_list_stored_notification_dto(
+            storedNotifications,
+            serializer,
+          );
+          sse_encode_box_autoadd_notification_policy_dto(policy, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 54,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_notification_sync_plan_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaPlanNotificationSyncConstMeta,
+        argValues: [cardNotifications, storedNotifications, policy],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaPlanNotificationSyncConstMeta =>
+      const TaskConstMeta(
+        debugName: "plan_notification_sync",
+        argNames: ["cardNotifications", "storedNotifications", "policy"],
+      );
+
+  @override
+  Future<PlatformInt64?> crateApiLpaPredictProfileSize({
+    required String catalogJson,
+    String? eid,
+    String? smdpAddress,
+    String? plmn,
+    String? serviceProviderName,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(catalogJson, serializer);
+          sse_encode_opt_String(eid, serializer);
+          sse_encode_opt_String(smdpAddress, serializer);
+          sse_encode_opt_String(plmn, serializer);
+          sse_encode_opt_String(serviceProviderName, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 55,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_i_64,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaPredictProfileSizeConstMeta,
+        argValues: [catalogJson, eid, smdpAddress, plmn, serviceProviderName],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaPredictProfileSizeConstMeta =>
+      const TaskConstMeta(
+        debugName: "predict_profile_size",
+        argNames: [
+          "catalogJson",
+          "eid",
+          "smdpAddress",
+          "plmn",
+          "serviceProviderName",
+        ],
+      );
+
+  @override
+  Future<Scp03AuthResultDto> crateApiLpaScp03AuthenticateSession({
+    required String hostChallengeHex,
+    required String cardResponseHex,
+    required String staticEncKeyHex,
+    required String staticMacKeyHex,
+    required int securityLevel,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(hostChallengeHex, serializer);
+          sse_encode_String(cardResponseHex, serializer);
+          sse_encode_String(staticEncKeyHex, serializer);
+          sse_encode_String(staticMacKeyHex, serializer);
+          sse_encode_u_8(securityLevel, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 56,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_scp_03_auth_result_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaScp03AuthenticateSessionConstMeta,
+        argValues: [
+          hostChallengeHex,
+          cardResponseHex,
+          staticEncKeyHex,
+          staticMacKeyHex,
+          securityLevel,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaScp03AuthenticateSessionConstMeta =>
+      const TaskConstMeta(
+        debugName: "scp03_authenticate_session",
+        argNames: [
+          "hostChallengeHex",
+          "cardResponseHex",
+          "staticEncKeyHex",
+          "staticMacKeyHex",
+          "securityLevel",
+        ],
+      );
+
+  @override
+  Future<Uint8List> crateApiLpaScp03InitializeUpdateApdu({
+    required String hostChallengeHex,
+    required int keyVersion,
+    required int keyId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(hostChallengeHex, serializer);
+          sse_encode_u_8(keyVersion, serializer);
+          sse_encode_u_8(keyId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 57,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaScp03InitializeUpdateApduConstMeta,
+        argValues: [hostChallengeHex, keyVersion, keyId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaScp03InitializeUpdateApduConstMeta =>
+      const TaskConstMeta(
+        debugName: "scp03_initialize_update_apdu",
+        argNames: ["hostChallengeHex", "keyVersion", "keyId"],
+      );
+
+  @override
+  Future<Uint8List> crateApiLpaSessionComputeHashCc({
+    required DownloadSessionStateDto session,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 58,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaSessionComputeHashCcConstMeta,
+        argValues: [session],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionComputeHashCcConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_compute_hash_cc",
+        argNames: ["session"],
+      );
+
+  @override
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessAuthClientResp({
+    required DownloadSessionStateDto session,
+    required String status,
+    Uint8List? smdpSigned2,
+    Uint8List? smdpSignature2,
+    Uint8List? profileMetadata,
+    Uint8List? smdpCertificate,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          sse_encode_String(status, serializer);
+          sse_encode_opt_list_prim_u_8_strict(smdpSigned2, serializer);
+          sse_encode_opt_list_prim_u_8_strict(smdpSignature2, serializer);
+          sse_encode_opt_list_prim_u_8_strict(profileMetadata, serializer);
+          sse_encode_opt_list_prim_u_8_strict(smdpCertificate, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 59,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_download_session_state_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaSessionProcessAuthClientRespConstMeta,
+        argValues: [
+          session,
+          status,
+          smdpSigned2,
+          smdpSignature2,
+          profileMetadata,
+          smdpCertificate,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionProcessAuthClientRespConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_process_auth_client_resp",
+        argNames: [
+          "session",
+          "status",
+          "smdpSigned2",
+          "smdpSignature2",
+          "profileMetadata",
+          "smdpCertificate",
+        ],
+      );
+
+  @override
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessAuthServerResp({
+    required DownloadSessionStateDto session,
+    required List<int> respBytes,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          sse_encode_list_prim_u_8_loose(respBytes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 60,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_download_session_state_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaSessionProcessAuthServerRespConstMeta,
+        argValues: [session, respBytes],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionProcessAuthServerRespConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_process_auth_server_resp",
+        argNames: ["session", "respBytes"],
+      );
+
+  @override
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessEuiccChallenge({
+    required DownloadSessionStateDto session,
+    required List<int> challenge,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          sse_encode_list_prim_u_8_loose(challenge, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 61,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_download_session_state_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaSessionProcessEuiccChallengeConstMeta,
+        argValues: [session, challenge],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionProcessEuiccChallengeConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_process_euicc_challenge",
+        argNames: ["session", "challenge"],
+      );
+
+  @override
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessEuiccInfo1({
+    required DownloadSessionStateDto session,
+    required List<int> info1,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          sse_encode_list_prim_u_8_loose(info1, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 62,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_download_session_state_dto,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLpaSessionProcessEuiccInfo1ConstMeta,
+        argValues: [session, info1],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionProcessEuiccInfo1ConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_process_euicc_info1",
+        argNames: ["session", "info1"],
+      );
+
+  @override
+  Future<DownloadSessionStateDto> crateApiLpaSessionProcessInitiateAuthResp({
+    required DownloadSessionStateDto session,
+    required String transactionIdHex,
+    required List<int> serverCertificate,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          sse_encode_String(transactionIdHex, serializer);
+          sse_encode_list_prim_u_8_loose(serverCertificate, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 63,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_download_session_state_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaSessionProcessInitiateAuthRespConstMeta,
+        argValues: [session, transactionIdHex, serverCertificate],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionProcessInitiateAuthRespConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_process_initiate_auth_resp",
+        argNames: ["session", "transactionIdHex", "serverCertificate"],
+      );
+
+  @override
+  Future<void> crateApiLpaSessionValidateInitiateAuth({
+    required DownloadSessionStateDto session,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_download_session_state_dto(
+            session,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 64,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaSessionValidateInitiateAuthConstMeta,
+        argValues: [session],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaSessionValidateInitiateAuthConstMeta =>
+      const TaskConstMeta(
+        debugName: "session_validate_initiate_auth",
+        argNames: ["session"],
+      );
+
+  @override
+  Future<void> crateApiTelecomValidateApdu({
+    required int sw1,
+    required int sw2,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_8(sw1, serializer);
+          sse_encode_u_8(sw2, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 65,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiTelecomValidateApduConstMeta,
+        argValues: [sw1, sw2],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTelecomValidateApduConstMeta =>
+      const TaskConstMeta(debugName: "validate_apdu", argNames: ["sw1", "sw2"]);
+
+  @override
+  Future<bool> crateApiLpaVerifySmdpCertificate({
+    required String certStr,
+    required List<String> allowedCiPkidsHex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(certStr, serializer);
+          sse_encode_list_String(allowedCiPkidsHex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 66,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiLpaVerifySmdpCertificateConstMeta,
+        argValues: [certStr, allowedCiPkidsHex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLpaVerifySmdpCertificateConstMeta =>
+      const TaskConstMeta(
+        debugName: "verify_smdp_certificate",
+        argNames: ["certStr", "allowedCiPkidsHex"],
       );
 
   Future<void> Function(int)
@@ -554,9 +2942,95 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ActivationCodeDto dco_decode_activation_code_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ActivationCodeDto(
+      format: dco_decode_String(arr[0]),
+      smdpAddress: dco_decode_String(arr[1]),
+      matchingId: dco_decode_String(arr[2]),
+      smdpOid: dco_decode_opt_String(arr[3]),
+      confirmationCode: dco_decode_opt_String(arr[4]),
+      confirmationCodeRequired: dco_decode_bool(arr[5]),
+    );
+  }
+
+  @protected
+  Asn1NodeDto dco_decode_asn_1_node_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Asn1NodeDto(
+      tag: dco_decode_u_32(arr[0]),
+      value: dco_decode_list_prim_u_8_strict(arr[1]),
+      rawBytes: dco_decode_list_prim_u_8_strict(arr[2]),
+    );
+  }
+
+  @protected
+  AuthenticateClientResponseDto dco_decode_authenticate_client_response_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return AuthenticateClientResponseDto(
+      transactionId: dco_decode_String(arr[0]),
+      profileMetadata: dco_decode_opt_list_prim_u_8_strict(arr[1]),
+      smdpSigned2: dco_decode_opt_list_prim_u_8_strict(arr[2]),
+      smdpSignature2: dco_decode_opt_list_prim_u_8_strict(arr[3]),
+      smdpCertificate: dco_decode_opt_list_prim_u_8_strict(arr[4]),
+    );
+  }
+
+  @protected
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  ActivationCodeDto dco_decode_box_autoadd_activation_code_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_activation_code_dto(raw);
+  }
+
+  @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
+  DownloadSessionStateDto dco_decode_box_autoadd_download_session_state_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_download_session_state_dto(raw);
+  }
+
+  @protected
+  PlatformInt64 dco_decode_box_autoadd_i_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_i_64(raw);
+  }
+
+  @protected
+  NotificationPolicyDto dco_decode_box_autoadd_notification_policy_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_notification_policy_dto(raw);
+  }
+
+  @protected
+  OperatorIdDto dco_decode_box_autoadd_operator_id_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_operator_id_dto(raw);
   }
 
   @protected
@@ -566,15 +3040,180 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int dco_decode_box_autoadd_u_16(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  BigInt dco_decode_box_autoadd_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_usize(raw);
+  }
+
+  @protected
+  CertificateDetailsDto dco_decode_certificate_details_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return CertificateDetailsDto(
+      commonName: dco_decode_opt_String(arr[0]),
+      organization: dco_decode_opt_String(arr[1]),
+      country: dco_decode_opt_String(arr[2]),
+      serialNumberHex: dco_decode_String(arr[3]),
+      skiHex: dco_decode_String(arr[4]),
+      akiHex: dco_decode_opt_String(arr[5]),
+      isCa: dco_decode_bool(arr[6]),
+    );
+  }
+
+  @protected
+  DiscoveredEventDto dco_decode_discovered_event_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return DiscoveredEventDto(
+      eventId: dco_decode_String(arr[0]),
+      address: dco_decode_String(arr[1]),
+      activationCode: dco_decode_String(arr[2]),
+    );
+  }
+
+  @protected
+  DownloadSessionStateDto dco_decode_download_session_state_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return DownloadSessionStateDto(
+      smdpAddress: dco_decode_String(arr[0]),
+      matchingId: dco_decode_opt_String(arr[1]),
+      confirmationCode: dco_decode_opt_String(arr[2]),
+      euiccInfo1Bytes: dco_decode_opt_list_prim_u_8_strict(arr[3]),
+      euiccChallenge: dco_decode_opt_list_prim_u_8_strict(arr[4]),
+      transactionIdHex: dco_decode_opt_String(arr[5]),
+      transactionIdOctets: dco_decode_opt_list_prim_u_8_strict(arr[6]),
+      serverCertificate: dco_decode_opt_list_prim_u_8_strict(arr[7]),
+      authenticateServerResponse: dco_decode_opt_list_prim_u_8_strict(arr[8]),
+      authenticateClientStatus: dco_decode_opt_String(arr[9]),
+      smdpSigned2: dco_decode_opt_list_prim_u_8_strict(arr[10]),
+      smdpSignature2: dco_decode_opt_list_prim_u_8_strict(arr[11]),
+      profileMetadata: dco_decode_opt_list_prim_u_8_strict(arr[12]),
+      smdpCertificate: dco_decode_opt_list_prim_u_8_strict(arr[13]),
+      isAuthenticated: dco_decode_bool(arr[14]),
+    );
+  }
+
+  @protected
+  EuiccProfileDto dco_decode_euicc_profile_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return EuiccProfileDto(
+      iccid: dco_decode_String(arr[0]),
+      rawIccid: dco_decode_String(arr[1]),
+      name: dco_decode_opt_String(arr[2]),
+      nickname: dco_decode_opt_String(arr[3]),
+      serviceProviderName: dco_decode_opt_String(arr[4]),
+      enabled: dco_decode_bool(arr[5]),
+      profileClass: dco_decode_u_8(arr[6]),
+      isdpAid: dco_decode_opt_String(arr[7]),
+      smdpAddress: dco_decode_opt_String(arr[8]),
+    );
+  }
+
+  @protected
+  GetBppResponseDto dco_decode_get_bpp_response_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return GetBppResponseDto(
+      transactionId: dco_decode_String(arr[0]),
+      boundProfilePackage: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  PlatformInt64 dco_decode_i_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeI64(raw);
+  }
+
+  @protected
+  InitiateAuthResponseDto dco_decode_initiate_auth_response_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return InitiateAuthResponseDto(
+      transactionId: dco_decode_String(arr[0]),
+      serverSigned1: dco_decode_list_prim_u_8_strict(arr[1]),
+      serverSignature1: dco_decode_list_prim_u_8_strict(arr[2]),
+      euiccCiPkIdToBeUsed: dco_decode_opt_list_prim_u_8_strict(arr[3]),
+      serverCertificate: dco_decode_list_prim_u_8_strict(arr[4]),
+    );
+  }
+
+  @protected
   PlatformInt64 dco_decode_isize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeI64(raw);
   }
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
+  List<Asn1NodeDto> dco_decode_list_asn_1_node_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_asn_1_node_dto).toList();
+  }
+
+  @protected
+  List<DiscoveredEventDto> dco_decode_list_discovered_event_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_discovered_event_dto).toList();
+  }
+
+  @protected
+  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_list_prim_u_8_strict).toList();
+  }
+
+  @protected
   List<ModemSlot> dco_decode_list_modem_slot(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_modem_slot).toList();
+  }
+
+  @protected
+  List<NotificationJobDto> dco_decode_list_notification_job_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_notification_job_dto).toList();
+  }
+
+  @protected
+  List<NotificationRecordDto> dco_decode_list_notification_record_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_notification_record_dto)
+        .toList();
+  }
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Uint32List;
   }
 
   @protected
@@ -587,6 +3226,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  List<StoredNotificationDto> dco_decode_list_stored_notification_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_stored_notification_dto)
+        .toList();
+  }
+
+  @protected
+  List<VerificationReadDto> dco_decode_list_verification_read_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_verification_read_dto)
+        .toList();
   }
 
   @protected
@@ -605,9 +3262,124 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  NotificationActionDto dco_decode_notification_action_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return NotificationActionDto(
+      shouldSend: dco_decode_bool(arr[0]),
+      shouldRemove: dco_decode_bool(arr[1]),
+      shouldDeleteWithoutSending: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
+  NotificationJobDto dco_decode_notification_job_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return NotificationJobDto(
+      seqNumber: dco_decode_u_32(arr[0]),
+      iccid: dco_decode_String(arr[1]),
+      address: dco_decode_String(arr[2]),
+      contentBase64: dco_decode_String(arr[3]),
+      shouldRemoveAfterSend: dco_decode_bool(arr[4]),
+    );
+  }
+
+  @protected
+  NotificationPolicyDto dco_decode_notification_policy_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return NotificationPolicyDto(
+      autoSendInstall: dco_decode_bool(arr[0]),
+      autoRemoveInstall: dco_decode_bool(arr[1]),
+      autoSendEnable: dco_decode_bool(arr[2]),
+      autoRemoveEnable: dco_decode_bool(arr[3]),
+      deleteWithoutSendingEnable: dco_decode_bool(arr[4]),
+      autoSendDisable: dco_decode_bool(arr[5]),
+      autoRemoveDisable: dco_decode_bool(arr[6]),
+      deleteWithoutSendingDisable: dco_decode_bool(arr[7]),
+      autoSendDelete: dco_decode_bool(arr[8]),
+      autoRemoveDelete: dco_decode_bool(arr[9]),
+    );
+  }
+
+  @protected
+  NotificationRecordDto dco_decode_notification_record_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return NotificationRecordDto(
+      seqNumber: dco_decode_u_32(arr[0]),
+      operationByte: dco_decode_u_8(arr[1]),
+      address: dco_decode_String(arr[2]),
+      iccid: dco_decode_opt_String(arr[3]),
+      rawDer: dco_decode_opt_list_prim_u_8_strict(arr[4]),
+    );
+  }
+
+  @protected
+  NotificationSyncPlanDto dco_decode_notification_sync_plan_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return NotificationSyncPlanDto(
+      pruneDbSeqs: dco_decode_list_prim_u_32_strict(arr[0]),
+      pendingUnsentCount: dco_decode_usize(arr[1]),
+      jobs: dco_decode_list_notification_job_dto(arr[2]),
+      immediateRemovals: dco_decode_list_prim_u_32_strict(arr[3]),
+    );
+  }
+
+  @protected
+  OperatorIdDto dco_decode_operator_id_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return OperatorIdDto(
+      mcc: dco_decode_String(arr[0]),
+      mnc: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  ActivationCodeDto? dco_decode_opt_box_autoadd_activation_code_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_activation_code_dto(raw);
+  }
+
+  @protected
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_bool(raw);
+  }
+
+  @protected
+  PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_i_64(raw);
+  }
+
+  @protected
+  OperatorIdDto? dco_decode_opt_box_autoadd_operator_id_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_operator_id_dto(raw);
   }
 
   @protected
@@ -618,6 +3390,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return raw == null
         ? null
         : dco_decode_box_autoadd_qrtr_socket_datagram(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_16(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_16(raw);
+  }
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_usize(raw);
   }
 
   @protected
@@ -652,6 +3436,53 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Scp03AuthResultDto dco_decode_scp_03_auth_result_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Scp03AuthResultDto(
+      hostCryptogramHex: dco_decode_String(arr[0]),
+      externalAuthenticateApdu: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  StateTransitionResultDto dco_decode_state_transition_result_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return StateTransitionResultDto(
+      converged: dco_decode_bool(arr[0]),
+      commandAttempts: dco_decode_usize(arr[1]),
+      verificationAttempts: dco_decode_usize(arr[2]),
+      actualEnabled: dco_decode_opt_box_autoadd_bool(arr[3]),
+      errorMessage: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  StoredNotificationDto dco_decode_stored_notification_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return StoredNotificationDto(
+      seqNumber: dco_decode_u_32(arr[0]),
+      iccid: dco_decode_String(arr[1]),
+      status: dco_decode_u_8(arr[2]),
+      deletePending: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
+  int dco_decode_u_16(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   int dco_decode_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -673,6 +3504,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt dco_decode_usize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeU64(raw);
+  }
+
+  @protected
+  VerificationReadDto dco_decode_verification_read_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VerificationReadDto(
+      isOk: dco_decode_bool(arr[0]),
+      actualEnabled: dco_decode_opt_box_autoadd_bool(arr[1]),
+      error: dco_decode_opt_String(arr[2]),
+    );
   }
 
   @protected
@@ -733,9 +3577,102 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ActivationCodeDto sse_decode_activation_code_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_format = sse_decode_String(deserializer);
+    var var_smdpAddress = sse_decode_String(deserializer);
+    var var_matchingId = sse_decode_String(deserializer);
+    var var_smdpOid = sse_decode_opt_String(deserializer);
+    var var_confirmationCode = sse_decode_opt_String(deserializer);
+    var var_confirmationCodeRequired = sse_decode_bool(deserializer);
+    return ActivationCodeDto(
+      format: var_format,
+      smdpAddress: var_smdpAddress,
+      matchingId: var_matchingId,
+      smdpOid: var_smdpOid,
+      confirmationCode: var_confirmationCode,
+      confirmationCodeRequired: var_confirmationCodeRequired,
+    );
+  }
+
+  @protected
+  Asn1NodeDto sse_decode_asn_1_node_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_tag = sse_decode_u_32(deserializer);
+    var var_value = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_rawBytes = sse_decode_list_prim_u_8_strict(deserializer);
+    return Asn1NodeDto(tag: var_tag, value: var_value, rawBytes: var_rawBytes);
+  }
+
+  @protected
+  AuthenticateClientResponseDto sse_decode_authenticate_client_response_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_transactionId = sse_decode_String(deserializer);
+    var var_profileMetadata = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_smdpSigned2 = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_smdpSignature2 = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_smdpCertificate = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    return AuthenticateClientResponseDto(
+      transactionId: var_transactionId,
+      profileMetadata: var_profileMetadata,
+      smdpSigned2: var_smdpSigned2,
+      smdpSignature2: var_smdpSignature2,
+      smdpCertificate: var_smdpCertificate,
+    );
+  }
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  ActivationCodeDto sse_decode_box_autoadd_activation_code_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_activation_code_dto(deserializer));
+  }
+
+  @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_bool(deserializer));
+  }
+
+  @protected
+  DownloadSessionStateDto sse_decode_box_autoadd_download_session_state_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_download_session_state_dto(deserializer));
+  }
+
+  @protected
+  PlatformInt64 sse_decode_box_autoadd_i_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_i_64(deserializer));
+  }
+
+  @protected
+  NotificationPolicyDto sse_decode_box_autoadd_notification_policy_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_notification_policy_dto(deserializer));
+  }
+
+  @protected
+  OperatorIdDto sse_decode_box_autoadd_operator_id_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_operator_id_dto(deserializer));
   }
 
   @protected
@@ -747,9 +3684,223 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int sse_decode_box_autoadd_u_16(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_16(deserializer));
+  }
+
+  @protected
+  BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_usize(deserializer));
+  }
+
+  @protected
+  CertificateDetailsDto sse_decode_certificate_details_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_commonName = sse_decode_opt_String(deserializer);
+    var var_organization = sse_decode_opt_String(deserializer);
+    var var_country = sse_decode_opt_String(deserializer);
+    var var_serialNumberHex = sse_decode_String(deserializer);
+    var var_skiHex = sse_decode_String(deserializer);
+    var var_akiHex = sse_decode_opt_String(deserializer);
+    var var_isCa = sse_decode_bool(deserializer);
+    return CertificateDetailsDto(
+      commonName: var_commonName,
+      organization: var_organization,
+      country: var_country,
+      serialNumberHex: var_serialNumberHex,
+      skiHex: var_skiHex,
+      akiHex: var_akiHex,
+      isCa: var_isCa,
+    );
+  }
+
+  @protected
+  DiscoveredEventDto sse_decode_discovered_event_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_eventId = sse_decode_String(deserializer);
+    var var_address = sse_decode_String(deserializer);
+    var var_activationCode = sse_decode_String(deserializer);
+    return DiscoveredEventDto(
+      eventId: var_eventId,
+      address: var_address,
+      activationCode: var_activationCode,
+    );
+  }
+
+  @protected
+  DownloadSessionStateDto sse_decode_download_session_state_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_smdpAddress = sse_decode_String(deserializer);
+    var var_matchingId = sse_decode_opt_String(deserializer);
+    var var_confirmationCode = sse_decode_opt_String(deserializer);
+    var var_euiccInfo1Bytes = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_euiccChallenge = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_transactionIdHex = sse_decode_opt_String(deserializer);
+    var var_transactionIdOctets = sse_decode_opt_list_prim_u_8_strict(
+      deserializer,
+    );
+    var var_serverCertificate = sse_decode_opt_list_prim_u_8_strict(
+      deserializer,
+    );
+    var var_authenticateServerResponse = sse_decode_opt_list_prim_u_8_strict(
+      deserializer,
+    );
+    var var_authenticateClientStatus = sse_decode_opt_String(deserializer);
+    var var_smdpSigned2 = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_smdpSignature2 = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_profileMetadata = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_smdpCertificate = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    var var_isAuthenticated = sse_decode_bool(deserializer);
+    return DownloadSessionStateDto(
+      smdpAddress: var_smdpAddress,
+      matchingId: var_matchingId,
+      confirmationCode: var_confirmationCode,
+      euiccInfo1Bytes: var_euiccInfo1Bytes,
+      euiccChallenge: var_euiccChallenge,
+      transactionIdHex: var_transactionIdHex,
+      transactionIdOctets: var_transactionIdOctets,
+      serverCertificate: var_serverCertificate,
+      authenticateServerResponse: var_authenticateServerResponse,
+      authenticateClientStatus: var_authenticateClientStatus,
+      smdpSigned2: var_smdpSigned2,
+      smdpSignature2: var_smdpSignature2,
+      profileMetadata: var_profileMetadata,
+      smdpCertificate: var_smdpCertificate,
+      isAuthenticated: var_isAuthenticated,
+    );
+  }
+
+  @protected
+  EuiccProfileDto sse_decode_euicc_profile_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_iccid = sse_decode_String(deserializer);
+    var var_rawIccid = sse_decode_String(deserializer);
+    var var_name = sse_decode_opt_String(deserializer);
+    var var_nickname = sse_decode_opt_String(deserializer);
+    var var_serviceProviderName = sse_decode_opt_String(deserializer);
+    var var_enabled = sse_decode_bool(deserializer);
+    var var_profileClass = sse_decode_u_8(deserializer);
+    var var_isdpAid = sse_decode_opt_String(deserializer);
+    var var_smdpAddress = sse_decode_opt_String(deserializer);
+    return EuiccProfileDto(
+      iccid: var_iccid,
+      rawIccid: var_rawIccid,
+      name: var_name,
+      nickname: var_nickname,
+      serviceProviderName: var_serviceProviderName,
+      enabled: var_enabled,
+      profileClass: var_profileClass,
+      isdpAid: var_isdpAid,
+      smdpAddress: var_smdpAddress,
+    );
+  }
+
+  @protected
+  GetBppResponseDto sse_decode_get_bpp_response_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_transactionId = sse_decode_String(deserializer);
+    var var_boundProfilePackage = sse_decode_list_prim_u_8_strict(deserializer);
+    return GetBppResponseDto(
+      transactionId: var_transactionId,
+      boundProfilePackage: var_boundProfilePackage,
+    );
+  }
+
+  @protected
+  PlatformInt64 sse_decode_i_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getPlatformInt64();
+  }
+
+  @protected
+  InitiateAuthResponseDto sse_decode_initiate_auth_response_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_transactionId = sse_decode_String(deserializer);
+    var var_serverSigned1 = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_serverSignature1 = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_euiccCiPkIdToBeUsed = sse_decode_opt_list_prim_u_8_strict(
+      deserializer,
+    );
+    var var_serverCertificate = sse_decode_list_prim_u_8_strict(deserializer);
+    return InitiateAuthResponseDto(
+      transactionId: var_transactionId,
+      serverSigned1: var_serverSigned1,
+      serverSignature1: var_serverSignature1,
+      euiccCiPkIdToBeUsed: var_euiccCiPkIdToBeUsed,
+      serverCertificate: var_serverCertificate,
+    );
+  }
+
+  @protected
   PlatformInt64 sse_decode_isize(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getPlatformInt64();
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Asn1NodeDto> sse_decode_list_asn_1_node_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Asn1NodeDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_asn_1_node_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<DiscoveredEventDto> sse_decode_list_discovered_event_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DiscoveredEventDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_discovered_event_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Uint8List>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_list_prim_u_8_strict(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -765,6 +3916,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NotificationJobDto> sse_decode_list_notification_job_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <NotificationJobDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_notification_job_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<NotificationRecordDto> sse_decode_list_notification_record_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <NotificationRecordDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_notification_record_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint32List(len_);
+  }
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -776,6 +3962,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  List<StoredNotificationDto> sse_decode_list_stored_notification_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <StoredNotificationDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_stored_notification_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VerificationReadDto> sse_decode_list_verification_read_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <VerificationReadDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_verification_read_dto(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -796,11 +4010,166 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  NotificationActionDto sse_decode_notification_action_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_shouldSend = sse_decode_bool(deserializer);
+    var var_shouldRemove = sse_decode_bool(deserializer);
+    var var_shouldDeleteWithoutSending = sse_decode_bool(deserializer);
+    return NotificationActionDto(
+      shouldSend: var_shouldSend,
+      shouldRemove: var_shouldRemove,
+      shouldDeleteWithoutSending: var_shouldDeleteWithoutSending,
+    );
+  }
+
+  @protected
+  NotificationJobDto sse_decode_notification_job_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_seqNumber = sse_decode_u_32(deserializer);
+    var var_iccid = sse_decode_String(deserializer);
+    var var_address = sse_decode_String(deserializer);
+    var var_contentBase64 = sse_decode_String(deserializer);
+    var var_shouldRemoveAfterSend = sse_decode_bool(deserializer);
+    return NotificationJobDto(
+      seqNumber: var_seqNumber,
+      iccid: var_iccid,
+      address: var_address,
+      contentBase64: var_contentBase64,
+      shouldRemoveAfterSend: var_shouldRemoveAfterSend,
+    );
+  }
+
+  @protected
+  NotificationPolicyDto sse_decode_notification_policy_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_autoSendInstall = sse_decode_bool(deserializer);
+    var var_autoRemoveInstall = sse_decode_bool(deserializer);
+    var var_autoSendEnable = sse_decode_bool(deserializer);
+    var var_autoRemoveEnable = sse_decode_bool(deserializer);
+    var var_deleteWithoutSendingEnable = sse_decode_bool(deserializer);
+    var var_autoSendDisable = sse_decode_bool(deserializer);
+    var var_autoRemoveDisable = sse_decode_bool(deserializer);
+    var var_deleteWithoutSendingDisable = sse_decode_bool(deserializer);
+    var var_autoSendDelete = sse_decode_bool(deserializer);
+    var var_autoRemoveDelete = sse_decode_bool(deserializer);
+    return NotificationPolicyDto(
+      autoSendInstall: var_autoSendInstall,
+      autoRemoveInstall: var_autoRemoveInstall,
+      autoSendEnable: var_autoSendEnable,
+      autoRemoveEnable: var_autoRemoveEnable,
+      deleteWithoutSendingEnable: var_deleteWithoutSendingEnable,
+      autoSendDisable: var_autoSendDisable,
+      autoRemoveDisable: var_autoRemoveDisable,
+      deleteWithoutSendingDisable: var_deleteWithoutSendingDisable,
+      autoSendDelete: var_autoSendDelete,
+      autoRemoveDelete: var_autoRemoveDelete,
+    );
+  }
+
+  @protected
+  NotificationRecordDto sse_decode_notification_record_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_seqNumber = sse_decode_u_32(deserializer);
+    var var_operationByte = sse_decode_u_8(deserializer);
+    var var_address = sse_decode_String(deserializer);
+    var var_iccid = sse_decode_opt_String(deserializer);
+    var var_rawDer = sse_decode_opt_list_prim_u_8_strict(deserializer);
+    return NotificationRecordDto(
+      seqNumber: var_seqNumber,
+      operationByte: var_operationByte,
+      address: var_address,
+      iccid: var_iccid,
+      rawDer: var_rawDer,
+    );
+  }
+
+  @protected
+  NotificationSyncPlanDto sse_decode_notification_sync_plan_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_pruneDbSeqs = sse_decode_list_prim_u_32_strict(deserializer);
+    var var_pendingUnsentCount = sse_decode_usize(deserializer);
+    var var_jobs = sse_decode_list_notification_job_dto(deserializer);
+    var var_immediateRemovals = sse_decode_list_prim_u_32_strict(deserializer);
+    return NotificationSyncPlanDto(
+      pruneDbSeqs: var_pruneDbSeqs,
+      pendingUnsentCount: var_pendingUnsentCount,
+      jobs: var_jobs,
+      immediateRemovals: var_immediateRemovals,
+    );
+  }
+
+  @protected
+  OperatorIdDto sse_decode_operator_id_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_mcc = sse_decode_String(deserializer);
+    var var_mnc = sse_decode_String(deserializer);
+    return OperatorIdDto(mcc: var_mcc, mnc: var_mnc);
+  }
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  ActivationCodeDto? sse_decode_opt_box_autoadd_activation_code_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_activation_code_dto(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_bool(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_i_64(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  OperatorIdDto? sse_decode_opt_box_autoadd_operator_id_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_operator_id_dto(deserializer));
     } else {
       return null;
     }
@@ -814,6 +4183,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_qrtr_socket_datagram(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_16(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_16(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_usize(deserializer));
     } else {
       return null;
     }
@@ -852,6 +4243,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Scp03AuthResultDto sse_decode_scp_03_auth_result_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_hostCryptogramHex = sse_decode_String(deserializer);
+    var var_externalAuthenticateApdu = sse_decode_list_prim_u_8_strict(
+      deserializer,
+    );
+    return Scp03AuthResultDto(
+      hostCryptogramHex: var_hostCryptogramHex,
+      externalAuthenticateApdu: var_externalAuthenticateApdu,
+    );
+  }
+
+  @protected
+  StateTransitionResultDto sse_decode_state_transition_result_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_converged = sse_decode_bool(deserializer);
+    var var_commandAttempts = sse_decode_usize(deserializer);
+    var var_verificationAttempts = sse_decode_usize(deserializer);
+    var var_actualEnabled = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_errorMessage = sse_decode_opt_String(deserializer);
+    return StateTransitionResultDto(
+      converged: var_converged,
+      commandAttempts: var_commandAttempts,
+      verificationAttempts: var_verificationAttempts,
+      actualEnabled: var_actualEnabled,
+      errorMessage: var_errorMessage,
+    );
+  }
+
+  @protected
+  StoredNotificationDto sse_decode_stored_notification_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_seqNumber = sse_decode_u_32(deserializer);
+    var var_iccid = sse_decode_String(deserializer);
+    var var_status = sse_decode_u_8(deserializer);
+    var var_deletePending = sse_decode_bool(deserializer);
+    return StoredNotificationDto(
+      seqNumber: var_seqNumber,
+      iccid: var_iccid,
+      status: var_status,
+      deletePending: var_deletePending,
+    );
+  }
+
+  @protected
+  int sse_decode_u_16(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint16();
+  }
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint32();
@@ -872,6 +4320,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt sse_decode_usize(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getBigUint64();
+  }
+
+  @protected
+  VerificationReadDto sse_decode_verification_read_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_isOk = sse_decode_bool(deserializer);
+    var var_actualEnabled = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_error = sse_decode_opt_String(deserializer);
+    return VerificationReadDto(
+      isOk: var_isOk,
+      actualEnabled: var_actualEnabled,
+      error: var_error,
+    );
   }
 
   @protected
@@ -992,9 +4455,95 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_activation_code_dto(
+    ActivationCodeDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.format, serializer);
+    sse_encode_String(self.smdpAddress, serializer);
+    sse_encode_String(self.matchingId, serializer);
+    sse_encode_opt_String(self.smdpOid, serializer);
+    sse_encode_opt_String(self.confirmationCode, serializer);
+    sse_encode_bool(self.confirmationCodeRequired, serializer);
+  }
+
+  @protected
+  void sse_encode_asn_1_node_dto(Asn1NodeDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.tag, serializer);
+    sse_encode_list_prim_u_8_strict(self.value, serializer);
+    sse_encode_list_prim_u_8_strict(self.rawBytes, serializer);
+  }
+
+  @protected
+  void sse_encode_authenticate_client_response_dto(
+    AuthenticateClientResponseDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.transactionId, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.profileMetadata, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.smdpSigned2, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.smdpSignature2, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.smdpCertificate, serializer);
+  }
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_activation_code_dto(
+    ActivationCodeDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_activation_code_dto(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_download_session_state_dto(
+    DownloadSessionStateDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_download_session_state_dto(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_i_64(
+    PlatformInt64 self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_notification_policy_dto(
+    NotificationPolicyDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_notification_policy_dto(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_operator_id_dto(
+    OperatorIdDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_operator_id_dto(self, serializer);
   }
 
   @protected
@@ -1007,9 +4556,164 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_u_16(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_16(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(self, serializer);
+  }
+
+  @protected
+  void sse_encode_certificate_details_dto(
+    CertificateDetailsDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.commonName, serializer);
+    sse_encode_opt_String(self.organization, serializer);
+    sse_encode_opt_String(self.country, serializer);
+    sse_encode_String(self.serialNumberHex, serializer);
+    sse_encode_String(self.skiHex, serializer);
+    sse_encode_opt_String(self.akiHex, serializer);
+    sse_encode_bool(self.isCa, serializer);
+  }
+
+  @protected
+  void sse_encode_discovered_event_dto(
+    DiscoveredEventDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.eventId, serializer);
+    sse_encode_String(self.address, serializer);
+    sse_encode_String(self.activationCode, serializer);
+  }
+
+  @protected
+  void sse_encode_download_session_state_dto(
+    DownloadSessionStateDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.smdpAddress, serializer);
+    sse_encode_opt_String(self.matchingId, serializer);
+    sse_encode_opt_String(self.confirmationCode, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.euiccInfo1Bytes, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.euiccChallenge, serializer);
+    sse_encode_opt_String(self.transactionIdHex, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.transactionIdOctets, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.serverCertificate, serializer);
+    sse_encode_opt_list_prim_u_8_strict(
+      self.authenticateServerResponse,
+      serializer,
+    );
+    sse_encode_opt_String(self.authenticateClientStatus, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.smdpSigned2, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.smdpSignature2, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.profileMetadata, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.smdpCertificate, serializer);
+    sse_encode_bool(self.isAuthenticated, serializer);
+  }
+
+  @protected
+  void sse_encode_euicc_profile_dto(
+    EuiccProfileDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.iccid, serializer);
+    sse_encode_String(self.rawIccid, serializer);
+    sse_encode_opt_String(self.name, serializer);
+    sse_encode_opt_String(self.nickname, serializer);
+    sse_encode_opt_String(self.serviceProviderName, serializer);
+    sse_encode_bool(self.enabled, serializer);
+    sse_encode_u_8(self.profileClass, serializer);
+    sse_encode_opt_String(self.isdpAid, serializer);
+    sse_encode_opt_String(self.smdpAddress, serializer);
+  }
+
+  @protected
+  void sse_encode_get_bpp_response_dto(
+    GetBppResponseDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.transactionId, serializer);
+    sse_encode_list_prim_u_8_strict(self.boundProfilePackage, serializer);
+  }
+
+  @protected
+  void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putPlatformInt64(self);
+  }
+
+  @protected
+  void sse_encode_initiate_auth_response_dto(
+    InitiateAuthResponseDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.transactionId, serializer);
+    sse_encode_list_prim_u_8_strict(self.serverSigned1, serializer);
+    sse_encode_list_prim_u_8_strict(self.serverSignature1, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.euiccCiPkIdToBeUsed, serializer);
+    sse_encode_list_prim_u_8_strict(self.serverCertificate, serializer);
+  }
+
+  @protected
   void sse_encode_isize(PlatformInt64 self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putPlatformInt64(self);
+  }
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_asn_1_node_dto(
+    List<Asn1NodeDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_asn_1_node_dto(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_discovered_event_dto(
+    List<DiscoveredEventDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_discovered_event_dto(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_list_prim_u_8_strict(
+    List<Uint8List> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_list_prim_u_8_strict(item, serializer);
+    }
   }
 
   @protected
@@ -1022,6 +4726,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_modem_slot(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_notification_job_dto(
+    List<NotificationJobDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_notification_job_dto(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_notification_record_dto(
+    List<NotificationRecordDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_notification_record_dto(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+    Uint32List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint32List(self);
   }
 
   @protected
@@ -1047,6 +4785,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_stored_notification_dto(
+    List<StoredNotificationDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_stored_notification_dto(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_verification_read_dto(
+    List<VerificationReadDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_verification_read_dto(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_modem_slot(ModemSlot self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_8(self.slot, serializer);
@@ -1054,6 +4816,83 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.ready, serializer);
     sse_encode_opt_String(self.imei, serializer);
     sse_encode_opt_list_prim_u_8_strict(self.atr, serializer);
+  }
+
+  @protected
+  void sse_encode_notification_action_dto(
+    NotificationActionDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.shouldSend, serializer);
+    sse_encode_bool(self.shouldRemove, serializer);
+    sse_encode_bool(self.shouldDeleteWithoutSending, serializer);
+  }
+
+  @protected
+  void sse_encode_notification_job_dto(
+    NotificationJobDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.seqNumber, serializer);
+    sse_encode_String(self.iccid, serializer);
+    sse_encode_String(self.address, serializer);
+    sse_encode_String(self.contentBase64, serializer);
+    sse_encode_bool(self.shouldRemoveAfterSend, serializer);
+  }
+
+  @protected
+  void sse_encode_notification_policy_dto(
+    NotificationPolicyDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.autoSendInstall, serializer);
+    sse_encode_bool(self.autoRemoveInstall, serializer);
+    sse_encode_bool(self.autoSendEnable, serializer);
+    sse_encode_bool(self.autoRemoveEnable, serializer);
+    sse_encode_bool(self.deleteWithoutSendingEnable, serializer);
+    sse_encode_bool(self.autoSendDisable, serializer);
+    sse_encode_bool(self.autoRemoveDisable, serializer);
+    sse_encode_bool(self.deleteWithoutSendingDisable, serializer);
+    sse_encode_bool(self.autoSendDelete, serializer);
+    sse_encode_bool(self.autoRemoveDelete, serializer);
+  }
+
+  @protected
+  void sse_encode_notification_record_dto(
+    NotificationRecordDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.seqNumber, serializer);
+    sse_encode_u_8(self.operationByte, serializer);
+    sse_encode_String(self.address, serializer);
+    sse_encode_opt_String(self.iccid, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.rawDer, serializer);
+  }
+
+  @protected
+  void sse_encode_notification_sync_plan_dto(
+    NotificationSyncPlanDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_32_strict(self.pruneDbSeqs, serializer);
+    sse_encode_usize(self.pendingUnsentCount, serializer);
+    sse_encode_list_notification_job_dto(self.jobs, serializer);
+    sse_encode_list_prim_u_32_strict(self.immediateRemovals, serializer);
+  }
+
+  @protected
+  void sse_encode_operator_id_dto(
+    OperatorIdDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.mcc, serializer);
+    sse_encode_String(self.mnc, serializer);
   }
 
   @protected
@@ -1067,6 +4906,55 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_activation_code_dto(
+    ActivationCodeDto? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_activation_code_dto(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_bool(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_64(
+    PlatformInt64? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_i_64(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_operator_id_dto(
+    OperatorIdDto? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_operator_id_dto(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_qrtr_socket_datagram(
     QrtrSocketDatagram? self,
     SseSerializer serializer,
@@ -1076,6 +4964,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_qrtr_socket_datagram(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_16(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_16(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_usize(
+    BigInt? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_usize(self, serializer);
     }
   }
 
@@ -1114,6 +5025,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_scp_03_auth_result_dto(
+    Scp03AuthResultDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.hostCryptogramHex, serializer);
+    sse_encode_list_prim_u_8_strict(self.externalAuthenticateApdu, serializer);
+  }
+
+  @protected
+  void sse_encode_state_transition_result_dto(
+    StateTransitionResultDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.converged, serializer);
+    sse_encode_usize(self.commandAttempts, serializer);
+    sse_encode_usize(self.verificationAttempts, serializer);
+    sse_encode_opt_box_autoadd_bool(self.actualEnabled, serializer);
+    sse_encode_opt_String(self.errorMessage, serializer);
+  }
+
+  @protected
+  void sse_encode_stored_notification_dto(
+    StoredNotificationDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.seqNumber, serializer);
+    sse_encode_String(self.iccid, serializer);
+    sse_encode_u_8(self.status, serializer);
+    sse_encode_bool(self.deletePending, serializer);
+  }
+
+  @protected
+  void sse_encode_u_16(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint16(self);
+  }
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint32(self);
@@ -1134,6 +5086,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_usize(BigInt self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
+  }
+
+  @protected
+  void sse_encode_verification_read_dto(
+    VerificationReadDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.isOk, serializer);
+    sse_encode_opt_box_autoadd_bool(self.actualEnabled, serializer);
+    sse_encode_opt_String(self.error, serializer);
   }
 
   @protected
