@@ -45,7 +45,7 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | `lib/logic/notification_dispatcher.dart` | `nlpa_core::lpa::notifications` | eUICC Notification Queue manager and ES10b.HandleNotification ACK APDU generator. |
 | `lib/ts43/` | `nlpa_core::lpa::ts43` | GSMA TS.43 carrier entitlement client configurations and HTTP headers generator. |
 | `lib/models/euicc_profile.dart` | `nlpa_core::profile` | GSMA eUICC profile representation, raw vs display ICCID separation, display name resolution logic. |
-| `lib/utils/cat_proactive.dart` | `nlpa_core::cat` | ETSI TS 102 221 / TS 102 223 / 3GPP TS 31.111 Card Application Toolkit proactive command encoder/decoder. |
+| `lib/utils/cat_proactive.dart` | `nlpa_core::cat` | ETSI TS 102 221 / TS 102 223 / 3GPP TS 31.111 Card Application Toolkit proactive command encoder/decoder. Orphaned Dart implementation and tests deleted. |
 | `lib/utils/crypto_utils.dart` | `nlpa_core::crypto` | Standard SHA-256, GSMA SGP.22 HashCc, FIPS AES, CBC mode, PKCS#7, Base64, and telecom MAC support. |
 | `lib/utils/mcc_utils.dart` | `nlpa_core::mcc` | ITU-T E.212 MCC mapping, Unicode regional indicator flag emojis, and PLMN decoder. |
 | `lib/utils/notification_address_validator.dart` | `nlpa_core::notification_address` | Strict GSMA SGP.22 notification server address validator. |
@@ -56,6 +56,8 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | `lib/adapter/ccid/nine_esim_usb_protocol.dart` | `nlpa_core::atr`, `nlpa_core::ccid::nine_esim` & `rust_lib_nlpa2::api::ccid` | ATR parser, capability toggles, CRC-24, and vendor commands. |
 | `lib/models/isdp.dart` & `scp03.dart` | `nlpa_core::lpa::isdp`, `nlpa_core::lpa::scp03` & `rust_lib_nlpa2::api::lpa` | ISD-P lifecycle, SELECT/DELETE APDU builders, and GlobalPlatform SCP03 support. |
 | `lib/models/x509.dart` & `ci_verification.dart` | `nlpa_core::asn1::x509` & `rust_lib_nlpa2::api::lpa` | RFC 5280 X.509 certificate parsing and GSMA CI constraint verification. |
+| `lib/services/smds_discovery_service.dart` | `nlpa_core::lpa::es11` & `rust_lib_nlpa2::api::lpa` | GSMA SGP.22 ES11 SM-DS discovery protocol, host FQDN sanitization, authentication request builders, and response event decoder. |
+| `lib/services/profile_size_prediction_service.dart` | `nlpa_core::profile_size_predictor` & `rust_lib_nlpa2::api::lpa` | Multi-criteria profile size prediction and scoring catalog (RSP, PLMN, SPN, EUM prefix from EID). |
 | Bridge Layer | `rust_lib_nlpa2::api::telecom`, `api::lpa` & `api::ccid` | Flutter Rust Bridge exports for telecom, profile, LPA, and CCID operations. |
 
 ## Profile tag and utility port notes

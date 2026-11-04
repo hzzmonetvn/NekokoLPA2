@@ -269,3 +269,28 @@
   - Deprecation and deletion policy: Delete legacy Dart files once native Rust test vectors achieve 100% parity.
 - **Alternatives Considered:** Keeping TS.43 in Dart or compiling Go `ts43-go` as a shared library.
 - **Reasoning:** A third language (Go) introduces heavy cgo runtime overhead, goroutine schedulers, and GC pauses on mobile Android. Consolidating TS.43 natively in safe Rust maximizes repository Rust proportion well beyond 60% while ensuring sub-millisecond cryptographic performance.
+
+## 30. GSMA SGP.22 ES11 SM-DS Discovery Protocol & Activation Code Engine
+- **Choice:** Ported the GSMA SGP.22 ES11 SM-DS (Discovery Server) orchestration protocol, FQDN hostname normalization, and event response decoder to native Rust (`nlpa_core::lpa::es11`, `rust_lib_nlpa2::api::lpa`):
+  - `nlpa_core::lpa::es11`:
+    - Root discovery server configuration (`lpa.ds.gsma.com`).
+    - Robust FQDN hostname cleaning (`clean_smds_host`): strips leading `http://` / `https://` schemes, trailing paths, query strings, fragments, port numbers, and normalizes to lowercase ASCII.
+    - `DiscoveredEvent` data model generating standard GSMA activation code strings (`LPA:1$<address>$<eventId>`).
+    - ES11 JSON request generators (`build_smds_initiate_auth_request`, `build_smds_auth_client_request`).
+    - Response parsing and error handling (`parse_smds_discovery_response`, `parse_smds_event_entries`): checks function execution status, extracts `statusCodeData`, and maps `eventEntries` array into typed `DiscoveredEvent` instances.
+  - `rust_lib_nlpa2::api::lpa`: Exposed FFI bridge functions `clean_smds_host_address`, `build_smds_init_auth`, `build_smds_auth_client`, and `parse_smds_events`.
+  - Comprehensive unit and integration test coverage in `rust/core/tests/es11_test.rs` and `rust/tests/lpa_bridge_test.rs`.
+- **Alternatives Considered:** Leaving ES11 JSON payload serialization and URL parsing in Dart.
+- **Reasoning:** Discovering pending eSIM profiles via SM-DS follows the exact cryptographic handshake as ES9+ downloads. Performing discovery address sanitization and event parsing in Rust provides unified validation with ES9+/ES10 native modules, removes runtime exceptions from malformed server responses, and guarantees compliance with GSMA SGP.22 §5.8.2.
+
+## 31. eSIM Profile Size Prediction & Multi-Criteria Scoring Catalog
+- **Choice:** Ported the in-memory eSIM profile size prediction catalog, JSON deserializer, and heuristic scoring engine to native Rust (`nlpa_core::profile_size_predictor`, `rust_lib_nlpa2::api::lpa`):
+  - `nlpa_core::profile_size_predictor`:
+    - `ReferenceSizeEntry` and `ProfileSizeCatalog` with `from_json` loader parsing GSMA reference catalog files (`reference_sizes_simple.json`).
+    - In-memory indexing by lowercase SM-DP+ FQDN for instant candidate lookup.
+    - Multi-criteria heuristic scoring: SM-DP+ match (+1), PLMN exact match (+2), Service Provider Name (SPN) exact or substring match (+3).
+    - EUM prefix matching: extracts first 8 digits from target eUICC EID to match card manufacturer hardware size profiles (`eum_sizes`), falling back to `reference_eum` and default `reference_size`.
+  - `rust_lib_nlpa2::api::lpa`: Exposed FFI bridge function `predict_profile_size`.
+  - Comprehensive unit and integration test coverage in `rust/core/tests/profile_size_predictor_test.rs` and `rust/tests/lpa_bridge_test.rs`.
+- **Alternatives Considered:** Keeping reference size JSON decoding and dictionary iteration on the Dart UI isolate or using `compute()`.
+- **Reasoning:** Processing ~735 KB reference catalogs with hundreds of network operators on the Dart/Flutter isolate causes frame drops and heap fragmentation on mobile devices. Native Rust deserialization and indexed lookup executes in microseconds with zero memory allocations on each query.

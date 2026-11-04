@@ -433,7 +433,8 @@ fn shuffled_placeholder<'a>(
 fn shuffled_country_code(seed: &str) -> &'static str {
     SHUFFLED_COUNTRY_CODES[stable_index(seed, SHUFFLED_COUNTRY_CODES.len())]
 }
-fn flag_url_from_code(code: &str) -> String {
+#[must_use]
+pub fn flag_url_from_code(code: &str) -> String {
     let normalized = if code.len() == 2 {
         code.to_ascii_uppercase()
     } else {

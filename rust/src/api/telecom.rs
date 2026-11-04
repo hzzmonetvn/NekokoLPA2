@@ -151,3 +151,30 @@ pub fn create_euicc_profile(iccid: String, enabled: bool) -> EuiccProfileDto {
         smdp_address: p.smdp_address,
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct OperatorIdDto {
+    pub mcc: String,
+    pub mnc: String,
+}
+
+#[frb]
+pub fn mcc_to_country(mcc: String, mnc: Option<String>, iccid: Option<String>) -> String {
+    nlpa_core::mcc_to_country_code(&mcc, mnc.as_deref(), iccid.as_deref()).to_string()
+}
+
+#[frb]
+pub fn flag_emoji_for_country(country_code: String) -> String {
+    nlpa_core::get_flag_emoji(&country_code)
+}
+
+#[frb]
+pub fn flag_url_for_country(country_code: String) -> String {
+    nlpa_core::flag_url_from_code(&country_code)
+}
+
+#[frb]
+pub fn parse_plmn_operator_id(data: Vec<u8>) -> Option<OperatorIdDto> {
+    nlpa_core::parse_operator_id(&data).map(|(mcc, mnc)| OperatorIdDto { mcc, mnc })
+}

@@ -1,8 +1,9 @@
 use rust_lib_nlpa2::api::lpa::{
-    create_download_session, evaluate_profile_convergence, get_certificate_details,
-    isdp_delete_apdu, isdp_select_apdu, scp03_authenticate_session, scp03_initialize_update_apdu,
-    session_compute_hash_cc, session_process_auth_client_resp, session_process_auth_server_resp,
-    session_process_euicc_challenge, session_process_euicc_info1,
+    build_smds_auth_client, build_smds_init_auth, clean_smds_host_address, create_download_session,
+    evaluate_profile_convergence, get_certificate_details, isdp_delete_apdu, isdp_select_apdu,
+    parse_smds_events, predict_profile_size, scp03_authenticate_session,
+    scp03_initialize_update_apdu, session_compute_hash_cc, session_process_auth_client_resp,
+    session_process_auth_server_resp, session_process_euicc_challenge, session_process_euicc_info1,
     session_process_initiate_auth_resp, session_validate_initiate_auth, verify_smdp_certificate,
     VerificationReadDto,
 };
@@ -242,4 +243,81 @@ fn test_scp03_bridge_initialization_and_authentication() {
         &auth_result.external_authenticate_apdu[0..5],
         &[0x84, 0x82, 0x03, 0x00, 0x10]
     );
+}
+
+#[test]
+fn test_smds_bridge_helpers_and_parsing() {
+    let host = clean_smds_host_address("https://LPA.DS.GSMA.COM:443/endpoint".to_string());
+    assert_eq!(host, "lpa.ds.gsma.com");
+
+    let init_req = build_smds_init_auth(host, "CHALLENGE_HEX".to_string(), "INFO1_HEX".to_string());
+    assert!(init_req.contains("\"smdpAddress\":\"lpa.ds.gsma.com\""));
+    assert!(init_req.contains("\"euiccChallenge\":\"CHALLENGE_HEX\""));
+
+    let auth_client_req = build_smds_auth_client("TX-123".to_string(), "SERVER_RESP".to_string());
+    assert!(auth_client_req.contains("\"transactionId\":\"TX-123\""));
+
+    let resp_json = r#"{
+        "header": {
+            "functionExecutionStatus": {
+                "status": "Executed-Success"
+            }
+        },
+        "eventEntries": [
+            {
+                "eventId": "EV-001",
+                "rspServerAddress": "smdp.carrier.com"
+            }
+        ]
+    }"#
+    .to_string();
+
+    let events = parse_smds_events(resp_json, Some(200)).expect("valid parse");
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].event_id, "EV-001");
+    assert_eq!(events[0].address, "smdp.carrier.com");
+    assert_eq!(events[0].activation_code, "LPA:1$smdp.carrier.com$EV-001");
+}
+
+#[test]
+fn test_profile_size_prediction_bridge() {
+    let catalog_json = r#"{
+        "reference_eum": "89043051",
+        "results": [
+            {
+                "rsp": "smdp.test.com",
+                "plmn": "310260",
+                "serviceProviderName": "T-Mobile",
+                "reference_size": 48000,
+                "eum_sizes": {
+                    "89043051": 49500
+                }
+            }
+        ]
+    }"#
+    .to_string();
+
+    // EUM exact match
+    let size = predict_profile_size(
+        catalog_json.clone(),
+        Some("8904305112345678".to_string()),
+        Some("smdp.test.com".to_string()),
+        Some("310260".to_string()),
+        Some("T-Mobile".to_string()),
+    )
+    .expect("valid catalog")
+    .expect("size exists");
+    assert_eq!(size, 49500);
+
+    // Fallback reference size
+    let fallback = predict_profile_size(
+        catalog_json,
+        Some("9999999912345678".to_string()),
+        Some("smdp.test.com".to_string()),
+        Some("310260".to_string()),
+        Some("T-Mobile".to_string()),
+    )
+    .expect("valid catalog")
+    .expect("fallback size exists");
+    assert_eq!(fallback, 48000);
 }

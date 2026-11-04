@@ -16,6 +16,7 @@ pub mod mcc;
 pub mod modem;
 pub mod notification_address;
 pub mod profile;
+pub mod profile_size_predictor;
 pub mod profile_tag;
 pub mod redaction;
 pub mod size_formatter;
@@ -74,8 +75,10 @@ pub use lpa::{
     build_get_euicc_configured_addresses_apdu, build_get_euicc_info1_apdu,
     build_get_euicc_info2_apdu, build_get_profiles_info_apdu, build_list_notifications_apdu,
     build_remove_notification_apdu, build_select_isdp_apdu, build_select_isdr_apdu,
-    build_set_nickname_apdu, compute_card_cryptogram, compute_host_cryptogram, derive_session_key,
-    parse_es10_response, wrap_store_data_apdu, DownloadSessionError, EntitlementStatus,
+    build_set_nickname_apdu, build_smds_auth_client_request, build_smds_initiate_auth_request,
+    clean_smds_host, compute_card_cryptogram, compute_host_cryptogram, derive_session_key,
+    parse_es10_response, parse_smds_discovery_response, parse_smds_event_entries,
+    wrap_store_data_apdu, DiscoveredEvent, DownloadSessionError, EntitlementStatus,
     InitializeUpdateResponse, IsdpAid, IsdpContainer, IsdpError, IsdpState, LpaEngine, LpaError,
     NotificationAction, NotificationJob, NotificationPolicy, NotificationQueue, NotificationRecord,
     NotificationStatus, NotificationSyncPlan, ProfileDownloadSession, ProfileOperation,
@@ -84,16 +87,17 @@ pub use lpa::{
     Ts43CarrierConfig, Ts43Error, ISDP_AID_PREFIX, ISDR_AID, NOTIFICATION_INSTALL,
     NOTIFICATION_LOAD_RPM_PACKAGE, NOTIFICATION_LOCAL_DELETE, NOTIFICATION_LOCAL_DISABLE,
     NOTIFICATION_LOCAL_ENABLE, NOTIFICATION_RPM_DELETE, NOTIFICATION_RPM_DISABLE,
-    NOTIFICATION_RPM_ENABLE,
+    NOTIFICATION_RPM_ENABLE, ROOT_SMDS_ADDRESS,
 };
 pub use mcc::{get_flag_emoji, mcc_to_country_code, parse_operator_id};
 pub use modem::*;
 pub use notification_address::is_valid_notification_address;
 pub use profile::EuiccProfile;
+pub use profile_size_predictor::{ProfileSizeCatalog, ReferenceSizeEntry};
 pub use redaction::{
-    country_name, display_name, filter_tags, flag_emoji, flag_url, format_size_bytes, hide_flag,
-    hide_icon, operator_placeholder, operator_summary, operator_title,
-    placeholder_label_from_metadata, profile_flag_emoji, random_icon, redact_eid,
+    country_name, display_name, filter_tags, flag_emoji, flag_url, flag_url_from_code,
+    format_size_bytes, hide_flag, hide_icon, operator_placeholder, operator_summary,
+    operator_title, placeholder_label_from_metadata, profile_flag_emoji, random_icon, redact_eid,
     redact_eid_preview, redact_iccid, redact_iccid_preview, stable_index, FlagRedactionMode,
     IconRedactionMode, NicknameRedactionMode, OperatorPlaceholder, OperatorRedactionMode,
     ProfileView, RedactionSettings, SizeUnit, TagsRedactionMode,

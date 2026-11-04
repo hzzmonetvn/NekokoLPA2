@@ -709,3 +709,65 @@ pub fn scp03_authenticate_session(
         external_authenticate_apdu,
     })
 }
+
+// ---------------------------------------------------------------------------
+// GSMA SGP.22 ES11 SM-DS Discovery & Profile Size Prediction Bridge
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct DiscoveredEventDto {
+    pub event_id: String,
+    pub address: String,
+    pub activation_code: String,
+}
+
+#[frb]
+pub fn clean_smds_host_address(raw_address: String) -> String {
+    nlpa_core::clean_smds_host(&raw_address)
+}
+
+#[frb]
+pub fn build_smds_init_auth(smds_address: String, challenge: String, info1: String) -> String {
+    nlpa_core::build_smds_initiate_auth_request(&smds_address, &challenge, &info1)
+}
+
+#[frb]
+pub fn build_smds_auth_client(transaction_id: String, auth_server_resp: String) -> String {
+    nlpa_core::build_smds_auth_client_request(&transaction_id, &auth_server_resp)
+}
+
+#[frb]
+pub fn parse_smds_events(
+    json_response: String,
+    http_status: Option<u16>,
+) -> Result<Vec<DiscoveredEventDto>, String> {
+    let events = nlpa_core::parse_smds_discovery_response(&json_response, http_status)
+        .map_err(|e| e.to_string())?;
+    Ok(events
+        .into_iter()
+        .map(|e| DiscoveredEventDto {
+            activation_code: e.activation_code(),
+            event_id: e.event_id,
+            address: e.address,
+        })
+        .collect())
+}
+
+#[frb]
+pub fn predict_profile_size(
+    catalog_json: String,
+    eid: Option<String>,
+    smdp_address: Option<String>,
+    plmn: Option<String>,
+    service_provider_name: Option<String>,
+) -> Result<Option<i64>, String> {
+    let catalog =
+        nlpa_core::ProfileSizeCatalog::from_json(&catalog_json).map_err(|e| e.to_string())?;
+    Ok(catalog.predict_size(
+        eid.as_deref(),
+        smdp_address.as_deref(),
+        plmn.as_deref(),
+        service_provider_name.as_deref(),
+    ))
+}
