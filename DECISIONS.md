@@ -180,6 +180,16 @@
 - **Alternatives Considered:** Leaving lints scattered across crates and ignoring doc warnings.
 - **Reasoning:** Enforcing workspace-wide pedantic lints and zero-warning documentation ensures long-term codebase hygiene, prevents silent regressions, and guarantees absolute sound FFI boundaries.
 
+## 24. Profile Download Session & State Transition Convergence Bridge
+- **Choice:** Ported the GSMA SGP.22 eSIM Profile Download Session and Profile State Transition Convergence subsystem to native Rust FFI (`rust_lib_nlpa2::api::lpa`):
+  - `DownloadSessionStateDto`: Struct exposing complete SGP.22 profile download lifecycle state (`smdp_address`, `matching_id`, `confirmation_code`, `euicc_info1`, `euicc_challenge`, `transaction_id_hex`, `transaction_id_octets`, `server_certificate`, `authenticate_server_response`, `authenticate_client_status`, `smdp_signed2`, `smdp_signature2`, `profile_metadata`, `smdp_certificate`, `is_authenticated`).
+  - Session lifecycle operations: `create_download_session`, `session_process_euicc_info1`, `session_process_euicc_challenge`, `session_validate_initiate_auth`, `session_process_initiate_auth_resp`, `session_compute_hash_cc`, `session_process_auth_server_resp`, and `session_process_auth_client_resp`.
+  - State transition convergence evaluator: `evaluate_profile_convergence` bridging `ProfileStateTransition` to coordinate idempotent profile state commands (enable, disable, delete) with independent verification reads, bounded transient failure thresholds, and non-convergence error diagnostics.
+  - Added full test suite in `rust/tests/lpa_bridge_test.rs` covering multi-step session progression, HashCc validation, convergence verification, and non-convergence error handling (71 total workspace tests passing).
+- **Alternatives Considered:** Keeping state session tracking and convergence loop logic in Dart.
+- **Reasoning:** SGP.22 protocol validation and transaction ID octet normalization must strictly match cryptographic calculations (`HashCc = SHA256(SHA256(CC) || TransactionID)`). Centralizing session state and convergence controllers in Rust guarantees memory safety, eliminates race conditions across asynchronous channel resets, and increases the proportion of core telecommunications logic in native Rust.
+
+
 
 
 

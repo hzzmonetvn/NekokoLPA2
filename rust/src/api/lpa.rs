@@ -16,7 +16,9 @@ use nlpa_core::{
     parse_initiate_authentication_response as core_parse_initiate_authentication_response,
     NotificationPolicy as CoreNotificationPolicy, NotificationRecord as CoreNotificationRecord,
     NotificationStatus as CoreNotificationStatus, NotificationSyncPlan as CoreNotificationSyncPlan,
-    ProfileOperation as CoreProfileOperation, StoredNotification as CoreStoredNotification,
+    ProfileDownloadSession as CoreProfileDownloadSession, ProfileOperation as CoreProfileOperation,
+    ProfileStateTransition as CoreProfileStateTransition,
+    StoredNotification as CoreStoredNotification,
 };
 
 #[frb]
@@ -318,4 +320,241 @@ pub fn parse_get_bpp_resp(
 #[frb]
 pub fn build_cancel_session_req(transaction_id: String, cancel_resp_b64: String) -> String {
     core_build_cancel_session_body(&transaction_id, &cancel_resp_b64)
+}
+
+// ---------------------------------------------------------------------------
+// GSMA SGP.22 Download Session & State Transition Bridge
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct DownloadSessionStateDto {
+    pub smdp_address: String,
+    pub matching_id: Option<String>,
+    pub confirmation_code: Option<String>,
+    pub euicc_info1_bytes: Option<Vec<u8>>,
+    pub euicc_challenge: Option<Vec<u8>>,
+    pub transaction_id_hex: Option<String>,
+    pub transaction_id_octets: Option<Vec<u8>>,
+    pub server_certificate: Option<Vec<u8>>,
+    pub authenticate_server_response: Option<Vec<u8>>,
+    pub authenticate_client_status: Option<String>,
+    pub smdp_signed2: Option<Vec<u8>>,
+    pub smdp_signature2: Option<Vec<u8>>,
+    pub profile_metadata: Option<Vec<u8>>,
+    pub smdp_certificate: Option<Vec<u8>>,
+    pub is_authenticated: bool,
+}
+
+impl DownloadSessionStateDto {
+    fn from_core(session: &CoreProfileDownloadSession) -> Self {
+        Self {
+            smdp_address: session.smdp_address().to_string(),
+            matching_id: session.matching_id().map(ToString::to_string),
+            confirmation_code: session.confirmation_code().map(ToString::to_string),
+            euicc_info1_bytes: session.euicc_info1().map(|b| b.to_vec()),
+            euicc_challenge: session.euicc_challenge().map(|b| b.to_vec()),
+            transaction_id_hex: session.get_transaction_id_hex().map(ToString::to_string),
+            transaction_id_octets: session.get_transaction_id().map(|b| b.to_vec()),
+            server_certificate: session.server_certificate().map(|b| b.to_vec()),
+            authenticate_server_response: session
+                .authenticate_server_response()
+                .map(|b| b.to_vec()),
+            authenticate_client_status: session
+                .authenticate_client_status()
+                .map(ToString::to_string),
+            smdp_signed2: session.get_smdp_signed2().map(|b| b.to_vec()),
+            smdp_signature2: session.get_smdp_signature2().map(|b| b.to_vec()),
+            profile_metadata: session.get_profile_metadata().map(|b| b.to_vec()),
+            smdp_certificate: session.smdp_certificate().map(|b| b.to_vec()),
+            is_authenticated: session.is_client_authenticated_successfully(),
+        }
+    }
+
+    fn to_core(&self) -> CoreProfileDownloadSession {
+        let mut session = CoreProfileDownloadSession::new(
+            &self.smdp_address,
+            self.matching_id.clone(),
+            self.confirmation_code.clone(),
+        );
+        if let Some(ref info1) = self.euicc_info1_bytes {
+            session.process_euicc_info1(info1);
+        }
+        if let Some(ref challenge) = self.euicc_challenge {
+            session.process_euicc_challenge(challenge);
+        }
+        if let (Some(ref tx_hex), Some(ref cert)) =
+            (&self.transaction_id_hex, &self.server_certificate)
+        {
+            let _ = session.process_initiate_authentication_response(tx_hex, cert);
+        }
+        if let Some(ref auth_resp) = self.authenticate_server_response {
+            session.process_authenticate_server_response(auth_resp);
+        }
+        if let Some(ref status) = self.authenticate_client_status {
+            session.process_authenticate_client_response(
+                status,
+                self.smdp_signed2.as_deref(),
+                self.smdp_signature2.as_deref(),
+                self.profile_metadata.as_deref(),
+                self.smdp_certificate.as_deref(),
+            );
+        }
+        session
+    }
+}
+
+#[frb]
+pub fn create_download_session(
+    smdp_address: String,
+    matching_id: Option<String>,
+    confirmation_code: Option<String>,
+) -> DownloadSessionStateDto {
+    let session = CoreProfileDownloadSession::new(smdp_address, matching_id, confirmation_code);
+    DownloadSessionStateDto::from_core(&session)
+}
+
+#[frb]
+pub fn session_process_euicc_info1(
+    session: DownloadSessionStateDto,
+    info1: Vec<u8>,
+) -> DownloadSessionStateDto {
+    let mut core = session.to_core();
+    core.process_euicc_info1(&info1);
+    DownloadSessionStateDto::from_core(&core)
+}
+
+#[frb]
+pub fn session_process_euicc_challenge(
+    session: DownloadSessionStateDto,
+    challenge: Vec<u8>,
+) -> DownloadSessionStateDto {
+    let mut core = session.to_core();
+    core.process_euicc_challenge(&challenge);
+    DownloadSessionStateDto::from_core(&core)
+}
+
+#[frb]
+pub fn session_validate_initiate_auth(session: DownloadSessionStateDto) -> Result<(), String> {
+    let core = session.to_core();
+    core.validate_initiate_authentication_prerequisites()
+        .map_err(|e| e.to_string())
+}
+
+#[frb]
+pub fn session_process_initiate_auth_resp(
+    session: DownloadSessionStateDto,
+    transaction_id_hex: String,
+    server_certificate: Vec<u8>,
+) -> Result<DownloadSessionStateDto, String> {
+    let mut core = session.to_core();
+    core.process_initiate_authentication_response(&transaction_id_hex, &server_certificate)
+        .map_err(|e| e.to_string())?;
+    Ok(DownloadSessionStateDto::from_core(&core))
+}
+
+#[frb]
+pub fn session_compute_hash_cc(session: DownloadSessionStateDto) -> Result<Vec<u8>, String> {
+    let core = session.to_core();
+    core.compute_hash_cc()
+        .map(|hash| hash.to_vec())
+        .map_err(|e| e.to_string())
+}
+
+#[frb]
+pub fn session_process_auth_server_resp(
+    session: DownloadSessionStateDto,
+    resp_bytes: Vec<u8>,
+) -> DownloadSessionStateDto {
+    let mut core = session.to_core();
+    core.process_authenticate_server_response(&resp_bytes);
+    DownloadSessionStateDto::from_core(&core)
+}
+
+#[frb]
+pub fn session_process_auth_client_resp(
+    session: DownloadSessionStateDto,
+    status: String,
+    smdp_signed2: Option<Vec<u8>>,
+    smdp_signature2: Option<Vec<u8>>,
+    profile_metadata: Option<Vec<u8>>,
+    smdp_certificate: Option<Vec<u8>>,
+) -> DownloadSessionStateDto {
+    let mut core = session.to_core();
+    core.process_authenticate_client_response(
+        status,
+        smdp_signed2.as_deref(),
+        smdp_signature2.as_deref(),
+        profile_metadata.as_deref(),
+        smdp_certificate.as_deref(),
+    );
+    DownloadSessionStateDto::from_core(&core)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct StateTransitionResultDto {
+    pub converged: bool,
+    pub command_attempts: usize,
+    pub verification_attempts: usize,
+    pub actual_enabled: Option<bool>,
+    pub error_message: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct VerificationReadDto {
+    pub is_ok: bool,
+    pub actual_enabled: Option<bool>,
+    pub error: Option<String>,
+}
+
+#[frb]
+pub fn evaluate_profile_convergence(
+    target_enabled: bool,
+    command_attempt: usize,
+    verification_reads: Vec<VerificationReadDto>,
+    max_command_attempts: Option<usize>,
+    max_verification_attempts: Option<usize>,
+    max_transient_failures_without_read: Option<usize>,
+) -> StateTransitionResultDto {
+    let transition = CoreProfileStateTransition::new(
+        max_command_attempts.unwrap_or(2),
+        max_verification_attempts.unwrap_or(6),
+        max_transient_failures_without_read.unwrap_or(2),
+    );
+    let reads: Vec<Result<Option<bool>, String>> = verification_reads
+        .into_iter()
+        .map(|r| {
+            if r.is_ok {
+                Ok(r.actual_enabled)
+            } else {
+                Err(r
+                    .error
+                    .unwrap_or_else(|| "Transient read error".to_string()))
+            }
+        })
+        .collect();
+
+    match transition.evaluate_convergence(target_enabled, command_attempt, &reads) {
+        Ok(res) => StateTransitionResultDto {
+            converged: true,
+            command_attempts: res.command_attempts,
+            verification_attempts: res.verification_attempts,
+            actual_enabled: Some(res.actual_enabled),
+            error_message: None,
+        },
+        Err(err) => StateTransitionResultDto {
+            converged: false,
+            command_attempts: command_attempt,
+            verification_attempts: reads.len(),
+            actual_enabled: match &err {
+                nlpa_core::StateTransitionError::NonConvergence { actual_enabled, .. } => {
+                    *actual_enabled
+                }
+                _ => None,
+            },
+            error_message: Some(err.to_string()),
+        },
+    }
 }

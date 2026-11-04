@@ -255,6 +255,21 @@ impl ProfileDownloadSession {
     }
 
     #[must_use]
+    pub fn authenticate_client_status(&self) -> Option<&str> {
+        self.authenticate_client_status.as_deref()
+    }
+
+    #[must_use]
+    pub fn smdp_certificate(&self) -> Option<&[u8]> {
+        self.smdp_certificate.as_deref()
+    }
+
+    #[must_use]
+    pub fn server_certificate(&self) -> Option<&[u8]> {
+        self.server_certificate.as_deref()
+    }
+
+    #[must_use]
     pub fn get_server_certificate(&self) -> Option<&[u8]> {
         self.smdp_certificate
             .as_deref()
