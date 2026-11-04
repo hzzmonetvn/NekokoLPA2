@@ -86,7 +86,12 @@
 ## 32. Generated Flutter Rust Bridge bindings
 - **Choice:** Commit FRB 2.13.0 generated Dart and Rust bindings for the new bridge APIs, and regenerate/check them in the Android GitHub Actions job after Flutter dependency resolution.
 - **Alternatives Considered:** Manually editing generated bindings or relying on Rust-only bridge tests.
-- **Reasoning:** Generated bindings keep Dart able to call the Rust ES11, profile-size, telecom, and CCID APIs; CI drift checks catch missing or stale generated files without building APKs on the VPS.
+- **Reasoning:** Generated bindings keep Dart able to call the Rust ES11, profile-size, telecom, CCID, and SIM parser APIs; CI drift checks catch missing or stale generated files without building APKs on the VPS.
+
+## 33. Rust SIM FCP and EF_DIR Parser Boundary
+- **Choice:** Move SIM FCP and EF_DIR application-record parsing into `nlpa_core::asn1::fcp` and expose it to Dart through the FRB `api::sim` module; keep APDU sequencing and logical-channel lifecycle in Dart. Remove the now-unused `lib/ts43/sim/tlv.dart` implementation.
+- **Alternatives Considered:** Moving the complete SIM channel to Rust, or keeping a duplicate Dart parser alongside Rust.
+- **Reasoning:** The user selected parser-only scope. A single native parser avoids divergent implementations, while preserving Dart ownership of channel orchestration limits this change to the agreed boundary. Characterization tests preserve FCP validation, EF_DIR padding, extended child-tag handling, and Dart byte-to-code-unit label conversion.
 
 ## 13. GSMA SGP.22 RSP ASN.1 DER & LPA Engine Port (`nlpa_core::asn1`, `nlpa_core::lpa`)
 - **Choice:** Built a complete, native Rust implementation of GSMA SGP.22 RSP ASN.1 structures, ISO 7816-4 APDU command builders, and an in-memory LPA operational state machine:

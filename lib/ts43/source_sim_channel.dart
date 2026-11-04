@@ -7,7 +7,7 @@ import 'sim/aka.dart';
 import 'sim/identifier.dart';
 import 'sim/identity.dart';
 import 'sim/imsi.dart';
-import 'sim/tlv.dart';
+import '../src/rust/api/sim.dart' as rust_sim;
 import 'sim/usim_files.dart';
 import 'types.dart';
 
@@ -27,6 +27,14 @@ class SourceSimUnavailable implements Exception {
 /// The profile to transfer MUST be enabled before use; the USIM ADF only
 /// exists while its profile is active. APDUs go on a logical channel separate
 /// from the ISD-R session used for LPA download/delete.
+bool _bytesStartsWith(List<int> data, List<int> prefix) {
+  if (data.length < prefix.length) return false;
+  for (var index = 0; index < prefix.length; index++) {
+    if (data[index] != prefix[index]) return false;
+  }
+  return true;
+}
+
 class SourceSimChannel implements SourceChannel {
   static final Logger _log = Logger('SourceSimChannel');
 
@@ -99,9 +107,12 @@ class SourceSimChannel implements SourceChannel {
       UsimFiles.selectP2,
       UsimFiles.fid(UsimFiles.efDir),
     );
-    final info = FileInfo.parse(fcp);
-    if (!info.isLinearFixed) {
+    final info = await rust_sim.parseSimFcp(data: fcp);
+    if (info.fileStructure != 0x42) {
       throw const SourceSimUnavailable('EF_DIR is not linear fixed');
+    }
+    if (info.recordCount == 0 || info.recordSize == 0) {
+      throw const SourceSimUnavailable('EF_DIR has no records');
     }
     for (var record = 1; record <= info.recordCount; record++) {
       final data = await _apdu(
@@ -112,10 +123,10 @@ class SourceSimChannel implements SourceChannel {
         null,
         info.recordSize,
       );
-      final app = SimApplication.parseRecord(data);
+      final app = await rust_sim.parseSimApplicationRecord(data: data);
       if (app == null) continue;
       if (app.label.toUpperCase() == 'USIM' ||
-          bytesStartsWith(app.aid, UsimFiles.usimAidPrefix)) {
+          _bytesStartsWith(app.aid, UsimFiles.usimAidPrefix)) {
         return app.aid;
       }
     }
@@ -137,29 +148,53 @@ class SourceSimChannel implements SourceChannel {
   Future<String> _readIccid() async {
     await _selectFid(UsimFiles.masterFile);
     await _selectFid(UsimFiles.efIccid);
-    final raw = await _apdu(UsimFiles.readBinaryCla, UsimFiles.readBinaryIns,
-        0x00, 0x00, null, UsimFiles.iccidLength);
+    final raw = await _apdu(
+      UsimFiles.readBinaryCla,
+      UsimFiles.readBinaryIns,
+      0x00,
+      0x00,
+      null,
+      UsimFiles.iccidLength,
+    );
     return decodeSwappedBcd(raw, stripLeadingNine: true);
   }
 
   Future<String> _readImsi() async {
     await _selectFid(UsimFiles.efImsi);
-    final raw = await _apdu(UsimFiles.readBinaryCla, UsimFiles.readBinaryIns,
-        0x00, 0x00, null, UsimFiles.imsiLength);
+    final raw = await _apdu(
+      UsimFiles.readBinaryCla,
+      UsimFiles.readBinaryIns,
+      0x00,
+      0x00,
+      null,
+      UsimFiles.imsiLength,
+    );
     return Imsi.fromBytes(raw).toString();
   }
 
   Future<Uint8List> _readAdministrativeData() async {
     await _selectFid(UsimFiles.efAd);
-    return _apdu(UsimFiles.readBinaryCla, UsimFiles.readBinaryIns, 0x00, 0x00,
-        null, UsimFiles.adLength);
+    return _apdu(
+      UsimFiles.readBinaryCla,
+      UsimFiles.readBinaryIns,
+      0x00,
+      0x00,
+      null,
+      UsimFiles.adLength,
+    );
   }
 
   Future<String> _readGid1() async {
     try {
       await _selectFid(UsimFiles.efGid1);
-      final raw = await _apdu(UsimFiles.readBinaryCla, UsimFiles.readBinaryIns,
-          0x00, 0x00, null, 0x00);
+      final raw = await _apdu(
+        UsimFiles.readBinaryCla,
+        UsimFiles.readBinaryIns,
+        0x00,
+        0x00,
+        null,
+        0x00,
+      );
       return groupIdentifierString(raw);
     } catch (e) {
       _log.fine('EF_GID1 unavailable: $e');

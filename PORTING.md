@@ -70,11 +70,18 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 |---|---|---|
 | `ProfileTagUtils.escapeContent`, `unescapeContent` | `profile_tag::{escape_content,unescape_content}` | Preserves replacement order. |
 | `ProfileTagUtils.parse`, `format`; `ProfileTag`, `TextTag`, `DateTag` | `profile_tag::{parse_nickname,format_nickname,ProfileTag}` | Hand-scanned tag matching; display names equal parsed names. |
-| `Tlv.parse`, `FileInfo.parse`, `SimApplication.parseRecord` | `asn1::fcp::{parse_fcp,parse_application_record}` | Reuses DER reader; rejects indefinite lengths in DER parser. |
+| `Tlv.parse`, `FileInfo.parse`, `SimApplication.parseRecord` | `nlpa_core::asn1::fcp::{parse_fcp,parse_application_record}` via `rust_lib_nlpa2::api::sim` | FCP and EF_DIR parsing is exposed through FRB; `lib/ts43/sim/tlv.dart` is deleted. Reuses DER length/value parsing while retaining SIM child-tag and byte-label behavior. |
 | `SizeFormatter.format` | `size_formatter::format_size` | Reuses `redaction::SizeUnit`. |
 | `locale_utils.dart` | Not ported | Flutter `Locale` resolution is UI/framework-specific. |
 
-Deliberate differences: Phone-number formatting/detection is omitted; `display_name` equals `name`. Date parsing avoids `chrono`; valid common date forms are formatted directly, and invalid dates have no display date instead of substituting the current date. Tag detection uses a byte scan rather than a regex crate. Existing Dart sources are retained.
+Deliberate differences: Phone-number formatting/detection is omitted; `display_name` equals `name`. Date parsing avoids `chrono`; valid common date forms are formatted directly, and invalid dates have no display date instead of substituting the current date. Tag detection uses a byte scan rather than a regex crate. The SIM channel’s APDU sequencing and channel lifecycle remain in Dart; only FCP and EF_DIR record parsing moved to Rust. FCP parser errors cross FRB as strings.
+
+### SIM FCP and EF_DIR parser port
+
+- **Bridge API:** `parse_sim_fcp` returns `SimFileInfoDto` (structure, record size/count, file size); `parse_sim_application_record` returns an optional `SimApplicationDto` (AID and label).
+- **Preserved behavior:** EF_DIR trailing `0xff` padding is removed; all-padding records are absent; labels map each source byte to a Unicode code point as Dart `String.fromCharCodes` does; child extended tags are ignored for SIM field matching.
+- **Characterization tests:** `parses_file_control_fields`, `parses_descriptor_without_record_fields_and_ignores_extended_tags`, `rejects_missing_descriptor_and_bad_field_lengths`, `parses_application_record_and_trailing_padding`, and `handles_padding_missing_aid_and_dart_label_code_units` in `rust/core/src/asn1/fcp.rs`.
+- **Verification:** `cargo fmt --all -- --check`, `cargo test --workspace`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `dart format lib/ts43/source_sim_channel.dart lib/src/rust/api/sim.dart`, and `dart analyze lib/ts43/source_sim_channel.dart lib/src/rust` passed. APK packaging was not run locally; CI remains the Android build environment.
 
 ## Profile redaction port notes
 

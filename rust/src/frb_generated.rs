@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 2081020636;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 2031754401;
 
 // Section: executor
 
@@ -1990,6 +1990,72 @@ fn wire__crate__api__telecom__parse_plmn_operator_id_impl(
         },
     )
 }
+fn wire__crate__api__sim__parse_sim_application_record_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "parse_sim_application_record",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::sim::parse_sim_application_record(api_data)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__sim__parse_sim_fcp_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "parse_sim_fcp",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::sim::parse_sim_fcp(api_data)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__lpa__parse_smds_events_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -3251,6 +3317,19 @@ impl SseDecode for Option<crate::api::modem::QrtrSocketDatagram> {
     }
 }
 
+impl SseDecode for Option<crate::api::sim::SimApplicationDto> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::sim::SimApplicationDto>::sse_decode(
+                deserializer,
+            ));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<u16> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -3318,6 +3397,34 @@ impl SseDecode for crate::api::lpa::Scp03AuthResultDto {
         return crate::api::lpa::Scp03AuthResultDto {
             host_cryptogram_hex: var_hostCryptogramHex,
             external_authenticate_apdu: var_externalAuthenticateApdu,
+        };
+    }
+}
+
+impl SseDecode for crate::api::sim::SimApplicationDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_aid = <Vec<u8>>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        return crate::api::sim::SimApplicationDto {
+            aid: var_aid,
+            label: var_label,
+        };
+    }
+}
+
+impl SseDecode for crate::api::sim::SimFileInfoDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_fileStructure = <u8>::sse_decode(deserializer);
+        let mut var_recordSize = <u32>::sse_decode(deserializer);
+        let mut var_recordCount = <u32>::sse_decode(deserializer);
+        let mut var_fileSize = <u32>::sse_decode(deserializer);
+        return crate::api::sim::SimFileInfoDto {
+            file_structure: var_fileStructure,
+            record_size: var_recordSize,
+            record_count: var_recordCount,
+            file_size: var_fileSize,
         };
     }
 }
@@ -3582,62 +3689,69 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        53 => wire__crate__api__lpa__parse_smds_events_impl(port, ptr, rust_vec_len, data_len),
-        54 => wire__crate__api__lpa__plan_notification_sync_impl(port, ptr, rust_vec_len, data_len),
-        55 => wire__crate__api__lpa__predict_profile_size_impl(port, ptr, rust_vec_len, data_len),
-        56 => wire__crate__api__lpa__scp03_authenticate_session_impl(
+        53 => wire__crate__api__sim__parse_sim_application_record_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        57 => wire__crate__api__lpa__scp03_initialize_update_apdu_impl(
+        54 => wire__crate__api__sim__parse_sim_fcp_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__crate__api__lpa__parse_smds_events_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__crate__api__lpa__plan_notification_sync_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__lpa__predict_profile_size_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__crate__api__lpa__scp03_authenticate_session_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        58 => {
+        59 => wire__crate__api__lpa__scp03_initialize_update_apdu_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        60 => {
             wire__crate__api__lpa__session_compute_hash_cc_impl(port, ptr, rust_vec_len, data_len)
         }
-        59 => wire__crate__api__lpa__session_process_auth_client_resp_impl(
+        61 => wire__crate__api__lpa__session_process_auth_client_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        60 => wire__crate__api__lpa__session_process_auth_server_resp_impl(
+        62 => wire__crate__api__lpa__session_process_auth_server_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        61 => wire__crate__api__lpa__session_process_euicc_challenge_impl(
+        63 => wire__crate__api__lpa__session_process_euicc_challenge_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        62 => wire__crate__api__lpa__session_process_euicc_info1_impl(
+        64 => wire__crate__api__lpa__session_process_euicc_info1_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        63 => wire__crate__api__lpa__session_process_initiate_auth_resp_impl(
+        65 => wire__crate__api__lpa__session_process_initiate_auth_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        64 => wire__crate__api__lpa__session_validate_initiate_auth_impl(
+        66 => wire__crate__api__lpa__session_validate_initiate_auth_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        65 => wire__crate__api__telecom__validate_apdu_impl(port, ptr, rust_vec_len, data_len),
-        66 => {
+        67 => wire__crate__api__telecom__validate_apdu_impl(port, ptr, rust_vec_len, data_len),
+        68 => {
             wire__crate__api__lpa__verify_smdp_certificate_impl(port, ptr, rust_vec_len, data_len)
         }
         _ => unreachable!(),
@@ -4136,6 +4250,50 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::lpa::Scp03AuthResultDto>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sim::SimApplicationDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.aid.into_into_dart().into_dart(),
+            self.label.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::sim::SimApplicationDto
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sim::SimApplicationDto>
+    for crate::api::sim::SimApplicationDto
+{
+    fn into_into_dart(self) -> crate::api::sim::SimApplicationDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sim::SimFileInfoDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.file_structure.into_into_dart().into_dart(),
+            self.record_size.into_into_dart().into_dart(),
+            self.record_count.into_into_dart().into_dart(),
+            self.file_size.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::sim::SimFileInfoDto
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sim::SimFileInfoDto>
+    for crate::api::sim::SimFileInfoDto
+{
+    fn into_into_dart(self) -> crate::api::sim::SimFileInfoDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::lpa::StateTransitionResultDto {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -4623,6 +4781,16 @@ impl SseEncode for Option<crate::api::modem::QrtrSocketDatagram> {
     }
 }
 
+impl SseEncode for Option<crate::api::sim::SimApplicationDto> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::sim::SimApplicationDto>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<u16> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4675,6 +4843,24 @@ impl SseEncode for crate::api::lpa::Scp03AuthResultDto {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.host_cryptogram_hex, serializer);
         <Vec<u8>>::sse_encode(self.external_authenticate_apdu, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sim::SimApplicationDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<u8>>::sse_encode(self.aid, serializer);
+        <String>::sse_encode(self.label, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sim::SimFileInfoDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u8>::sse_encode(self.file_structure, serializer);
+        <u32>::sse_encode(self.record_size, serializer);
+        <u32>::sse_encode(self.record_count, serializer);
+        <u32>::sse_encode(self.file_size, serializer);
     }
 }
 

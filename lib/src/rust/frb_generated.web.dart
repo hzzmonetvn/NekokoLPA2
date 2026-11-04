@@ -9,6 +9,7 @@
 import 'api/ccid.dart';
 import 'api/lpa.dart';
 import 'api/modem.dart';
+import 'api/sim.dart';
 import 'api/telecom.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -110,6 +111,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   QrtrSocketDatagram dco_decode_box_autoadd_qrtr_socket_datagram(dynamic raw);
+
+  @protected
+  SimApplicationDto dco_decode_box_autoadd_sim_application_dto(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_16(dynamic raw);
@@ -225,6 +229,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SimApplicationDto? dco_decode_opt_box_autoadd_sim_application_dto(
+    dynamic raw,
+  );
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
 
   @protected
@@ -241,6 +250,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Scp03AuthResultDto dco_decode_scp_03_auth_result_dto(dynamic raw);
+
+  @protected
+  SimApplicationDto dco_decode_sim_application_dto(dynamic raw);
+
+  @protected
+  SimFileInfoDto dco_decode_sim_file_info_dto(dynamic raw);
 
   @protected
   StateTransitionResultDto dco_decode_state_transition_result_dto(dynamic raw);
@@ -337,6 +352,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   QrtrSocketDatagram sse_decode_box_autoadd_qrtr_socket_datagram(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SimApplicationDto sse_decode_box_autoadd_sim_application_dto(
     SseDeserializer deserializer,
   );
 
@@ -486,6 +506,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SimApplicationDto? sse_decode_opt_box_autoadd_sim_application_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_16(SseDeserializer deserializer);
 
   @protected
@@ -508,6 +533,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Scp03AuthResultDto sse_decode_scp_03_auth_result_dto(
     SseDeserializer deserializer,
   );
+
+  @protected
+  SimApplicationDto sse_decode_sim_application_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SimFileInfoDto sse_decode_sim_file_info_dto(SseDeserializer deserializer);
 
   @protected
   StateTransitionResultDto sse_decode_state_transition_result_dto(
@@ -649,6 +682,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_qrtr_socket_datagram(
     QrtrSocketDatagram self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_sim_application_dto(
+    SimApplicationDto self,
     SseSerializer serializer,
   );
 
@@ -833,6 +872,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_sim_application_dto(
+    SimApplicationDto? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_u_16(int? self, SseSerializer serializer);
 
   @protected
@@ -859,6 +904,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_scp_03_auth_result_dto(
     Scp03AuthResultDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_sim_application_dto(
+    SimApplicationDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_sim_file_info_dto(
+    SimFileInfoDto self,
     SseSerializer serializer,
   );
 
