@@ -1,6 +1,7 @@
 //! ASN.1 DER Tag-Length-Value (TLV) reader and node hierarchy for parsing GSMA SGP.22 eSIM metadata.
 
 pub mod der;
+pub mod fcp;
 pub mod pe;
 pub mod rsp;
 pub mod x509;

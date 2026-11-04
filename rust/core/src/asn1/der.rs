@@ -301,6 +301,9 @@ impl<'a> Asn1Reader<'a> {
             length_byte as usize
         } else {
             let num_bytes = (length_byte & 0x7F) as usize;
+            if num_bytes == 0 {
+                return Err(Asn1Error::UnsupportedLength { num_bytes });
+            }
             if num_bytes > 4 {
                 return Err(Asn1Error::UnsupportedLength { num_bytes });
             }

@@ -128,7 +128,7 @@ fn test_pkcs7_padding_roundtrip() {
 fn test_aes_cbc_roundtrip() {
     let key = [0x42u8; 32];
     let iv = [0x24u8; 16];
-    let plaintext = b"Hello GSMA eSIM remote profile management via Rust!";
+    let plaintext = b"NekokoLPA2 pure Dart zero-dependency AES cipher";
     let padded = pkcs7_pad(plaintext);
 
     let ciphertext = aes_cbc_encrypt(&key, &iv, &padded).expect("cbc encrypt");

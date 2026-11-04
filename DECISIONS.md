@@ -240,3 +240,32 @@
   - Comprehensive unit and integration test coverage in `rust/core/tests/x509_test.rs` and `rust/tests/lpa_bridge_test.rs` (total 97 workspace tests passing).
 - **Alternatives Considered:** Using heavy third-party certificate parsing libraries (`x509-parser` or `ring`) or keeping certificate validation in Dart.
 - **Reasoning:** SGP.22 requires verifying SM-DP+ certificates against the eUICC's CI PKID list prior to mutual authentication. Adding heavy crates bloats Android APK size, while keeping it in Dart leaves security verification outside the memory-safe native core. Pure, zero-dependency Rust provides sub-millisecond parsing and mathematically sound CI constraint checking.
+
+## 28. Profile Redaction & Privacy Engine, Error Codes, SIM FCP & BER-TLV Parser
+- **Choice:** Ported profile redaction, display name resolution, operator title formatting, error codes, and SIM File Control Parameters (FCP) BER-TLV decoding to native Rust (`nlpa_core::redaction`, `nlpa_core::profile_tag`, `nlpa_core::size_formatter`, `nlpa_core::error_codes`, `nlpa_core::asn1::fcp`):
+  - `nlpa_core::redaction`:
+    - EID and ICCID masking preserving enabled boundary ranges (`[0..8]`, `[8..24]`, `[len-10..len]`) with consecutive mask runs of 9+ '*' characters collapsing to exactly 8.
+    - Deterministic 31-multiplier positive hash `stable_index` over UTF-8 bytes for shuffled country codes and placeholder labels.
+    - Regional indicator flag emoji formatting (`0x1F1E6` base offset) and Toss PNG flag URL generation.
+    - Hand-scanned phone number approximation without bulky regex crates.
+  - `nlpa_core::profile_tag`:
+    - Profile tag parsing (`t:` text tags, `d:` date tags), custom character escaping (`' ' <-> '\x11'`, `':' <-> '\x03'`), and date pivot logic (`YYMMDD` -> 2000 + YY).
+  - `nlpa_core::size_formatter`:
+    - 1024-based binary (`B`, `kB`, `kiB`, `AdaptiveBi`) and adaptive SI units with comma separation.
+  - `nlpa_core::error_codes`:
+    - Native `AppErrorCode` and `AppException` implementing `Display` and `Error`, with legacy Bluetooth errors excised.
+  - `nlpa_core::asn1::fcp`:
+    - BER-TLV parsing for SIM FCP template (`Tag 0x62`), File Descriptor (`Tag 0x82`), File Size (`Tag 0x80`), and EF_DIR application records (`Tag 0x61`, AID `0x4F`, Label `0x50`).
+  - `nlpa_core::mcc`:
+    - Patched missing ITU-T E.212 MCC entries (`298`, `308`, `332`, `742`, `995`, `901`) and specialized MNC routes.
+  - Verified with 23 new unit and integration tests across `redaction_test.rs`, `error_codes_test.rs`, `fcp.rs`, `profile_tag.rs`, and `size_formatter.rs` (123 workspace tests passing).
+- **Alternatives Considered:** Keeping profile metadata masking and tag parsing in Dart.
+- **Reasoning:** Sanitizing sensitive EID and ICCID data natively prevents memory exposure in high-level managed garbage collection, guarantees zero regex overhead on mobile ARM, and eliminates Dart-side string allocation bottlenecks during profile list rendering.
+
+## 29. GSMA TS.43 Entitlement Stack Architecture & Porting Plan
+- **Choice:** Designed the full migration of the 4,242-line GSMA TS.43 Entitlement and Service Management client subsystem from Dart (`lib/ts43/`) to native Rust (`nlpa_core::lpa::ts43`):
+  - Structured modular Rust crate hierarchy: `types`, `enums`, `constants`, `errors`, `sim::identifier`, `sim::imsi`, `sim::identity`, `sim::aka`, `sim::usim_files`, `entitlement`, `request`, `google`, `samsung`, `response`, `websheet`, and `client`.
+  - Cryptographic EAP-AKA module: FIPS-186-2 PRF, HMAC-SHA1 message authentication, and 3G AUTHENTICATE response evaluation.
+  - Deprecation and deletion policy: Delete legacy Dart files once native Rust test vectors achieve 100% parity.
+- **Alternatives Considered:** Keeping TS.43 in Dart or compiling Go `ts43-go` as a shared library.
+- **Reasoning:** A third language (Go) introduces heavy cgo runtime overhead, goroutine schedulers, and GC pauses on mobile Android. Consolidating TS.43 natively in safe Rust maximizes repository Rust proportion well beyond 60% while ensuring sub-millisecond cryptographic performance.

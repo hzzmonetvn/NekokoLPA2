@@ -6,6 +6,7 @@ pub mod cat;
 pub mod ccid;
 pub mod channel;
 pub mod crypto;
+pub mod error_codes;
 pub mod es9;
 pub mod hex;
 pub mod iccid;
@@ -15,6 +16,9 @@ pub mod mcc;
 pub mod modem;
 pub mod notification_address;
 pub mod profile;
+pub mod profile_tag;
+pub mod redaction;
+pub mod size_formatter;
 
 pub use activation_code::{ActivationCode, ActivationCodeError};
 pub use apdu::{validate_apdu_sw, ApduError};
@@ -86,3 +90,11 @@ pub use mcc::{get_flag_emoji, mcc_to_country_code, parse_operator_id};
 pub use modem::*;
 pub use notification_address::is_valid_notification_address;
 pub use profile::EuiccProfile;
+pub use redaction::{
+    country_name, display_name, filter_tags, flag_emoji, flag_url, format_size_bytes, hide_flag,
+    hide_icon, operator_placeholder, operator_summary, operator_title,
+    placeholder_label_from_metadata, profile_flag_emoji, random_icon, redact_eid,
+    redact_eid_preview, redact_iccid, redact_iccid_preview, stable_index, FlagRedactionMode,
+    IconRedactionMode, NicknameRedactionMode, OperatorPlaceholder, OperatorRedactionMode,
+    ProfileView, RedactionSettings, SizeUnit, TagsRedactionMode,
+};

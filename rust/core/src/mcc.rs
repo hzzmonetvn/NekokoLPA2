@@ -6,7 +6,7 @@
 /// Maps an ITU-T E.212 MCC (with optional MNC/ICCID disambiguation) to an ISO 3166-1 alpha-2 code.
 /// Returns `"UN"` for unrecognized, unknown, or international codes.
 #[must_use]
-pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, _iccid: Option<&str>) -> &'static str {
+pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, iccid: Option<&str>) -> &'static str {
     match mcc {
         // --- Europe (200-299) ---
         "202" => "GR",
@@ -30,6 +30,7 @@ pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, _iccid: Option<&str>) -
         "234" => match mnc {
             Some("03" | "28" | "50") => "JE",
             Some("18" | "36" | "58" | "73") => "IM",
+            Some("55") => "GG",
             _ => "GB",
         },
         "235" => "GB",
@@ -65,17 +66,59 @@ pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, _iccid: Option<&str>) -
         "294" => "MK",
         "295" => "LI",
         "297" => "ME",
+        "298" => "GE",
 
         // --- North America & Caribbean (300-399) ---
         "302" => "CA",
-        "310" | "311" | "312" | "313" | "314" | "315" | "316" => "US",
+        "308" => "PM",
+        "310" => match mnc {
+            Some("110" | "140" | "370" | "480") => "GU",
+            _ => "US",
+        },
+        "311" => match mnc {
+            Some("310" | "320" | "470") => "VI",
+            _ => "US",
+        },
+        "312" | "313" => match mnc {
+            Some("510" | "790") => "PR",
+            _ => "US",
+        },
+        "314" | "315" | "316" => "US",
         "330" => "PR",
+        "332" => "VI",
         "334" => "MX",
-        "338" => "JM",
+        "338" => {
+            if matches!(mnc, Some("05" | "050")) {
+                if let Some(iccid) = iccid.filter(|value| value.starts_with("890105")) {
+                    let sub = iccid.as_bytes().get(9..12);
+                    match sub {
+                        Some(b"830") => "AI",
+                        Some(b"831") => "KN",
+                        Some(b"832") => "DM",
+                        Some(b"833") => "BM",
+                        Some(b"834") => "AG",
+                        Some(b"837") => "TC",
+                        Some(b"843") => "MS",
+                        _ => match iccid.as_bytes().get(9) {
+                            Some(b'0') => "JM",
+                            Some(b'1') => "LC",
+                            Some(b'2') => "VC",
+                            Some(b'3') => "GD",
+                            Some(b'5') => "BB",
+                            Some(b'6') => "KY",
+                            Some(b'9') => "HT",
+                            _ => "JM",
+                        },
+                    }
+                } else {
+                    "JM"
+                }
+            } else {
+                "JM"
+            }
+        }
         "340" => match mnc {
-            Some("01" | "02" | "03") => "GP",
-            Some("08" | "09") => "BL",
-            Some("11" | "12") => "MF",
+            Some("03") => "MF",
             _ => "MQ",
         },
         "342" => "BB",
@@ -117,7 +160,10 @@ pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, _iccid: Option<&str>) -
         "421" => "YE",
         "422" => "OM",
         "424" | "430" | "431" => "AE",
-        "425" => "IL",
+        "425" => match mnc {
+            Some("05" | "06") => "PS",
+            _ => "IL",
+        },
         "426" => "BH",
         "427" => "QA",
         "428" => "MN",
@@ -142,7 +188,10 @@ pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, _iccid: Option<&str>) -
 
         // --- Oceania (500-599) ---
         "502" => "MY",
-        "505" => "AU",
+        "505" => match mnc {
+            Some("10") => "NF",
+            _ => "AU",
+        },
         "510" => "ID",
         "514" => "TL",
         "515" => "PH",
@@ -247,11 +296,14 @@ pub fn mcc_to_country_code(mcc: &str, mnc: Option<&str>, _iccid: Option<&str>) -
         "736" => "BO",
         "738" => "GY",
         "740" => "EC",
+        "742" => "GF",
         "744" => "PY",
         "746" => "SR",
         "748" => "UY",
         "750" => "FK",
+        "995" => "IO",
 
+        "901" => "UN",
         _ => "UN",
     }
 }
