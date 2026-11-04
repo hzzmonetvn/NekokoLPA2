@@ -95,6 +95,10 @@ pub fn swap_nibbles(input: &str) -> String {
         out.push(chunk[1]);
         out.push(chunk[0]);
     }
-    // SAFETY: Input chars were ASCII hex chars, preserving UTF-8 validity.
-    unsafe { String::from_utf8_unchecked(out) }
+    if s.is_ascii() {
+        // SAFETY: `s` is verified ASCII, so swapping adjacent bytes yields only valid ASCII bytes.
+        unsafe { String::from_utf8_unchecked(out) }
+    } else {
+        String::from_utf8(out).unwrap_or_else(|_| input.to_string())
+    }
 }

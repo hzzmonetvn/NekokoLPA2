@@ -125,13 +125,13 @@ impl CatProactive {
         vec![0x80, 0xF2, 0x00, 0x00, 0x00]
     }
 
-    /// Constructs FETCH APDU (0x80 0x12 0x00 0x00 [length]).
+    /// Constructs FETCH APDU (0x80 0x12 0x00 0x00 \[length\]).
     #[must_use]
     pub fn fetch(length: u8) -> Vec<u8> {
         vec![0x80, 0x12, 0x00, 0x00, length]
     }
 
-    /// Constructs TERMINAL RESPONSE APDU carrying [details] and [general_result].
+    /// Constructs TERMINAL RESPONSE APDU carrying `details` and `general_result`.
     pub fn terminal_response(
         details: &ProactiveCommandDetails,
         general_result: u8,

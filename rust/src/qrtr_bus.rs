@@ -45,6 +45,7 @@ struct SockAddrQrtr {
 /// Open a socket on the bus, answering the descriptor or a negative errno.
 fn open() -> i32 {
     for family in FAMILIES {
+        // SAFETY: libc::socket creates a new socket file descriptor with standard kernel arguments.
         let socket = unsafe {
             libc::socket(
                 family,
@@ -69,6 +70,7 @@ fn family(fd: i32) -> io::Result<libc::sa_family_t> {
     let mut address = SockAddrQrtr::default();
     let mut length = size_of::<SockAddrQrtr>() as libc::socklen_t;
 
+    // SAFETY: `fd` is an open socket descriptor; `address` and `length` pointers are properly initialized and aligned.
     let named =
         unsafe { libc::getsockname(fd, (&mut address as *mut SockAddrQrtr).cast(), &mut length) };
 
@@ -84,6 +86,7 @@ fn node(fd: i32) -> io::Result<u32> {
     let mut address = SockAddrQrtr::default();
     let mut length = size_of::<SockAddrQrtr>() as libc::socklen_t;
 
+    // SAFETY: `fd` is an open socket descriptor; `address` and `length` pointers are properly initialized and aligned.
     let named =
         unsafe { libc::getsockname(fd, (&mut address as *mut SockAddrQrtr).cast(), &mut length) };
 
@@ -102,6 +105,7 @@ fn send(fd: i32, node: u32, port: u32, datagram: &[u8]) -> io::Result<()> {
         sq_port: port,
     };
 
+    // SAFETY: `fd` is a valid open socket; `datagram` pointer and length are valid memory; `to` address struct is valid.
     let written = unsafe {
         libc::sendto(
             fd,
@@ -138,6 +142,7 @@ fn receive(fd: i32, timeout: Duration) -> io::Result<Option<(u32, u32, Vec<u8>)>
         };
 
         let milliseconds = remaining.as_millis().min(libc::c_int::MAX as u128) as libc::c_int;
+        // SAFETY: `poll` pointer and length 1 are valid memory; timeout milliseconds is bounded.
         let ready = unsafe { libc::poll(&mut poll, 1, milliseconds.max(1)) };
 
         if ready < 0 {
@@ -157,6 +162,7 @@ fn receive(fd: i32, timeout: Duration) -> io::Result<Option<(u32, u32, Vec<u8>)>
         let mut from = SockAddrQrtr::default();
         let mut length = size_of::<SockAddrQrtr>() as libc::socklen_t;
 
+        // SAFETY: `fd` is valid; `datagram` buffer has MAX_DATAGRAM capacity; `from` and `length` pointers are properly initialized and aligned.
         let read = unsafe {
             libc::recvfrom(
                 fd,

@@ -79,13 +79,13 @@ pub fn map_logical_channel_cla(cla: u8, channel: u8) -> Result<u8, ChannelError>
     }
 }
 
-/// Builds a MANAGE CHANNEL [Open] APDU (`[0x00, 0x70, 0x00, 0x00, 0x01]`).
+/// Builds a MANAGE CHANNEL \[Open\] APDU (`[0x00, 0x70, 0x00, 0x00, 0x01]`).
 #[must_use]
 pub fn build_manage_channel_open_apdu() -> [u8; 5] {
     [0x00, 0x70, 0x00, 0x00, 0x01]
 }
 
-/// Builds a MANAGE CHANNEL [Close] APDU (`[0x00, 0x70, 0x80, channel, 0x00]`).
+/// Builds a MANAGE CHANNEL \[Close\] APDU (`[0x00, 0x70, 0x80, channel, 0x00]`).
 ///
 /// # Errors
 /// Returns [`ChannelError::CannotCloseBasicChannel`] if `channel == 0`.

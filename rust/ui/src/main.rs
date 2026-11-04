@@ -8,6 +8,7 @@ use nlpa_ui::models::{
 };
 use nlpa_ui::theme::AMOLED_PALETTE;
 
+#[expect(clippy::print_stdout, reason = "CLI entrypoint diagnostic output")]
 fn main() {
     let mut dom = VirtualDom::new(App);
     dom.rebuild_in_place();

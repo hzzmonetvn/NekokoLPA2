@@ -22,5 +22,5 @@ rm-qmi = { version = "0.1.0", features = ["qrtr"] }
 jni = "=0.21.1"
 libc = "0.2"
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+[lints]
+workspace = true

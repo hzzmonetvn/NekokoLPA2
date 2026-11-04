@@ -171,6 +171,15 @@
 - **Alternatives Considered:** Keeping APDU chaining and HTTP ES9+ payload serialization in Dart.
 - **Reasoning:** Managing low-level APDU framing, logical channel bitmasking, and response reassembly in native Rust guarantees strict ISO 7816-4 conformance, zero memory allocations during segmenting, and immunity against channel state corruption. Decoding ES9+ structures in Rust provides compile-time memory safety for cryptographic certificates and bound profile packages.
 
+## 23. Workspace Lint Consolidation, Intra-Doc Link Resolution & Unsafe Invariant Hardening
+- **Choice:** Aligned the Rust workspace with the BeautifulRust best practices guidelines:
+  - Centralized lint definitions into `[workspace.lints]` in root `Cargo.toml`, configured `dbg_macro = "warn"`, `print_stdout = "warn"`, and enabled workspace inheritance across `nlpa_core`, `nlpa_ui`, and `rust_lib_nlpa2`.
+  - Resolved 5 broken intra-doc link warnings in `nlpa_core::cat` and `nlpa_core::channel` (`\[length\]`, `details`, `general_result`, `\[Open\]`, `\[Close\]`), making `cargo doc --no-deps` 100% clean.
+  - Documented explicit `// SAFETY:` invariant comments across all raw libc socket syscalls in `rust/src/qrtr_bus.rs`.
+  - Hardened `nlpa_core::hex::swap_nibbles` against non-ASCII adversarial input by verifying `s.is_ascii()` prior to `from_utf8_unchecked`, falling back safely to `String::from_utf8`.
+- **Alternatives Considered:** Leaving lints scattered across crates and ignoring doc warnings.
+- **Reasoning:** Enforcing workspace-wide pedantic lints and zero-warning documentation ensures long-term codebase hygiene, prevents silent regressions, and guarantees absolute sound FFI boundaries.
+
 
 
 

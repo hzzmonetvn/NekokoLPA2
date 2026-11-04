@@ -6,6 +6,13 @@ members = [
 ]
 resolver = "2"
 
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+print_stdout = "warn"
+
 [profile.release]
 opt-level = "z"
 lto = "fat"
