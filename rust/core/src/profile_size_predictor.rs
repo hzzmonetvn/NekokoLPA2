@@ -29,7 +29,7 @@ struct RawCatalog {
 #[derive(Debug, Clone, Default)]
 pub struct ProfileSizeCatalog {
     pub reference_eum: Option<String>,
-    pub entries: Vec<ReferenceSizeEntry>,
+    entries: Vec<ReferenceSizeEntry>,
     by_rsp: HashMap<String, Vec<usize>>,
 }
 
@@ -49,6 +49,12 @@ impl ProfileSizeCatalog {
             entries,
             by_rsp,
         }
+    }
+
+    /// Returns the catalog entries in their original order.
+    #[must_use]
+    pub fn entries(&self) -> &[ReferenceSizeEntry] {
+        &self.entries
     }
 
     /// Parses a profile size catalog from GSMA/reference JSON text.
@@ -73,7 +79,7 @@ impl ProfileSizeCatalog {
             return None;
         }
 
-        let eum_prefix = eid.and_then(|e| if e.len() >= 8 { Some(&e[..8]) } else { None });
+        let eum_prefix = eid.and_then(|e| (e.len() >= 8 && e.is_ascii()).then(|| &e[..8]));
 
         // Determine candidate entry indices
         let candidates: Vec<&ReferenceSizeEntry> = if let Some(smdp) = smdp_address {

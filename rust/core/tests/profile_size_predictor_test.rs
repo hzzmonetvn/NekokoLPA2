@@ -83,6 +83,23 @@ fn test_predict_size_empty_catalog() {
 }
 
 #[test]
+fn test_predict_size_non_ascii_eid_does_not_panic() {
+    let entries = vec![ReferenceSizeEntry {
+        rsp: "smdp.test.com".to_string(),
+        plmn: Some("12345".to_string()),
+        service_provider_name: None,
+        reference_size: 30000,
+        eum_sizes: HashMap::new(),
+    }];
+    let catalog = ProfileSizeCatalog::new(None, entries);
+
+    assert_eq!(
+        catalog.predict_size(Some("1234567é"), Some("smdp.test.com"), None, None),
+        Some(30000)
+    );
+}
+
+#[test]
 fn test_profile_size_catalog_from_json() {
     let json_data = r#"{
         "reference_eum": "89044045",
@@ -102,7 +119,7 @@ fn test_profile_size_catalog_from_json() {
 
     let catalog = ProfileSizeCatalog::from_json(json_data).expect("valid catalog json");
     assert_eq!(catalog.reference_eum.as_deref(), Some("89044045"));
-    assert_eq!(catalog.entries.len(), 1);
+    assert_eq!(catalog.entries().len(), 1);
 
     // Matches EUM
     let size = catalog.predict_size(
