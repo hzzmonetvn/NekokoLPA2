@@ -73,6 +73,8 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
+      - name: Install Rust bridge code generator
+        run: cargo install flutter_rust_bridge_codegen --version 2.13.0 --locked
       - name: Verify generated Rust bridge bindings
         run: |
           flutter_rust_bridge_codegen generate
