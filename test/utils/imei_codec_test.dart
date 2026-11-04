@@ -2,7 +2,6 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nlpa2/ts43/sim/identifier.dart';
 import 'package:nlpa2/utils/imei_codec.dart';
 
 void main() {

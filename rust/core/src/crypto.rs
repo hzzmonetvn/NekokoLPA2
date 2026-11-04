@@ -297,6 +297,35 @@ fn compress_sha1_block(state: &mut [u32; 5], block: &[u8; 64]) {
     state[4] = state[4].wrapping_add(e);
 }
 
+/// Computes the RFC 2104 / RFC 2202 HMAC-SHA1 message authentication code.
+#[must_use]
+pub fn hmac_sha1(key: &[u8], data: &[u8]) -> [u8; 20] {
+    let mut k = [0u8; 64];
+    if key.len() > 64 {
+        let digest = sha1(key);
+        k[..20].copy_from_slice(&digest);
+    } else {
+        k[..key.len()].copy_from_slice(key);
+    }
+
+    let mut ipad = [0u8; 64];
+    let mut opad = [0u8; 64];
+    for i in 0..64 {
+        ipad[i] = k[i] ^ 0x36;
+        opad[i] = k[i] ^ 0x5c;
+    }
+
+    let mut inner_input = Vec::with_capacity(64 + data.len());
+    inner_input.extend_from_slice(&ipad);
+    inner_input.extend_from_slice(data);
+    let inner_hash = sha1(&inner_input);
+
+    let mut outer_input = [0u8; 64 + 20];
+    outer_input[..64].copy_from_slice(&opad);
+    outer_input[64..].copy_from_slice(&inner_hash);
+    sha1(&outer_input)
+}
+
 // ============================================================================
 // FIPS 197 AES-128 & AES-256 Engine
 // ============================================================================

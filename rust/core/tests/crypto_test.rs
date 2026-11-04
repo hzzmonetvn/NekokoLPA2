@@ -246,3 +246,35 @@ fn test_aes_cmac_rfc4493_vectors() {
     let cmac_64 = aes_cmac(&key, &msg_64).expect("cmac 64");
     assert_eq!(bytes_to_hex(&cmac_64), "51f0bebf7e3b9d92fc49741779363cfe");
 }
+
+#[test]
+fn test_hmac_sha1_rfc2202_vectors() {
+    use nlpa_core::hmac_sha1;
+
+    // RFC 2202 Test Case 1:
+    let key1 = [0x0bu8; 20];
+    let data1 = b"Hi There";
+    let mac1 = hmac_sha1(&key1, data1);
+    assert_eq!(
+        bytes_to_hex(&mac1),
+        "b617318655057264e28bc0b6fb378c8ef146be00"
+    );
+
+    // RFC 2202 Test Case 2:
+    let key2 = b"Jefe";
+    let data2 = b"what do ya want for nothing?";
+    let mac2 = hmac_sha1(key2, data2);
+    assert_eq!(
+        bytes_to_hex(&mac2),
+        "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79"
+    );
+
+    // RFC 2202 Test Case 3:
+    let key3 = [0xaau8; 20];
+    let data3 = [0xddu8; 50];
+    let mac3 = hmac_sha1(&key3, &data3);
+    assert_eq!(
+        bytes_to_hex(&mac3),
+        "125d7342b9ac11cd91a39af48aa17b4f63f175d3"
+    );
+}

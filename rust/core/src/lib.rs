@@ -50,7 +50,7 @@ pub use channel::{
 pub use crypto::{
     aes_cbc_decrypt, aes_cbc_encrypt, aes_cmac, aes_cmac_8, base64_decode, base64_encode,
     calc_host_mac, compute_hash_cc, decrypt_aes_256_cbc_with_key, encrypt_aes_256_cbc_with_key,
-    key_from_password, pkcs7_pad, pkcs7_unpad, sha1, sha256, AesCipher, CryptoError,
+    hmac_sha1, key_from_password, pkcs7_pad, pkcs7_unpad, sha1, sha256, AesCipher, CryptoError,
 };
 pub use es9::{
     build_authenticate_client_body, build_cancel_session_body, build_es9_headers,

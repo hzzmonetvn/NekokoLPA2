@@ -1,7 +1,57 @@
-//! GSMA TS.43 Service Management and Entitlement Configuration protocol types.
+//! GSMA TS.43 Service Management and Entitlement Configuration protocol.
+
+pub mod client;
+pub mod constants;
+pub mod entitlement;
+pub mod enums;
+pub mod errors;
+pub mod request;
+pub mod response;
+pub mod sim;
+pub mod types;
+pub mod websheet;
 
 use core::fmt;
 use std::error::Error;
+
+pub use client::{
+    SourceSimProvider, Ts43Client, Ts43Config, Ts43HttpRequest, Ts43HttpResponse, Ts43Method,
+    Ts43Transport,
+};
+pub use constants::Ts43Constants;
+pub use entitlement::{
+    discover_auto, discover_entitlement, discover_entitlement_for_channel, EntitlementRecord,
+    DEFAULT_ENTITLEMENT_TIMEOUT,
+};
+pub use enums::{
+    AppEligibility, EntitlementChannel, MessageButton, Operation, OperationResult, OperationType,
+    ServiceStatus, SimType, SubscriptionResult, TransferType,
+};
+pub use errors::{
+    is_http_status, CarrierDeniedError, EntitlementException, Ts43HttpError, WebsheetException,
+    ENTITLEMENT_AMBIGUOUS, ENTITLEMENT_NOT_FOUND, ENTITLEMENT_UNSUPPORTED,
+    WEBSHEET_DEFAULT_SMDP_UNSUPPORTED, WEBSHEET_DISMISSED,
+};
+pub use request::{
+    acquire_configuration_operation, acquire_configuration_request_device,
+    activation_configuration_operation, build_prepared_request, check_eligibility_operation,
+    manage_subscription_operation, manage_subscription_request_device, temporary_token_operation,
+    update_subscription_operation, OdsaOperation, PreparedRequest, ServiceEntitlementRequest,
+};
+pub use response::OdsaResponse;
+pub use sim::{
+    decode_bcd, decode_mnc_length, decode_swapped_bcd, encode_bcd, fid, format_mnc,
+    group_identifier_string, imsi_eap_identity, respond_to_challenge, respond_to_challenge_base64,
+    AkaChallenge, AkaError, AkaRequest, AkaResponse, IdentifierError, Identity, Imsi, ImsiError,
+    UsimFiles,
+};
+pub use types::{
+    first_non_empty, merge_cookie_headers, ActivationResult, AuthToken, ContinueRequest, Device,
+    DownloadConfig, Endpoint, Entitlement, Message, TemporaryToken, TransferOffer, TransferSession,
+    TransferTokenResult, Ts43Event, Ts43Result, Ts43State, UserInputResult, Websheet,
+    WebsheetCallbackEvent, WebsheetResult,
+};
+pub use websheet::parse_websheet_result;
 
 /// Error returned during TS.43 operation parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]

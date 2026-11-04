@@ -1,9 +1,50 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import '../ts43/sim/identifier.dart';
-
 const String defaultDeviceTac = '35383741';
+
+/// Encodes a decimal/hex string as swapped GSM BCD.
+Uint8List encodeBcd(String value) {
+  for (final r in value.codeUnits) {
+    final isDigit = r >= 0x30 && r <= 0x39;
+    final isUpper = r >= 0x41 && r <= 0x46;
+    final isLower = r >= 0x61 && r <= 0x66;
+    if (!isDigit && !isUpper && !isLower) {
+      throw const FormatException('invalid BCD value');
+    }
+  }
+  var s = value;
+  if (s.length % 2 != 0) {
+    s += 'F';
+  }
+  final out = Uint8List(s.length ~/ 2);
+  for (var i = 0; i < out.length; i++) {
+    final hi = int.parse(s[i * 2], radix: 16);
+    final lo = int.parse(s[i * 2 + 1], radix: 16);
+    // Swap nibbles (GSM BCD stores least significant nibble first).
+    out[i] = ((lo << 4) & 0xF0) | (hi & 0x0F);
+  }
+  return out;
+}
+
+/// Decodes swapped GSM BCD bytes to a decimal string, trimming the trailing
+/// 'f' padding nibble if present.
+String decodeBcd(List<int> value) {
+  final sb = StringBuffer();
+  for (final b in value) {
+    final hi = (b >> 4) & 0x0F;
+    final lo = b & 0x0F;
+    // Swapped order: low nibble is the first digit.
+    sb.write(lo.toRadixString(16));
+    sb.write(hi.toRadixString(16));
+  }
+  var out = sb.toString();
+  final index = out.lastIndexOf('f');
+  if (index != -1) {
+    out = out.substring(0, index);
+  }
+  return out;
+}
 
 /// Converts the app's ordinary digit-order IMEI bytes into the swapped BCD
 /// encoding used by GSMA deviceInfo.imei.
