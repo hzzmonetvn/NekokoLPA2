@@ -20,12 +20,14 @@ pub use activation_code::{ActivationCode, ActivationCodeError};
 pub use apdu::{validate_apdu_sw, ApduError};
 pub use asn1::{
     decode_integer, decode_utf8_string, encode_integer, encode_length, encode_octet_string,
-    encode_sequence, encode_tag, encode_tlv, encode_utf8_string, parse_profile_package,
-    validate_profile_elements, Asn1Error, Asn1Node, Asn1Reader, DeleteNotificationStatus,
-    DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest, EuiccChallenge,
-    EuiccConfiguredAddresses, EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest,
+    encode_sequence, encode_tag, encode_tlv, encode_utf8_string, find_matching_ci_pkid,
+    format_ci_pkid, oid_bytes_to_string, parse_ci_pkid_hex_list, parse_profile_package,
+    validate_profile_elements, verify_ci_public_key_constraint, Asn1Error, Asn1Node, Asn1Reader,
+    DeleteNotificationStatus, DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest,
+    EuiccChallenge, EuiccConfiguredAddresses, EuiccInfo1, EuiccInfo2, EuiccMemoryResetRequest,
     NotificationMetadata, NotificationSentResponse, PeType, ProfileElement, RspProfileInfo,
-    SetNicknameRequest,
+    SetNicknameRequest, SubjectPublicKeyInfo, Validity, X509Certificate, X509Error, X509Extension,
+    X509Name,
 };
 pub use atr::{Atr, AtrError, DEFAULT_EUICC_ATR};
 pub use cat::{
@@ -42,9 +44,9 @@ pub use channel::{
     OmapiSafetyLatch, ReassemblyAction, ResponseReassembler,
 };
 pub use crypto::{
-    aes_cbc_decrypt, aes_cbc_encrypt, base64_decode, base64_encode, calc_host_mac, compute_hash_cc,
-    decrypt_aes_256_cbc_with_key, encrypt_aes_256_cbc_with_key, key_from_password, pkcs7_pad,
-    pkcs7_unpad, sha256, AesCipher, CryptoError,
+    aes_cbc_decrypt, aes_cbc_encrypt, aes_cmac, aes_cmac_8, base64_decode, base64_encode,
+    calc_host_mac, compute_hash_cc, decrypt_aes_256_cbc_with_key, encrypt_aes_256_cbc_with_key,
+    key_from_password, pkcs7_pad, pkcs7_unpad, sha1, sha256, AesCipher, CryptoError,
 };
 pub use es9::{
     build_authenticate_client_body, build_cancel_session_body, build_es9_headers,
@@ -63,16 +65,19 @@ pub use imei::{
     ImeiError,
 };
 pub use lpa::{
-    build_delete_profile_apdu, build_disable_profile_apdu, build_enable_profile_apdu,
-    build_euicc_memory_reset_apdu, build_get_euicc_challenge_apdu,
+    build_delete_isdp_apdu, build_delete_profile_apdu, build_disable_profile_apdu,
+    build_enable_profile_apdu, build_euicc_memory_reset_apdu, build_get_euicc_challenge_apdu,
     build_get_euicc_configured_addresses_apdu, build_get_euicc_info1_apdu,
     build_get_euicc_info2_apdu, build_get_profiles_info_apdu, build_list_notifications_apdu,
-    build_remove_notification_apdu, build_select_isdr_apdu, build_set_nickname_apdu,
-    parse_es10_response, wrap_store_data_apdu, DownloadSessionError, EntitlementStatus, LpaEngine,
-    LpaError, NotificationAction, NotificationJob, NotificationPolicy, NotificationQueue,
-    NotificationRecord, NotificationStatus, NotificationSyncPlan, ProfileDownloadSession,
-    ProfileOperation, ProfileStateTransition, ProfileStateTransitionResult, StateTransitionError,
-    StoredNotification, Ts43CarrierConfig, Ts43Error, ISDR_AID, NOTIFICATION_INSTALL,
+    build_remove_notification_apdu, build_select_isdp_apdu, build_select_isdr_apdu,
+    build_set_nickname_apdu, compute_card_cryptogram, compute_host_cryptogram, derive_session_key,
+    parse_es10_response, wrap_store_data_apdu, DownloadSessionError, EntitlementStatus,
+    InitializeUpdateResponse, IsdpAid, IsdpContainer, IsdpError, IsdpState, LpaEngine, LpaError,
+    NotificationAction, NotificationJob, NotificationPolicy, NotificationQueue, NotificationRecord,
+    NotificationStatus, NotificationSyncPlan, ProfileDownloadSession, ProfileOperation,
+    ProfileStateTransition, ProfileStateTransitionResult, Scp03Error, Scp03KeySet, Scp03Session,
+    Scp03SessionKeys, SecurityLevel, SessionState, StateTransitionError, StoredNotification,
+    Ts43CarrierConfig, Ts43Error, ISDP_AID_PREFIX, ISDR_AID, NOTIFICATION_INSTALL,
     NOTIFICATION_LOAD_RPM_PACKAGE, NOTIFICATION_LOCAL_DELETE, NOTIFICATION_LOCAL_DISABLE,
     NOTIFICATION_LOCAL_ENABLE, NOTIFICATION_RPM_DELETE, NOTIFICATION_RPM_DISABLE,
     NOTIFICATION_RPM_ENABLE,

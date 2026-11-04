@@ -4,7 +4,9 @@
 pub mod download_session;
 pub mod engine;
 pub mod es10;
+pub mod isdp;
 pub mod notifications;
+pub mod scp03;
 pub mod state_transition;
 pub mod ts43;
 
@@ -18,12 +20,20 @@ pub use es10::{
     build_remove_notification_apdu, build_select_isdr_apdu, build_set_nickname_apdu,
     parse_es10_response, wrap_store_data_apdu, ISDR_AID,
 };
+pub use isdp::{
+    build_delete_isdp_apdu, build_select_isdp_apdu, IsdpAid, IsdpContainer, IsdpError, IsdpState,
+    ISDP_AID_PREFIX,
+};
 pub use notifications::{
     NotificationAction, NotificationJob, NotificationPolicy, NotificationQueue, NotificationRecord,
     NotificationStatus, NotificationSyncPlan, ProfileOperation, StoredNotification,
     NOTIFICATION_INSTALL, NOTIFICATION_LOAD_RPM_PACKAGE, NOTIFICATION_LOCAL_DELETE,
     NOTIFICATION_LOCAL_DISABLE, NOTIFICATION_LOCAL_ENABLE, NOTIFICATION_RPM_DELETE,
     NOTIFICATION_RPM_DISABLE, NOTIFICATION_RPM_ENABLE,
+};
+pub use scp03::{
+    compute_card_cryptogram, compute_host_cryptogram, derive_session_key, InitializeUpdateResponse,
+    Scp03Error, Scp03KeySet, Scp03Session, Scp03SessionKeys, SecurityLevel, SessionState,
 };
 pub use state_transition::{
     ProfileStateTransition, ProfileStateTransitionResult, StateTransitionError,

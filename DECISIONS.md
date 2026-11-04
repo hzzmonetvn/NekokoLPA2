@@ -207,4 +207,36 @@
 - **Alternatives Considered:** Keeping ATR interface byte traversal and 9eSIM CRC-24 hashing in Dart.
 - **Reasoning:** Smart card ATR parsing involves bitwise interface byte navigation where subtle length or off-by-one errors can misconfigure card capabilities or corrupt the trailing TCK checksum byte. Executing ATR parsing, TCK repair, and CCID command framing in native Rust guarantees absolute memory safety, strict ISO/IEC 7816-3 conformance, zero-allocation CRC-24 calculation, and further maximizes the Rust codebase proportion.
 
+## 26. GSMA SGP.22 ISD-P Lifecycle & GlobalPlatform SCP03 Security Domain Engine
+- **Choice:** Ported the GSMA SGP.22 Issuer Security Domain - Profile (ISD-P) and GlobalPlatform Secure Channel Protocol 03 (SCP03) mutual authentication subsystem to native Rust (`nlpa_core::lpa::isdp`, `nlpa_core::lpa::scp03`, `nlpa_core::crypto`, `rust_lib_nlpa2::api::lpa`):
+  - `nlpa_core::crypto`:
+    - Pure, safe Rust implementation of NIST SP 800-38B / RFC 4493 AES-CMAC message authentication code supporting AES-128 and AES-256 with subkey generation ($K_1, K_2$) and 8-byte truncation (`aes_cmac_8`).
+    - Standard FIPS 180-1 / RFC 3174 SHA-1 producing 160-bit (20-byte) message digests for PKIX SKI calculation.
+  - `nlpa_core::lpa::isdp`:
+    - Standard ISD-P Application Identifier (`IsdpAid`) representation with prefix validation (`A0 00 00 05 59 10 10`).
+    - ISD-P container state machine enforcing valid GSMA SGP.22 transitions (`Created` -> `Personalized` -> `Installed` <-> `Operating`, and terminal `Deleted`).
+    - ISD-P APDU command builders: `SELECT [AID]` (`00 A4 04 00 <LEN> <AID>`) and `DELETE [AID]` (`80 E4 00 00 <LEN> 4F <AID_LEN> <AID>`).
+  - `nlpa_core::lpa::scp03`:
+    - GlobalPlatform Card Specification v2.3 Amendment D (SCP03) mutual authentication engine.
+    - NIST SP 800-108 counter mode key derivation for session keys: $S\text{-ENC}$ (constant `0x04`), $S\text{-MAC}$ (constant `0x06`), and $S\text{-RMAC}$ (constant `0x07`).
+    - Cryptogram generation and verification: 8-byte Card Cryptogram (constant `0x00`) and 8-byte Host Cryptogram (constant `0x01`).
+    - Client command builders: `INITIALIZE UPDATE` (`80 50 <P1> <P2> 08 <HostChallenge>`) and `EXTERNAL AUTHENTICATE` (`84 82 <SecurityLevel> 00 10 <HostCryptogram><HostMAC>`).
+    - APDU command wrapping with C-MAC chaining across sequential invocations and C-ENC AES-CBC payload encryption using counter-derived ICVs.
+  - `rust_lib_nlpa2::api::lpa`: Exposed FFI methods `isdp_select_apdu`, `isdp_delete_apdu`, `scp03_initialize_update_apdu`, and `scp03_authenticate_session`.
+  - Comprehensive unit and integration test coverage in `rust/core/tests/crypto_test.rs`, `rust/core/tests/scp03_test.rs`, and `rust/tests/lpa_bridge_test.rs`.
+- **Alternatives Considered:** Performing SCP03 session key derivation and APDU MAC wrapping in Dart or relying on external C libraries (OpenSSL).
+- **Reasoning:** SCP03 mutual authentication and ISD-P channel management are critical cryptographic boundaries for profile installation and deletion on eUICCs. Implementing SCP03 and ISD-P in safe Rust prevents side-channel bugs, guarantees memory safety without OpenSSL overhead, and ensures complete telecom stack independence.
 
+## 27. RFC 5280 X.509 PKIX Certificate Parser & GSMA SGP.22 CI Constraint Verification Engine
+- **Choice:** Ported the zero-dependency RFC 5280 X.509 PKIX certificate parser and GSMA SGP.22 Certificate Issuer (CI) constraint verification engine to native Rust (`nlpa_core::asn1::x509`, `rust_lib_nlpa2::api::lpa`):
+  - `nlpa_core::asn1::x509`:
+    - Zero-dependency DER and PEM parser for X.509 v1/v2/v3 certificates (`X509Certificate`).
+    - Distinguished Name (DN) component extraction for Subject and Issuer (`CN`, `O`, `C`).
+    - Standard X.509 extension parsing: Subject Key Identifier (SKI, OID `2.5.29.14`), Authority Key Identifier (AKI, OID `2.5.29.35`), Basic Constraints (`is_ca`, OID `2.5.29.19`), and Key Usage (`key_usage`, OID `2.5.29.15`).
+    - Dual-path Subject Key Identifier resolution: direct extraction from X.509 extension `2.5.29.14` when present, or fallback RFC 5280 Method 1 calculation via 160-bit SHA-1 over `subjectPublicKeyInfo.public_key_bytes`.
+    - GSMA SGP.22 Certificate Issuer constraint verification against eUICC `euiccCiPKIdListForVerification`: matching SM-DP+ or SM-DS certificate's AKI or SKI against the card's authorized CI PKID list (`verify_ci_public_key_constraint`, `find_matching_ci_pkid`).
+    - CI PKID formatting and 20-byte hexadecimal parser (`format_ci_pkid`, `parse_ci_pkid_hex_list`).
+  - `rust_lib_nlpa2::api::lpa`: Exposed FFI methods `get_certificate_details` and `verify_smdp_certificate`.
+  - Comprehensive unit and integration test coverage in `rust/core/tests/x509_test.rs` and `rust/tests/lpa_bridge_test.rs` (total 97 workspace tests passing).
+- **Alternatives Considered:** Using heavy third-party certificate parsing libraries (`x509-parser` or `ring`) or keeping certificate validation in Dart.
+- **Reasoning:** SGP.22 requires verifying SM-DP+ certificates against the eUICC's CI PKID list prior to mutual authentication. Adding heavy crates bloats Android APK size, while keeping it in Dart leaves security verification outside the memory-safe native core. Pure, zero-dependency Rust provides sub-millisecond parsing and mathematically sound CI constraint checking.

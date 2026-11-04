@@ -1,8 +1,10 @@
 use rust_lib_nlpa2::api::lpa::{
-    create_download_session, evaluate_profile_convergence, session_compute_hash_cc,
-    session_process_auth_client_resp, session_process_auth_server_resp,
+    create_download_session, evaluate_profile_convergence, get_certificate_details,
+    isdp_delete_apdu, isdp_select_apdu, scp03_authenticate_session, scp03_initialize_update_apdu,
+    session_compute_hash_cc, session_process_auth_client_resp, session_process_auth_server_resp,
     session_process_euicc_challenge, session_process_euicc_info1,
-    session_process_initiate_auth_resp, session_validate_initiate_auth, VerificationReadDto,
+    session_process_initiate_auth_resp, session_validate_initiate_auth, verify_smdp_certificate,
+    VerificationReadDto,
 };
 
 #[test]
@@ -130,4 +132,114 @@ fn test_state_transition_bridge_non_convergence() {
     assert_eq!(result.command_attempts, 2);
     assert_eq!(result.actual_enabled, Some(false));
     assert!(result.error_message.is_some());
+}
+
+#[test]
+fn test_x509_certificate_bridge_and_verification() {
+    let cert_pem = r#"-----BEGIN CERTIFICATE-----
+MIIBgjCCASmgAwIBAgIUWEquEgQb352AeoUtQMnjl1XLHB8wCgYIKoZIzj0EAwIw
+FzEVMBMGA1UEAwwMR1NNQSBDSSBSb290MB4XDTI2MTEwNDAxNDk0NloXDTM2MTEw
+MTAxNDk0NlowFzEVMBMGA1UEAwwMR1NNQSBDSSBSb290MFkwEwYHKoZIzj0CAQYI
+KoZIzj0DAQcDQgAEk3qmJmGRMcnQfORD2VjY/sLWRScSzIGvC5ozrAFiZICrl97p
+6sg0A9cDNmbOlMgxqns3CNy1U8x3QS7KfbAH/KNTMFEwHQYDVR0OBBYEFHk6byuv
+JZU8AFRHVe5RkMhKuoauMB8GA1UdIwQYMBaAFHk6byuvJZU8AFRHVe5RkMhKuoau
+MA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIhAItJXitUqLUKvXn4
+UZiPZhJ/SndoeYig43ohBL1hija8Ah8C7piEXm6JRFB4aoEpJ5aN8ATpCwJYmpsH
+6Wanvctd
+-----END CERTIFICATE-----"#;
+
+    let cert_dto =
+        get_certificate_details(cert_pem.to_string()).expect("get certificate details dto");
+    assert_eq!(cert_dto.common_name.as_deref(), Some("GSMA CI Root"));
+    assert!(cert_dto.is_ca);
+    assert_eq!(cert_dto.ski_hex, "793A6F2BAF25953C00544755EE5190C84ABA86AE");
+
+    // Verify SM-DP+ certificate constraint against matching and unmatching CI PKID lists
+    let matching_pkid = "793A6F2BAF25953C00544755EE5190C84ABA86AE".to_string();
+    let unmatching_pkid = "0102030405060708090A0B0C0D0E0F1011121314".to_string();
+
+    let verify_ok = verify_smdp_certificate(
+        cert_pem.to_string(),
+        vec![unmatching_pkid.clone(), matching_pkid],
+    )
+    .expect("verification call");
+    assert!(verify_ok);
+
+    let verify_fail = verify_smdp_certificate(cert_pem.to_string(), vec![unmatching_pkid])
+        .expect("verification call with no matching pkid");
+    assert!(!verify_fail);
+}
+
+#[test]
+fn test_isdp_apdu_bridge_generators() {
+    let aid_hex = "A0000005591010FFFFFFFF8900000100";
+    let select_apdu = isdp_select_apdu(aid_hex.to_string()).expect("valid isdp select apdu");
+    assert_eq!(&select_apdu[0..4], &[0x00, 0xA4, 0x04, 0x00]);
+    assert_eq!(select_apdu[4], 16);
+
+    let delete_apdu = isdp_delete_apdu(aid_hex.to_string()).expect("valid isdp delete apdu");
+    assert_eq!(&delete_apdu[0..4], &[0x80, 0xE4, 0x00, 0x00]);
+    assert_eq!(delete_apdu[4], 18);
+    assert_eq!(delete_apdu[5], 0x4F);
+
+    // Invalid AID hex fails gracefully
+    assert!(isdp_select_apdu("invalid_hex".to_string()).is_err());
+    assert!(isdp_delete_apdu("1234".to_string()).is_err());
+}
+
+#[test]
+fn test_scp03_bridge_initialization_and_authentication() {
+    let host_challenge_hex = "1122334455667788".to_string();
+    let init_apdu = scp03_initialize_update_apdu(host_challenge_hex.clone(), 0x01, 0x01)
+        .expect("build init update");
+    assert_eq!(&init_apdu[0..5], &[0x80, 0x50, 0x01, 0x01, 0x08]);
+    assert_eq!(
+        &init_apdu[5..13],
+        &[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]
+    );
+
+    // Test session authentication derivation
+    let static_enc_hex = "01010101010101010101010101010101".to_string();
+    let static_mac_hex = "02020202020202020202020202020202".to_string();
+    let static_mac = vec![0x02u8; 16];
+    let card_challenge = [0xBBu8; 8];
+
+    // Compute valid card cryptogram using core derivation
+    let s_mac = nlpa_core::derive_session_key(
+        &static_mac,
+        0x06,
+        &[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88],
+        &card_challenge,
+    )
+    .expect("derive s-mac");
+    let valid_card_crypto = nlpa_core::compute_card_cryptogram(
+        &s_mac,
+        &[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88],
+        &card_challenge,
+    )
+    .expect("compute card cryptogram");
+
+    let mut card_resp_data = Vec::with_capacity(32);
+    card_resp_data.extend_from_slice(&[0x10; 10]); // Diversification data (10 bytes)
+    card_resp_data.extend_from_slice(&[0x01, 0x03, 0x70]); // Key info (3 bytes)
+    card_resp_data.extend_from_slice(&card_challenge); // Card challenge (8 bytes)
+    card_resp_data.extend_from_slice(&valid_card_crypto); // Card cryptogram (8 bytes)
+    card_resp_data.extend_from_slice(&[0x00, 0x00, 0x01]); // Sequence counter (3 bytes)
+    let card_resp_hex = nlpa_core::bytes_to_hex(&card_resp_data);
+
+    let auth_result = scp03_authenticate_session(
+        host_challenge_hex,
+        card_resp_hex,
+        static_enc_hex,
+        static_mac_hex,
+        0x03, // C-DEC and C-MAC
+    )
+    .expect("authenticate session bridge call");
+
+    assert_eq!(auth_result.host_cryptogram_hex.len(), 16); // 8 bytes = 16 hex chars
+    assert_eq!(auth_result.external_authenticate_apdu.len(), 21); // 5 header + 16 payload
+    assert_eq!(
+        &auth_result.external_authenticate_apdu[0..5],
+        &[0x84, 0x82, 0x03, 0x00, 0x10]
+    );
 }

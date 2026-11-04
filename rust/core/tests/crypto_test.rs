@@ -1,7 +1,8 @@
 use nlpa_core::{
-    aes_cbc_decrypt, aes_cbc_encrypt, base64_decode, base64_encode, bytes_to_hex, calc_host_mac,
-    compute_hash_cc, decrypt_aes_256_cbc_with_key, encrypt_aes_256_cbc_with_key, hex_to_bytes,
-    key_from_password, pkcs7_pad, pkcs7_unpad, sha256, AesCipher, CryptoError,
+    aes_cbc_decrypt, aes_cbc_encrypt, aes_cmac, aes_cmac_8, base64_decode, base64_encode,
+    bytes_to_hex, calc_host_mac, compute_hash_cc, decrypt_aes_256_cbc_with_key,
+    encrypt_aes_256_cbc_with_key, hex_to_bytes, key_from_password, pkcs7_pad, pkcs7_unpad, sha1,
+    sha256, AesCipher, CryptoError,
 };
 
 #[test]
@@ -183,4 +184,65 @@ fn test_calc_host_mac() {
     let mac = calc_host_mac(&session_key, &challenge).expect("calc mac");
     assert_eq!(mac.len(), 4);
     assert_ne!(mac, [0u8; 4]);
+}
+
+#[test]
+fn test_sha1_standard_vectors() {
+    // RFC 3174 Test 1: "abc"
+    let hash_abc = sha1(b"abc");
+    assert_eq!(
+        bytes_to_hex(&hash_abc),
+        "a9993e364706816aba3e25717850c26c9cd0d89d"
+    );
+
+    // RFC 3174 Test 2: "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+    let long_input = b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
+    let hash_long = sha1(long_input);
+    assert_eq!(
+        bytes_to_hex(&hash_long),
+        "84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+    );
+
+    // Empty string
+    let hash_empty = sha1(b"");
+    assert_eq!(
+        bytes_to_hex(&hash_empty),
+        "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+    );
+}
+
+#[test]
+fn test_aes_cmac_rfc4493_vectors() {
+    // RFC 4493 Test vectors
+    // Key: 2b7e1516 28aed2a6 abf71588 09cf4f3c
+    let key = hex_to_bytes("2b7e151628aed2a6abf7158809cf4f3c").expect("hex key");
+
+    // Example 1: len = 0
+    let cmac_0 = aes_cmac(&key, b"").expect("cmac empty");
+    assert_eq!(bytes_to_hex(&cmac_0), "bb1d6929e95937287fa37d129b756746");
+
+    // Truncated 8-byte
+    let cmac_0_8 = aes_cmac_8(&key, b"").expect("cmac_8 empty");
+    assert_eq!(bytes_to_hex(&cmac_0_8), "bb1d6929e9593728");
+
+    // Example 2: len = 16
+    let msg_16 = hex_to_bytes("6bc1bee22e409f96e93d7e117393172a").expect("hex msg");
+    let cmac_16 = aes_cmac(&key, &msg_16).expect("cmac 16");
+    assert_eq!(bytes_to_hex(&cmac_16), "070a16b46b4d4144f79bdd9dd04a287c");
+
+    // Example 3: len = 40
+    let msg_40 = hex_to_bytes(
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411",
+    )
+    .expect("hex msg");
+    let cmac_40 = aes_cmac(&key, &msg_40).expect("cmac 40");
+    assert_eq!(bytes_to_hex(&cmac_40), "dfa66747de9ae63030ca32611497c827");
+
+    // Example 4: len = 64
+    let msg_64 = hex_to_bytes(
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+    )
+    .expect("hex msg");
+    let cmac_64 = aes_cmac(&key, &msg_64).expect("cmac 64");
+    assert_eq!(bytes_to_hex(&cmac_64), "51f0bebf7e3b9d92fc49741779363cfe");
 }

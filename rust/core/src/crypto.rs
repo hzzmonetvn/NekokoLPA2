@@ -1,10 +1,12 @@
-//! Cryptographic primitives, AES-CBC, PKCS#7, Base64, and GSMA SGP.22 confirmation code hash calculations.
+//! Cryptographic primitives, AES-CBC, AES-CMAC, SHA-1, SHA-256, PKCS#7, Base64, and GSMA SGP.22 confirmation code hash calculations.
 //!
 //! Provides a zero-dependency, safe Rust implementation of:
 //! - Standard SHA-256 (RFC 6234)
+//! - Standard SHA-1 (RFC 3174) for PKIX SubjectKeyIdentifier derivation
 //! - GSMA SGP.22 confirmation code hash computation: `HashCc = SHA256(SHA256(CC) || TxID)`
 //! - FIPS 197 AES-128 and AES-256 block cipher
 //! - Cipher Block Chaining (CBC) mode with PKCS#7 padding
+//! - NIST SP 800-38B / RFC 4493 AES-CMAC message authentication
 //! - Standard Base64 encoding and decoding
 //! - Telecom GM authentication host MAC calculation
 
@@ -195,6 +197,104 @@ fn compress_sha256_block(state: &mut [u32; 8], block: &[u8; 64]) {
     state[5] = state[5].wrapping_add(f);
     state[6] = state[6].wrapping_add(g);
     state[7] = state[7].wrapping_add(h);
+}
+
+// ============================================================================
+// SHA-1 (RFC 3174) for PKIX SubjectKeyIdentifier
+// ============================================================================
+
+/// Computes the 160-bit SHA-1 digest of `data`.
+///
+/// Implemented per RFC 3174 for standard X.509 Subject Key Identifier (SKI) derivation.
+#[must_use]
+pub fn sha1(data: &[u8]) -> [u8; 20] {
+    let mut state: [u32; 5] = [
+        0x6745_2301,
+        0xEFCD_AB89,
+        0x98BA_DCFE,
+        0x1032_5476,
+        0xC3D2_E1F0,
+    ];
+
+    let bit_len = (data.len() as u64).wrapping_mul(8);
+    let mut buffer = [0u8; 64];
+    let mut chunk_len = 0;
+
+    for &byte in data {
+        buffer[chunk_len] = byte;
+        chunk_len += 1;
+        if chunk_len == 64 {
+            compress_sha1_block(&mut state, &buffer);
+            chunk_len = 0;
+        }
+    }
+
+    // Padding: append 0x80 bit
+    buffer[chunk_len] = 0x80;
+    chunk_len += 1;
+
+    if chunk_len > 56 {
+        for b in &mut buffer[chunk_len..64] {
+            *b = 0;
+        }
+        compress_sha1_block(&mut state, &buffer);
+        chunk_len = 0;
+    }
+
+    for b in &mut buffer[chunk_len..56] {
+        *b = 0;
+    }
+    buffer[56..64].copy_from_slice(&bit_len.to_be_bytes());
+    compress_sha1_block(&mut state, &buffer);
+
+    let mut digest = [0u8; 20];
+    for (i, word) in state.iter().enumerate() {
+        digest[i * 4..(i + 1) * 4].copy_from_slice(&word.to_be_bytes());
+    }
+    digest
+}
+
+fn compress_sha1_block(state: &mut [u32; 5], block: &[u8; 64]) {
+    let mut w = [0u32; 80];
+    for (i, chunk) in block.as_chunks::<4>().0.iter().enumerate() {
+        w[i] = u32::from_be_bytes(*chunk);
+    }
+    for i in 16..80 {
+        w[i] = (w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]).rotate_left(1);
+    }
+
+    let mut a = state[0];
+    let mut b = state[1];
+    let mut c = state[2];
+    let mut d = state[3];
+    let mut e = state[4];
+
+    for (i, &w_i) in w.iter().enumerate() {
+        let (f, k) = match i {
+            0..=19 => ((b & c) | (!b & d), 0x5A82_7999),
+            20..=39 => (b ^ c ^ d, 0x6ED9_EBA1),
+            40..=59 => ((b & c) | (b & d) | (c & d), 0x8F1B_BCDC),
+            _ => (b ^ c ^ d, 0xCA62_C1D6),
+        };
+
+        let temp = a
+            .rotate_left(5)
+            .wrapping_add(f)
+            .wrapping_add(e)
+            .wrapping_add(k)
+            .wrapping_add(w_i);
+        e = d;
+        d = c;
+        c = b.rotate_left(30);
+        b = a;
+        a = temp;
+    }
+
+    state[0] = state[0].wrapping_add(a);
+    state[1] = state[1].wrapping_add(b);
+    state[2] = state[2].wrapping_add(c);
+    state[3] = state[3].wrapping_add(d);
+    state[4] = state[4].wrapping_add(e);
 }
 
 // ============================================================================
@@ -571,6 +671,96 @@ pub fn calc_host_mac(session_key: &[u8], challenge: &[u8]) -> Result<[u8; 4], Cr
         res[i] = ct[i] ^ ct[i + 8];
     }
     Ok(res)
+}
+
+// ============================================================================
+// AES-CMAC (NIST SP 800-38B / RFC 4493)
+// ============================================================================
+
+#[inline]
+fn shift_left_128(input: &[u8; 16]) -> [u8; 16] {
+    let mut out = [0u8; 16];
+    let mut carry = 0u8;
+    for i in (0..16).rev() {
+        let b = input[i];
+        out[i] = (b << 1) | carry;
+        carry = (b & 0x80) >> 7;
+    }
+    out
+}
+
+/// Generates AES-CMAC subkeys $K_1$ and $K_2$ per NIST SP 800-38B.
+fn generate_cmac_subkeys(cipher: &AesCipher) -> ([u8; 16], [u8; 16]) {
+    let mut l = [0u8; 16];
+    cipher.encrypt_block(&mut l);
+
+    let msb_l = (l[0] & 0x80) != 0;
+    let mut k1 = shift_left_128(&l);
+    if msb_l {
+        k1[15] ^= 0x87;
+    }
+
+    let msb_k1 = (k1[0] & 0x80) != 0;
+    let mut k2 = shift_left_128(&k1);
+    if msb_k1 {
+        k2[15] ^= 0x87;
+    }
+
+    (k1, k2)
+}
+
+/// Computes the 128-bit (16 bytes) AES-CMAC message authentication code.
+///
+/// Implemented per NIST SP 800-38B and RFC 4493 for GlobalPlatform SCP03 mutual authentication.
+pub fn aes_cmac(key: &[u8], data: &[u8]) -> Result<[u8; 16], CryptoError> {
+    let cipher = AesCipher::new(key)?;
+    let (k1, k2) = generate_cmac_subkeys(&cipher);
+
+    let n = data.len().div_ceil(16);
+    let num_blocks = if n == 0 { 1 } else { n };
+    let is_complete = !data.is_empty() && data.len().is_multiple_of(16);
+
+    let mut state = [0u8; 16];
+
+    for i in 0..(num_blocks - 1) {
+        let chunk = &data[i * 16..(i + 1) * 16];
+        for j in 0..16 {
+            state[j] ^= chunk[j];
+        }
+        cipher.encrypt_block(&mut state);
+    }
+
+    let mut last_block = [0u8; 16];
+    if is_complete {
+        let chunk = &data[(num_blocks - 1) * 16..];
+        last_block.copy_from_slice(chunk);
+        for j in 0..16 {
+            last_block[j] ^= k1[j];
+        }
+    } else {
+        let offset = (num_blocks - 1) * 16;
+        let rem = &data[offset..];
+        last_block[..rem.len()].copy_from_slice(rem);
+        last_block[rem.len()] = 0x80;
+        for j in 0..16 {
+            last_block[j] ^= k2[j];
+        }
+    }
+
+    for j in 0..16 {
+        state[j] ^= last_block[j];
+    }
+    cipher.encrypt_block(&mut state);
+
+    Ok(state)
+}
+
+/// Computes the 8-byte (64-bit) truncated AES-CMAC used in GlobalPlatform SCP03 C-MAC and cryptograms.
+pub fn aes_cmac_8(key: &[u8], data: &[u8]) -> Result<[u8; 8], CryptoError> {
+    let full = aes_cmac(key, data)?;
+    let mut out = [0u8; 8];
+    out.copy_from_slice(&full[..8]);
+    Ok(out)
 }
 
 // ============================================================================

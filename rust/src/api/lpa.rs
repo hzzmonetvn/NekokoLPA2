@@ -2,23 +2,27 @@
 
 use flutter_rust_bridge::frb;
 use nlpa_core::{
-    build_authenticate_client_body as core_build_authenticate_client_body,
+    base64_decode, build_authenticate_client_body as core_build_authenticate_client_body,
     build_cancel_session_body as core_build_cancel_session_body,
+    build_delete_isdp_apdu as core_build_delete_isdp_apdu,
     build_get_bound_profile_package_body as core_build_get_bound_profile_package_body,
     build_initiate_authentication_body as core_build_initiate_authentication_body,
     build_manage_channel_close_apdu as core_build_manage_channel_close_apdu,
     build_manage_channel_open_apdu as core_build_manage_channel_open_apdu,
+    build_select_isdp_apdu as core_build_select_isdp_apdu, bytes_to_hex,
     chain_apdu_request as core_chain_apdu_request, compute_hash_cc as core_compute_hash_cc,
-    frame_apdu_command as core_frame_apdu_command,
+    format_ci_pkid, frame_apdu_command as core_frame_apdu_command, hex_to_bytes,
     map_logical_channel_cla as core_map_logical_channel_cla,
     parse_authenticate_client_response as core_parse_authenticate_client_response,
     parse_get_bound_profile_package_response as core_parse_get_bound_profile_package_response,
     parse_initiate_authentication_response as core_parse_initiate_authentication_response,
-    NotificationPolicy as CoreNotificationPolicy, NotificationRecord as CoreNotificationRecord,
-    NotificationStatus as CoreNotificationStatus, NotificationSyncPlan as CoreNotificationSyncPlan,
+    verify_ci_public_key_constraint, IsdpAid, NotificationPolicy as CoreNotificationPolicy,
+    NotificationRecord as CoreNotificationRecord, NotificationStatus as CoreNotificationStatus,
+    NotificationSyncPlan as CoreNotificationSyncPlan,
     ProfileDownloadSession as CoreProfileDownloadSession, ProfileOperation as CoreProfileOperation,
-    ProfileStateTransition as CoreProfileStateTransition,
-    StoredNotification as CoreStoredNotification,
+    ProfileStateTransition as CoreProfileStateTransition, Scp03KeySet, Scp03Session,
+    SecurityLevel as CoreSecurityLevel, StoredNotification as CoreStoredNotification,
+    X509Certificate,
 };
 
 #[frb]
@@ -557,4 +561,151 @@ pub fn evaluate_profile_convergence(
             error_message: Some(err.to_string()),
         },
     }
+}
+
+// ---------------------------------------------------------------------------
+// GSMA SGP.22 X.509 PKIX & CI Public Key Constraint Bridge
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct CertificateDetailsDto {
+    pub common_name: Option<String>,
+    pub organization: Option<String>,
+    pub country: Option<String>,
+    pub serial_number_hex: String,
+    pub ski_hex: String,
+    pub aki_hex: Option<String>,
+    pub is_ca: bool,
+}
+
+fn parse_cert_bytes(cert_str: &str) -> Result<X509Certificate, String> {
+    let trimmed = cert_str.trim();
+    if trimmed.starts_with("-----BEGIN CERTIFICATE-----") {
+        X509Certificate::from_pem(trimmed).map_err(|e| e.to_string())
+    } else if let Ok(bytes) = hex_to_bytes(trimmed) {
+        X509Certificate::from_der(&bytes).map_err(|e| e.to_string())
+    } else if let Ok(bytes) = base64_decode(trimmed) {
+        X509Certificate::from_der(&bytes).map_err(|e| e.to_string())
+    } else {
+        Err("Invalid certificate format (expected PEM, DER hex, or Base64)".to_string())
+    }
+}
+
+#[frb]
+pub fn get_certificate_details(cert_str: String) -> Result<CertificateDetailsDto, String> {
+    let cert = parse_cert_bytes(&cert_str)?;
+    let ski = cert.ski();
+    let aki_hex = cert
+        .authority_key_identifier
+        .as_ref()
+        .map(|aki| bytes_to_hex(aki).to_ascii_uppercase());
+    let serial_number_hex = cert.serial_number_hex();
+
+    Ok(CertificateDetailsDto {
+        common_name: cert.subject.common_name,
+        organization: cert.subject.organization,
+        country: cert.subject.country,
+        serial_number_hex,
+        ski_hex: format_ci_pkid(&ski),
+        aki_hex,
+        is_ca: cert.is_ca,
+    })
+}
+
+#[frb]
+pub fn verify_smdp_certificate(
+    cert_str: String,
+    allowed_ci_pkids_hex: Vec<String>,
+) -> Result<bool, String> {
+    let cert = parse_cert_bytes(&cert_str)?;
+    let mut allowed_bytes = Vec::with_capacity(allowed_ci_pkids_hex.len());
+    for s in allowed_ci_pkids_hex {
+        let b =
+            hex_to_bytes(&s).map_err(|e| format!("Invalid hex in allowed CI PKID list: {e}"))?;
+        allowed_bytes.push(b);
+    }
+    Ok(verify_ci_public_key_constraint(&cert, &allowed_bytes))
+}
+
+// ---------------------------------------------------------------------------
+// GSMA SGP.22 ISD-P & GlobalPlatform SCP03 Bridge
+// ---------------------------------------------------------------------------
+
+#[frb]
+pub fn isdp_select_apdu(aid_hex: String) -> Result<Vec<u8>, String> {
+    let aid = IsdpAid::from_hex(&aid_hex).map_err(|e| e.to_string())?;
+    Ok(core_build_select_isdp_apdu(&aid))
+}
+
+#[frb]
+pub fn isdp_delete_apdu(aid_hex: String) -> Result<Vec<u8>, String> {
+    let aid = IsdpAid::from_hex(&aid_hex).map_err(|e| e.to_string())?;
+    Ok(core_build_delete_isdp_apdu(&aid))
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[frb]
+pub struct Scp03AuthResultDto {
+    pub host_cryptogram_hex: String,
+    pub external_authenticate_apdu: Vec<u8>,
+}
+
+#[frb]
+pub fn scp03_initialize_update_apdu(
+    host_challenge_hex: String,
+    key_version: u8,
+    key_id: u8,
+) -> Result<Vec<u8>, String> {
+    let challenge_bytes = hex_to_bytes(&host_challenge_hex).map_err(|e| e.to_string())?;
+    if challenge_bytes.len() != 8 {
+        return Err("Host challenge must be exactly 8 bytes (16 hex chars)".to_string());
+    }
+    let mut challenge = [0u8; 8];
+    challenge.copy_from_slice(&challenge_bytes);
+
+    let mut session = Scp03Session::new(CoreSecurityLevel::CMac);
+    Ok(session.build_initialize_update(challenge, key_version, key_id))
+}
+
+#[frb]
+pub fn scp03_authenticate_session(
+    host_challenge_hex: String,
+    card_response_hex: String,
+    static_enc_key_hex: String,
+    static_mac_key_hex: String,
+    security_level: u8,
+) -> Result<Scp03AuthResultDto, String> {
+    let challenge_bytes = hex_to_bytes(&host_challenge_hex).map_err(|e| e.to_string())?;
+    if challenge_bytes.len() != 8 {
+        return Err("Host challenge must be exactly 8 bytes".to_string());
+    }
+    let mut host_challenge = [0u8; 8];
+    host_challenge.copy_from_slice(&challenge_bytes);
+
+    let card_response = hex_to_bytes(&card_response_hex).map_err(|e| e.to_string())?;
+    let k_enc = hex_to_bytes(&static_enc_key_hex).map_err(|e| e.to_string())?;
+    let k_mac = hex_to_bytes(&static_mac_key_hex).map_err(|e| e.to_string())?;
+
+    let key_set = Scp03KeySet::new(&k_enc, &k_mac, 0x01, 0x01).map_err(|e| e.to_string())?;
+    let sec_level = CoreSecurityLevel::from_u8(security_level).map_err(|e| e.to_string())?;
+
+    let mut session = Scp03Session::new(sec_level);
+    // Arm session with initialize update
+    session.build_initialize_update(host_challenge, key_set.key_version, key_set.key_id);
+
+    // Process card response, verify card cryptogram, compute host cryptogram
+    let host_cryptogram = session
+        .process_initialize_update_response(&card_response, &key_set)
+        .map_err(|e| e.to_string())?;
+
+    // Build external authenticate APDU
+    let external_authenticate_apdu = session
+        .build_external_authenticate(host_cryptogram)
+        .map_err(|e| e.to_string())?;
+
+    Ok(Scp03AuthResultDto {
+        host_cryptogram_hex: bytes_to_hex(&host_cryptogram).to_ascii_uppercase(),
+        external_authenticate_apdu,
+    })
 }
