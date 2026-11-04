@@ -187,9 +187,24 @@
   - State transition convergence evaluator: `evaluate_profile_convergence` bridging `ProfileStateTransition` to coordinate idempotent profile state commands (enable, disable, delete) with independent verification reads, bounded transient failure thresholds, and non-convergence error diagnostics.
   - Added full test suite in `rust/tests/lpa_bridge_test.rs` covering multi-step session progression, HashCc validation, convergence verification, and non-convergence error handling (71 total workspace tests passing).
 - **Alternatives Considered:** Keeping state session tracking and convergence loop logic in Dart.
-- **Reasoning:** SGP.22 protocol validation and transaction ID octet normalization must strictly match cryptographic calculations (`HashCc = SHA256(SHA256(CC) || TransactionID)`). Centralizing session state and convergence controllers in Rust guarantees memory safety, eliminates race conditions across asynchronous channel resets, and increases the proportion of core telecommunications logic in native Rust.
-
-
-
+- **Reasoning:** SGP.22 protocol validation and transaction ID octet normalization must strictly match cryptographic calculations (`HashCc = SHA256(SHA256(CC) || TransactionID)`). Centralizing session state and convergence controllers in Rust guarantees memory safety, eliminates race conditions across asynchronous channel resets, and increases the proportion of core telecommunications logic in native Rust.## 25. ISO/IEC 7816-3 ATR & 9eSIM CCID USB Protocol Porting
+- **Choice:** Ported the full ISO/IEC 7816-3 ATR parsing and 9eSIM CCID USB custom management protocol to native Rust (`nlpa_core::atr`, `nlpa_core::ccid::nine_esim`, `rust_lib_nlpa2::api::ccid`):
+  - `nlpa_core::atr`:
+    - Strict ISO/IEC 7816-3 Answer to Reset (ATR) representation and validator supporting direct convention (`TS = 0x3B`).
+    - Format character T0 parser extracting historical bytes count K and presence bits Y1 (TA1, TB1, TC1, TD1).
+    - Recursive interface byte traversal scanning for protocol `T=15` global interface byte.
+    - GSMA SGP.22 eUICC capability bit inspection (`bit 1, 0x02`) and toggle helper.
+    - Standard ISO/IEC 7816-3 TCK checksum recalculation enforcing `XOR(T0..TCK) == 0`.
+    - Typed `AtrError` handling malformed interface bytes, missing T=15, and unsupported conventions.
+  - `nlpa_core::ccid::nine_esim`:
+    - Standard 9eSIM CRC-24 checksum calculation using generator polynomial `0x1864CFB` and seed `0xB704CE`.
+    - 6-character hex password normalizer and CRC-24 password derivation (`password_hex`).
+    - CCID vendor command builders: `set_password_command`, `enable_atr_programming_command` (`30 97 43 18 00`), and `set_atr_command`.
+    - ATR eUICC capability helpers (`euicc_capability_enabled`, `set_euicc_capability`).
+  - `rust_lib_nlpa2::api::ccid`:
+    - Flutter Rust Bridge exports (`nine_esim_password_hex`, `nine_esim_set_password_command`, `nine_esim_enable_atr_programming_command`, `nine_esim_set_atr_command`, `atr_euicc_capability_enabled`, `atr_set_euicc_capability`).
+  - Comprehensive unit and integration test coverage in `rust/core/tests/atr_test.rs`, `rust/core/tests/nine_esim_test.rs`, and `rust/tests/ccid_bridge_test.rs` (80 workspace tests passing).
+- **Alternatives Considered:** Keeping ATR interface byte traversal and 9eSIM CRC-24 hashing in Dart.
+- **Reasoning:** Smart card ATR parsing involves bitwise interface byte navigation where subtle length or off-by-one errors can misconfigure card capabilities or corrupt the trailing TCK checksum byte. Executing ATR parsing, TCK repair, and CCID command framing in native Rust guarantees absolute memory safety, strict ISO/IEC 7816-3 conformance, zero-allocation CRC-24 calculation, and further maximizes the Rust codebase proportion.
 
 

@@ -1,7 +1,9 @@
 pub mod activation_code;
 pub mod apdu;
 pub mod asn1;
+pub mod atr;
 pub mod cat;
+pub mod ccid;
 pub mod channel;
 pub mod crypto;
 pub mod es9;
@@ -25,9 +27,14 @@ pub use asn1::{
     NotificationMetadata, NotificationSentResponse, PeType, ProfileElement, RspProfileInfo,
     SetNicknameRequest,
 };
+pub use atr::{Atr, AtrError, DEFAULT_EUICC_ATR};
 pub use cat::{
     CatProactive, CatProactiveError, CatResponseDecision, ProactiveCommandDetails, RESULT_SUCCESS,
     RESULT_UNABLE_TO_PROCESS,
+};
+pub use ccid::nine_esim::{
+    calculate_crc24, enable_atr_programming_command, euicc_capability_enabled, password_hex,
+    set_atr_command, set_euicc_capability, set_password_command, NineEsimError, DEFAULT_9ESIM_ATR,
 };
 pub use channel::{
     build_manage_channel_close_apdu, build_manage_channel_open_apdu, chain_apdu_request,
