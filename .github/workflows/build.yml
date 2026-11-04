@@ -57,6 +57,12 @@ jobs:
         flavor: ${{ fromJSON(inputs.android_tools_only && '["privileged"]' || '["community","privileged"]') }}
     steps:
       - uses: actions/checkout@v4
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
       - uses: actions/setup-java@v4
         with:
           distribution: zulu
