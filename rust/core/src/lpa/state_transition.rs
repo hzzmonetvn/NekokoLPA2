@@ -59,7 +59,10 @@ impl fmt::Display for StateTransitionError {
 
 impl std::error::Error for StateTransitionError {}
 
-/// Coordinates an idempotent profile state command with independent reads.
+/// Pure profile-state convergence evaluator.
+///
+/// This does not submit commands, reconnect, delay, or classify runtime errors;
+/// those effects belong to the adapter-owning caller.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ProfileStateTransition {
     pub max_command_attempts: usize,
@@ -91,9 +94,10 @@ impl ProfileStateTransition {
         }
     }
 
-    /// Evaluates convergence given state read sequences.
+    /// Evaluates convergence given a sequence of verification reads.
     ///
-    /// Returns `Ok(ProfileStateTransitionResult)` if the card state matches `target_enabled`.
+    /// A successful read with `None` counts as a responsive read but cannot
+    /// satisfy an enable/disable request.
     pub fn evaluate_convergence(
         &self,
         target_enabled: bool,

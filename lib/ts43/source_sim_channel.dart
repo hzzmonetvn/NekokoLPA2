@@ -4,9 +4,8 @@ import 'package:logging/logging.dart';
 
 import '../adapter/euicc_adapter.dart';
 import 'sim/aka.dart';
-import 'sim/identifier.dart';
+import 'sim/identifier.dart' show groupIdentifierString;
 import 'sim/identity.dart';
-import 'sim/imsi.dart';
 import '../src/rust/api/sim.dart' as rust_sim;
 import 'sim/usim_files.dart';
 import 'types.dart';
@@ -156,7 +155,7 @@ class SourceSimChannel implements SourceChannel {
       null,
       UsimFiles.iccidLength,
     );
-    return decodeSwappedBcd(raw, stripLeadingNine: true);
+    return await rust_sim.decodeSimIccid(data: raw);
   }
 
   Future<String> _readImsi() async {
@@ -169,7 +168,7 @@ class SourceSimChannel implements SourceChannel {
       null,
       UsimFiles.imsiLength,
     );
-    return Imsi.fromBytes(raw).toString();
+    return await rust_sim.decodeSimImsi(data: raw);
   }
 
   Future<Uint8List> _readAdministrativeData() async {

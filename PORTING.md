@@ -36,7 +36,7 @@ Run from `/home/opc/lpa/NekokoLPA2` unless noted.
 | Original Dart Module | Rust Module | Porting Details |
 |---|---|---|
 | `lib/utils/profile_redaction.dart` and `lib/utils/size_formatter.dart` | `nlpa_core::redaction` | Pure redaction settings, profile display and operator helpers, country/flag formatting, tag filtering, and byte-size formatting. Async metadata warmup is represented by caller-supplied placeholders. |
-| `lib/utils/hex_utils.dart` | `nlpa_core::hex` | High-efficiency ASCII hex encoder/decoder (`bytes_to_hex`, `hex_to_bytes`), space-insensitive parsing, odd nibble left-padding, and `swap_nibbles` utilizing `as_chunks::<2>()`. |
+| `lib/utils/hex_utils.dart` | `nlpa_core::hex` | Rust equivalents exist, but active Dart paths remain authoritative: synchronous hex conversion is used on APDU/profile-package hot paths, while FRB calls are async. Do not count this as runtime-migrated without a sync bridge and parity/performance evidence. |
 | `lib/models/activation_code.dart` | `nlpa_core::activation_code` | Robust GSMA SGP.22 Activation Code parser/formatter (`LPA:1$<SMDP>$<MatchingId>[$<SMDP_OID>][$<CC>]`) with typed `ActivationCodeError`. |
 | `lib/utils/iccid_formatter.dart` | `nlpa_core::iccid` | ICCID BCD trailing filler stripper (`iccid_for_display`) and 4-digit grouped industrial formatter (`format_iccid_grouped`). |
 | `lib/utils/apdu_exception.dart` | `nlpa_core::apdu` | ISO 7816 / GSMA SGP.22 APDU status word validator returning typed `Result<(), ApduError>` (0x6985, 0x6881, 0x6A80, 0x6A88, 0x91XX proactive refresh). |
@@ -127,10 +127,22 @@ Deliberate differences: Phone-number formatting/detection is omitted; `display_n
 
 ## SIM BCD decoder correction
 
-- `decode_bcd` keeps its existing infallible hexadecimal-output API. It now removes only a final high-nibble `F` filler; an `F` in any earlier or low-nibble position remains data, as do subsequent nibbles.
+- `decode_bcd` keeps its existing infallible hexadecimal-output API. It now removes only a final high-nibble `F` filler; an `F` in any earlier or low-nibble position remains data, as do subsequent nibbles. `decode_swapped_bcd`, used by source-SIM ICCID/IMSI paths, separately trims only a final decoded `f` to match Dart's existing trailing-filler behavior.
 - `test_decode_bcd_trims_only_final_high_nibble_filler` covers empty input, terminal filler, misplaced `F`, and final-byte low-nibble `F`.
 - `parse_fcp` now rejects an unterminated extended child tag instead of interpreting its last tag byte as the TLV length. `rejects_unterminated_extended_child_tag` covers a malformed `0x9F` child at the end of an FCP template.
 - Strict rejection of A–E or misplaced `F` is not introduced: the decoder is shared by IMSI and ICCID paths, and changing those semantics needs a separate protocol-specific parity review.
+
+## Live SIM identifier decoder migration
+
+- **Runtime path:** `SourceSimChannel._readIccid` and `_readImsi` now call the Rust SIM FRB API after the Dart-owned APDU reads. APDU sequencing and channel lifecycle remain in Dart.
+- **API mapping:** `decodeSwappedBcd(..., stripLeadingNine: true)` → `decode_sim_iccid`; `Imsi.fromBytes(...).toString()` → `decode_sim_imsi`.
+- **Parity note:** The Rust swapped-BCD helper preserves the active Dart decoder's existing behavior of truncating at the last decoded `f`, then optionally removing a leading `9`. The general `decode_bcd` API remains unchanged for its other shared callers.
+- **Verification:** Rust decoder and bridge tests pass; `cargo fmt --all -- --check` and workspace Clippy pass. FRB 2.13.0 bindings were regenerated with the Flutter SDK at `/tmp/flutter-sdk-3.47.2/flutter`; Dart analysis and Flutter tests have not yet been run.
+
+## Rust utility migration assessment
+
+- `HexUtils.bytesToHex` and `hexToBytes` remain Dart-owned in live runtime paths. The generated FRB functions are asynchronous, while these helpers are synchronous and used for APDU and profile-package conversion; routing large payloads through the bridge would add copies and scheduling overhead. Their behavior is not interchangeable until parity is characterized (including spaces, odd digit counts, invalid characters, and nibble swapping). Do not remove the Dart implementation based solely on the existence of Rust helpers.
+- `ImeiCodec` and ICCID display helpers also have synchronous Dart callers and behavior that has not been proven equivalent to their Rust APIs. Defer those until caller graphs and parity are established.
 
 ## Remaining issues
 

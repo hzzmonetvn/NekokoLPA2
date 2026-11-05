@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 2031754401;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -454064293;
 
 // Section: executor
 
@@ -993,6 +993,72 @@ fn wire__crate__api__telecom__create_euicc_profile_impl(
                         api_iccid,
                         api_enabled,
                     ))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__sim__decode_sim_iccid_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "decode_sim_iccid",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::sim::decode_sim_iccid(api_data))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__sim__decode_sim_imsi_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "decode_sim_imsi",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::sim::decode_sim_imsi(api_data)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -3598,160 +3664,162 @@ fn pde_ffi_dispatcher_primary_impl(
         23 => {
             wire__crate__api__telecom__create_euicc_profile_impl(port, ptr, rust_vec_len, data_len)
         }
-        24 => wire__crate__api__telecom__decode_stored_imei_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__telecom__encode_stored_imei_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__lpa__evaluate_notification_action_impl(
+        24 => wire__crate__api__sim__decode_sim_iccid_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__sim__decode_sim_imsi_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__telecom__decode_stored_imei_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__telecom__encode_stored_imei_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__lpa__evaluate_notification_action_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        27 => wire__crate__api__lpa__evaluate_profile_convergence_impl(
+        29 => wire__crate__api__lpa__evaluate_profile_convergence_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        28 => wire__crate__api__telecom__extract_activation_code_impl(
+        30 => wire__crate__api__telecom__extract_activation_code_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        29 => wire__crate__api__telecom__flag_emoji_for_country_impl(
+        31 => wire__crate__api__telecom__flag_emoji_for_country_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        30 => {
+        32 => {
             wire__crate__api__telecom__flag_url_for_country_impl(port, ptr, rust_vec_len, data_len)
         }
-        31 => wire__crate__api__telecom__format_activation_code_impl(
+        33 => wire__crate__api__telecom__format_activation_code_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        32 => wire__crate__api__telecom__format_iccid_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__lpa__frame_apdu_impl(port, ptr, rust_vec_len, data_len),
-        34 => {
+        34 => wire__crate__api__telecom__format_iccid_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__lpa__frame_apdu_impl(port, ptr, rust_vec_len, data_len),
+        36 => {
             wire__crate__api__lpa__get_certificate_details_impl(port, ptr, rust_vec_len, data_len)
         }
-        35 => wire__crate__api__telecom__hex_decode_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__telecom__hex_encode_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__lpa__isdp_delete_apdu_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__lpa__isdp_select_apdu_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__lpa__map_channel_cla_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__telecom__mcc_to_country_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__telecom__nibble_swap_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__ccid__nine_esim_enable_atr_programming_command_impl(
+        37 => wire__crate__api__telecom__hex_decode_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__telecom__hex_encode_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__lpa__isdp_delete_apdu_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__lpa__isdp_select_apdu_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__crate__api__lpa__map_channel_cla_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__telecom__mcc_to_country_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__telecom__nibble_swap_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__ccid__nine_esim_enable_atr_programming_command_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        43 => {
+        45 => {
             wire__crate__api__ccid__nine_esim_password_hex_impl(port, ptr, rust_vec_len, data_len)
         }
-        44 => wire__crate__api__ccid__nine_esim_set_atr_command_impl(
+        46 => wire__crate__api__ccid__nine_esim_set_atr_command_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        45 => wire__crate__api__ccid__nine_esim_set_password_command_impl(
+        47 => wire__crate__api__ccid__nine_esim_set_password_command_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        46 => {
+        48 => {
             wire__crate__api__modem__open_qmi_qrtr_session_impl(port, ptr, rust_vec_len, data_len)
         }
-        47 => {
+        49 => {
             wire__crate__api__telecom__parse_activation_code_impl(port, ptr, rust_vec_len, data_len)
         }
-        48 => wire__crate__api__telecom__parse_asn1_tlvs_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__crate__api__lpa__parse_authenticate_client_resp_impl(
+        50 => wire__crate__api__telecom__parse_asn1_tlvs_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__lpa__parse_authenticate_client_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        50 => wire__crate__api__lpa__parse_get_bpp_resp_impl(port, ptr, rust_vec_len, data_len),
-        51 => {
+        52 => wire__crate__api__lpa__parse_get_bpp_resp_impl(port, ptr, rust_vec_len, data_len),
+        53 => {
             wire__crate__api__lpa__parse_initiate_auth_resp_impl(port, ptr, rust_vec_len, data_len)
         }
-        52 => wire__crate__api__telecom__parse_plmn_operator_id_impl(
+        54 => wire__crate__api__telecom__parse_plmn_operator_id_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        53 => wire__crate__api__sim__parse_sim_application_record_impl(
+        55 => wire__crate__api__sim__parse_sim_application_record_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        54 => wire__crate__api__sim__parse_sim_fcp_impl(port, ptr, rust_vec_len, data_len),
-        55 => wire__crate__api__lpa__parse_smds_events_impl(port, ptr, rust_vec_len, data_len),
-        56 => wire__crate__api__lpa__plan_notification_sync_impl(port, ptr, rust_vec_len, data_len),
-        57 => wire__crate__api__lpa__predict_profile_size_impl(port, ptr, rust_vec_len, data_len),
-        58 => wire__crate__api__lpa__scp03_authenticate_session_impl(
+        56 => wire__crate__api__sim__parse_sim_fcp_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__lpa__parse_smds_events_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__crate__api__lpa__plan_notification_sync_impl(port, ptr, rust_vec_len, data_len),
+        59 => wire__crate__api__lpa__predict_profile_size_impl(port, ptr, rust_vec_len, data_len),
+        60 => wire__crate__api__lpa__scp03_authenticate_session_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        59 => wire__crate__api__lpa__scp03_initialize_update_apdu_impl(
+        61 => wire__crate__api__lpa__scp03_initialize_update_apdu_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        60 => {
+        62 => {
             wire__crate__api__lpa__session_compute_hash_cc_impl(port, ptr, rust_vec_len, data_len)
         }
-        61 => wire__crate__api__lpa__session_process_auth_client_resp_impl(
+        63 => wire__crate__api__lpa__session_process_auth_client_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        62 => wire__crate__api__lpa__session_process_auth_server_resp_impl(
+        64 => wire__crate__api__lpa__session_process_auth_server_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        63 => wire__crate__api__lpa__session_process_euicc_challenge_impl(
+        65 => wire__crate__api__lpa__session_process_euicc_challenge_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        64 => wire__crate__api__lpa__session_process_euicc_info1_impl(
+        66 => wire__crate__api__lpa__session_process_euicc_info1_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        65 => wire__crate__api__lpa__session_process_initiate_auth_resp_impl(
+        67 => wire__crate__api__lpa__session_process_initiate_auth_resp_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        66 => wire__crate__api__lpa__session_validate_initiate_auth_impl(
+        68 => wire__crate__api__lpa__session_validate_initiate_auth_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        67 => wire__crate__api__telecom__validate_apdu_impl(port, ptr, rust_vec_len, data_len),
-        68 => {
+        69 => wire__crate__api__telecom__validate_apdu_impl(port, ptr, rust_vec_len, data_len),
+        70 => {
             wire__crate__api__lpa__verify_smdp_certificate_impl(port, ptr, rust_vec_len, data_len)
         }
         _ => unreachable!(),

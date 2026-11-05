@@ -6,6 +6,12 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+Future<String> decodeSimIccid({required List<int> data}) =>
+    RustLib.instance.api.crateApiSimDecodeSimIccid(data: data);
+
+Future<String> decodeSimImsi({required List<int> data}) =>
+    RustLib.instance.api.crateApiSimDecodeSimImsi(data: data);
+
 Future<SimFileInfoDto> parseSimFcp({required List<int> data}) =>
     RustLib.instance.api.crateApiSimParseSimFcp(data: data);
 

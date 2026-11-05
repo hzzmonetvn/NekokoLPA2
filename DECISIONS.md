@@ -314,3 +314,13 @@
 - **Choice:** Treat a SIM child tag that reaches the end of the FCP value without a terminating tag byte as malformed, regardless of the last byte's continuation bit.
 - **Alternatives Considered:** Accept the final tag byte as a complete tag or continue treating it as a subsequent TLV length.
 - **Reasoning:** Without a terminating tag byte, parsing the next byte as a length can accept malformed FCP data. The check is limited to the SIM-specific child traversal and does not alter the general ASN.1 reader.
+
+## 36. Keep Hot-Path Hex Helpers Dart-Owned Until Sync Interop Is Available
+- **Choice:** Do not replace synchronous `HexUtils.bytesToHex` or `hexToBytes` runtime calls with the current asynchronous FRB APIs. Rust equivalents exist, but active APDU and profile-package paths are synchronous and process large buffers.
+- **Alternatives Considered:** Route all calls through FRB, or keep both implementations and treat the feature as ported.
+- **Reasoning:** Async bridging and data copies may regress hot-path performance and force invasive caller changes. Runtime migration requires semantics parity and measured benefit; Rust source presence alone does not establish it.
+
+## 37. Move Source SIM Identifier Decoding Behind Rust FRB
+- **Choice:** Route source-SIM ICCID and IMSI decoding through Rust FRB after Dart performs the existing EF_ICCID and EF_IMSI reads. Keep APDU transport, channel lifecycle, and identity orchestration in Dart.
+- **Alternatives Considered:** Keep the decoders in Dart, or migrate the full SIM identity/TS.43 flow in one step.
+- **Reasoning:** Rust already provides swapped-BCD and length-prefixed IMSI decoding, and these active callers are asynchronous SIM operations. A narrow boundary removes duplicate runtime decoders without moving Android hardware access or TS.43 callback orchestration. The Rust swapped-BCD decoder preserves Dart's existing truncation at the last decoded `f`; the separate general BCD decoder remains unchanged.

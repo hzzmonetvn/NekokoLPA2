@@ -2,6 +2,7 @@
 
 use flutter_rust_bridge::frb;
 use nlpa_core::asn1::fcp::{parse_application_record, parse_fcp};
+use nlpa_core::lpa::ts43::sim::{decode_swapped_bcd, Imsi};
 
 #[frb]
 pub struct SimFileInfoDto {
@@ -15,6 +16,44 @@ pub struct SimFileInfoDto {
 pub struct SimApplicationDto {
     pub aid: Vec<u8>,
     pub label: String,
+}
+
+#[frb]
+pub fn decode_sim_iccid(data: Vec<u8>) -> String {
+    decode_swapped_bcd(&data, true)
+}
+
+#[frb]
+pub fn decode_sim_imsi(data: Vec<u8>) -> Result<String, String> {
+    Imsi::from_bytes(&data)
+        .map(|imsi| imsi.to_string())
+        .map_err(|error| error.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decodes_iccid_like_dart_swapped_bcd_path() {
+        assert_eq!(decode_sim_iccid(vec![0x98, 0x10, 0xF0]), "89010");
+        assert_eq!(decode_sim_iccid(vec![0x21, 0xF3]), "123");
+        assert_eq!(decode_sim_iccid(vec![0xF1, 0x23]), "1");
+        assert_eq!(decode_sim_iccid(vec![0xF9]), "");
+        assert_eq!(decode_sim_iccid(Vec::new()), "");
+    }
+
+    #[test]
+    fn decodes_length_prefixed_imsi() {
+        assert_eq!(
+            decode_sim_imsi(vec![0x08, 0x29, 0x43, 0x01, 0x87, 0x31, 0x42, 0x70, 0x97]),
+            Ok("234107813240779".to_string())
+        );
+        assert_eq!(
+            decode_sim_imsi(Vec::new()),
+            Err("reading EF_IMSI: empty payload".to_string())
+        );
+    }
 }
 
 #[frb]

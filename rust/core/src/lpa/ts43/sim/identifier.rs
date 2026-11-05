@@ -62,10 +62,19 @@ pub fn decode_bcd(data: &[u8]) -> String {
     out
 }
 
-/// Decodes swapped BCD, optionally stripping a leading '9' (used for EF_ICCID).
+/// Decodes swapped BCD like the Dart SIM helper, optionally stripping a leading '9'.
 #[must_use]
 pub fn decode_swapped_bcd(data: &[u8], strip_leading_nine: bool) -> String {
-    let mut out = decode_bcd(data);
+    let mut out = String::with_capacity(data.len() * 2);
+    for &byte in data {
+        let low = byte & 0x0F;
+        let high = (byte >> 4) & 0x0F;
+        out.push(char::from_digit(u32::from(low), 16).unwrap_or('0'));
+        out.push(char::from_digit(u32::from(high), 16).unwrap_or('0'));
+    }
+    if let Some(index) = out.rfind('f') {
+        out.truncate(index);
+    }
     if strip_leading_nine && out.starts_with('9') {
         out.remove(0);
     }
@@ -109,6 +118,15 @@ mod tests {
         assert_eq!(decode_bcd(&[0xF1, 0x23]), "1f32");
         assert_eq!(decode_bcd(&[0x1F, 0x23]), "f132");
         assert_eq!(decode_bcd(&[0xF1]), "1");
+    }
+
+    #[test]
+    fn test_decode_swapped_bcd_preserves_dart_trailing_filler_behavior() {
+        assert_eq!(decode_swapped_bcd(&[0x21, 0xF3], false), "123");
+        assert_eq!(decode_swapped_bcd(&[0x21, 0xF3], true), "123");
+        assert_eq!(decode_swapped_bcd(&[0xF1, 0x23], false), "1");
+        assert_eq!(decode_swapped_bcd(&[0x29], true), "2");
+        assert_eq!(decode_swapped_bcd(&[], true), "");
     }
 
     #[test]
