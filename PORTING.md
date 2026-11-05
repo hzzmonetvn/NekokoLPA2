@@ -129,6 +129,7 @@ Deliberate differences: Phone-number formatting/detection is omitted; `display_n
 
 - `decode_bcd` keeps its existing infallible hexadecimal-output API. It now removes only a final high-nibble `F` filler; an `F` in any earlier or low-nibble position remains data, as do subsequent nibbles.
 - `test_decode_bcd_trims_only_final_high_nibble_filler` covers empty input, terminal filler, misplaced `F`, and final-byte low-nibble `F`.
+- `parse_fcp` now rejects an unterminated extended child tag instead of interpreting its last tag byte as the TLV length. `rejects_unterminated_extended_child_tag` covers a malformed `0x9F` child at the end of an FCP template.
 - Strict rejection of A–E or misplaced `F` is not introduced: the decoder is shared by IMSI and ICCID paths, and changing those semantics needs a separate protocol-specific parity review.
 
 ## Remaining issues

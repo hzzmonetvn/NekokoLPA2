@@ -32,7 +32,7 @@ fn sim_children(node: &Asn1Node) -> Result<Vec<Asn1Node>, Asn1Error> {
                     break;
                 }
             }
-            if next == node.value.len() && node.value[next - 1] & 0x80 != 0 {
+            if next == node.value.len() {
                 return Err(Asn1Error::UnexpectedEof {
                     offset: node.value.len(),
                     needed: 1,
@@ -174,6 +174,11 @@ mod tests {
         ));
         assert!(parse_fcp(&[0x62, 0x03, 0x82, 0x01, 0x42]).is_err());
         assert!(parse_fcp(&[0x62, 0x05, 0x82, 0x02, 0x42, 0x00, 0x80, 0x00]).is_err());
+    }
+
+    #[test]
+    fn rejects_unterminated_extended_child_tag() {
+        assert!(parse_fcp(&[0x62, 0x06, 0x82, 0x02, 0x42, 0x00, 0x9f, 0x81]).is_err());
     }
 
     #[test]

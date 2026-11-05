@@ -309,3 +309,8 @@
 - **Choice:** Preserve the infallible `decode_bcd` API and its hexadecimal nibble output, but trim `F` only when it is the high nibble of the final byte. Do not truncate valid trailing data after an earlier `F`.
 - **Alternatives Considered:** Reject all non-decimal nibbles, introduce a fallible decoder, or keep truncating at the last `F` anywhere.
 - **Reasoning:** The decoder is shared by IMSI and ICCID paths and currently represents A–F as hexadecimal characters. Tightening malformed-value semantics would change public behavior and needs separate protocol-specific characterization; this focused fix corrects misplaced-filler truncation without widening scope.
+
+## 35. Reject Unterminated SIM Extended Tags
+- **Choice:** Treat a SIM child tag that reaches the end of the FCP value without a terminating tag byte as malformed, regardless of the last byte's continuation bit.
+- **Alternatives Considered:** Accept the final tag byte as a complete tag or continue treating it as a subsequent TLV length.
+- **Reasoning:** Without a terminating tag byte, parsing the next byte as a length can accept malformed FCP data. The check is limited to the SIM-specific child traversal and does not alter the general ASN.1 reader.

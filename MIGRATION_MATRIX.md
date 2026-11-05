@@ -1,6 +1,6 @@
 # Rust migration matrix
 
-Audit baseline: 2026-11-05, branch snapshot `b6f644a`. This is a static source audit, not a device/runtime parity certification. The six audit streams reported 40 capability rows; several rows group multiple files and some are subsystem-level rather than file-level. Do not interpret row count as audited-file count. `rust_unused_by_runtime` means no live app caller was identified in the inspected source, not proof that dynamic/reflection callers cannot exist.
+Audit baseline: 2026-11-05, branch snapshot `b6f644a`; follow-up fixes are recorded in commits after that baseline. This is a static source audit, not a device/runtime parity certification. The six audit streams reported 40 capability rows; several rows group multiple files and some are subsystem-level rather than file-level. Do not interpret row count as audited-file count. `rust_unused_by_runtime` means no live app caller was identified in the inspected source, not proof that dynamic/reflection callers cannot exist.
 
 Status vocabulary:
 
