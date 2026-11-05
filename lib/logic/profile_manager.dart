@@ -15,7 +15,7 @@ import '../models/asn1/simple_reader.dart';
 import '../utils/hex_utils.dart';
 import '../utils/iccid_formatter.dart';
 import '../utils/imei_codec.dart';
-import '../utils/notification_address.dart';
+import '../src/rust/api/lpa.dart' as rust_lpa;
 import '../utils/apdu_exception.dart';
 import '../utils/error_codes.dart';
 
@@ -75,7 +75,15 @@ class ProfileManager {
 
   final Map<String, NxpMemoryInfo> nxpInfos = {};
 
-  ProfileManager(this.adapter);
+  final Future<bool> Function(String?) _notificationAddressValidator;
+
+  ProfileManager(
+    this.adapter, {
+    Future<bool> Function(String?)? notificationAddressValidator,
+  }) : _notificationAddressValidator =
+           notificationAddressValidator ??
+           ((address) =>
+               rust_lpa.isValidNotificationAddressBridge(address: address));
 
   void addSessionPlugin(SessionPlugin plugin) {
     if (!_sessionPlugins.any((p) => p.id == plugin.id)) {
@@ -1209,7 +1217,9 @@ class ProfileManager {
             final notifications = <PendingNotification>[];
             for (final metadata in metadatas) {
               final skeleton = createSkeleton(metadata);
-              if (isValidNotificationAddress(metadata.notificationAddress) ||
+              if (await _notificationAddressValidator(
+                    metadata.notificationAddress,
+                  ) ||
                   metadata.seqNumber == null) {
                 notifications.add(skeleton);
                 continue;
@@ -1228,7 +1238,7 @@ class ProfileManager {
                 final resolvedAddress = extractMetadata(
                   resolved,
                 )?.notificationAddress;
-                if (isValidNotificationAddress(resolvedAddress)) {
+                if (await _notificationAddressValidator(resolvedAddress)) {
                   _log.info(
                     "Recovered notification $seqNumber address from the "
                     "signed notification.",

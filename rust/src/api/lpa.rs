@@ -12,7 +12,7 @@ use nlpa_core::{
     build_select_isdp_apdu as core_build_select_isdp_apdu, bytes_to_hex,
     chain_apdu_request as core_chain_apdu_request, compute_hash_cc as core_compute_hash_cc,
     format_ci_pkid, frame_apdu_command as core_frame_apdu_command, hex_to_bytes,
-    map_logical_channel_cla as core_map_logical_channel_cla,
+    is_valid_notification_address, map_logical_channel_cla as core_map_logical_channel_cla,
     parse_authenticate_client_response as core_parse_authenticate_client_response,
     parse_get_bound_profile_package_response as core_parse_get_bound_profile_package_response,
     parse_initiate_authentication_response as core_parse_initiate_authentication_response,
@@ -167,6 +167,30 @@ pub fn plan_notification_sync(
         pending_unsent_count: plan.pending_unsent_count,
         jobs,
         immediate_removals: plan.immediate_removals,
+    }
+}
+
+#[frb]
+pub fn is_valid_notification_address_bridge(address: Option<String>) -> bool {
+    address.is_some_and(|address| is_valid_notification_address(&address))
+}
+
+#[cfg(test)]
+mod notification_address_bridge_tests {
+    use super::is_valid_notification_address_bridge;
+
+    #[test]
+    fn validates_addresses_and_preserves_nullable_input_behavior() {
+        assert!(is_valid_notification_address_bridge(Some(
+            "smdp.example.com".to_string()
+        )));
+        assert!(is_valid_notification_address_bridge(Some(
+            "rsp.example.test.".to_string()
+        )));
+        assert!(!is_valid_notification_address_bridge(Some(
+            " malformed.example.com".to_string()
+        )));
+        assert!(!is_valid_notification_address_bridge(None));
     }
 }
 

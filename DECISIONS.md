@@ -324,3 +324,8 @@
 - **Choice:** Route source-SIM ICCID and IMSI decoding through Rust FRB after Dart performs the existing EF_ICCID and EF_IMSI reads. Keep APDU transport, channel lifecycle, and identity orchestration in Dart.
 - **Alternatives Considered:** Keep the decoders in Dart, or migrate the full SIM identity/TS.43 flow in one step.
 - **Reasoning:** Rust already provides swapped-BCD and length-prefixed IMSI decoding, and these active callers are asynchronous SIM operations. A narrow boundary removes duplicate runtime decoders without moving Android hardware access or TS.43 callback orchestration. The Rust swapped-BCD decoder preserves Dart's existing truncation at the last decoded `f`; the separate general BCD decoder remains unchanged.
+
+## 38. Route Notification FQDN Validation Through Rust FRB
+- **Choice:** Have the notification recovery flow validate nullable notification-server addresses through the Rust core validator exposed by FRB.
+- **Alternatives Considered:** Keep the duplicate Dart validator, or migrate the entire notification flow.
+- **Reasoning:** The Rust validator already mirrors the Dart null, ASCII, whitespace, label, and terminal-dot rules and has Rust tests. The two live validation sites are inside asynchronous notification processing, so the narrow bridge removes duplicate active validation without moving APDU, persistence, or UI responsibilities.

@@ -139,6 +139,13 @@ Deliberate differences: Phone-number formatting/detection is omitted; `display_n
 - **Parity note:** The Rust swapped-BCD helper preserves the active Dart decoder's existing behavior of truncating at the last decoded `f`, then optionally removing a leading `9`. The general `decode_bcd` API remains unchanged for its other shared callers.
 - **Verification:** Rust decoder and bridge tests pass; `cargo fmt --all -- --check` and workspace Clippy pass. FRB 2.13.0 bindings were regenerated with the Flutter SDK at `/tmp/flutter-sdk-3.47.2/flutter`; Dart analysis and Flutter tests have not yet been run.
 
+## Live notification-address validator migration
+
+- **Runtime path:** `ProfileManager.retrieveNotifications` now awaits the Rust FRB validator for both the initial ListNotification address and the address recovered from the signed notification. Null remains invalid; APDU and recovery orchestration remain Dart-owned.
+- **API mapping:** `isValidNotificationAddress(String?)` → `is_valid_notification_address_bridge(Option<String>)` → `nlpa_core::is_valid_notification_address`.
+- **Parity:** Preserves whitespace rejection, ASCII-only input, the 253-byte limit, optional trailing dot, at least two labels, label length/hyphen rules, and alphabetic-leading TLD behavior.
+- **Verification:** Rust validator tests cover valid, malformed, whitespace, invalid labels, numeric TLD, and non-ASCII inputs; a Rust bridge unit test covers nullable behavior. `flutter analyze lib/logic/profile_manager.dart lib/src/rust` and Dart formatting passed. The focused notification recovery test uses the existing Dart validator through the constructor's injectable validator to avoid requiring native FRB initialization in the Flutter test runner; FRB boundary behavior is covered by a Rust unit test.
+
 ## Rust utility migration assessment
 
 - `HexUtils.bytesToHex` and `hexToBytes` remain Dart-owned in live runtime paths. The generated FRB functions are asynchronous, while these helpers are synchronous and used for APDU and profile-package conversion; routing large payloads through the bridge would add copies and scheduling overhead. Their behavior is not interchangeable until parity is characterized (including spaces, odd digit counts, invalid characters, and nibble swapping). Do not remove the Dart implementation based solely on the existence of Rust helpers.

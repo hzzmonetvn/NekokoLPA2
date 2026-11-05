@@ -27,6 +27,11 @@ Future<NotificationSyncPlanDto> planNotificationSync({
   policy: policy,
 );
 
+Future<bool> isValidNotificationAddressBridge({String? address}) => RustLib
+    .instance
+    .api
+    .crateApiLpaIsValidNotificationAddressBridge(address: address);
+
 Future<String> buildHandleNotificationJson({required String contentBase64}) =>
     RustLib.instance.api.crateApiLpaBuildHandleNotificationJson(
       contentBase64: contentBase64,

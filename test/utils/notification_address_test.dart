@@ -54,7 +54,11 @@ void main() {
           '5A0A90010298583205240404',
         ),
       ]);
-      final manager = ProfileManager(adapter);
+      final manager = ProfileManager(
+        adapter,
+        notificationAddressValidator: (address) async =>
+            isValidNotificationAddress(address),
+      );
 
       final notifications = await manager.retrieveNotifications(
         useChannel: adapter.channel,
