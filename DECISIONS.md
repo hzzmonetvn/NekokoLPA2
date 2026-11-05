@@ -304,3 +304,8 @@
   - Comprehensive unit and integration test coverage in `rust/core/tests/profile_size_predictor_test.rs` and `rust/tests/lpa_bridge_test.rs`.
 - **Alternatives Considered:** Keeping reference size JSON decoding and dictionary iteration on the Dart UI isolate or using `compute()`.
 - **Reasoning:** Processing ~735 KB reference catalogs with hundreds of network operators on the Dart/Flutter isolate causes frame drops and heap fragmentation on mobile devices. Native Rust deserialization and indexed lookup executes in microseconds with zero memory allocations on each query.
+
+## 34. SIM BCD Filler Must Be Terminal
+- **Choice:** Preserve the infallible `decode_bcd` API and its hexadecimal nibble output, but trim `F` only when it is the high nibble of the final byte. Do not truncate valid trailing data after an earlier `F`.
+- **Alternatives Considered:** Reject all non-decimal nibbles, introduce a fallible decoder, or keep truncating at the last `F` anywhere.
+- **Reasoning:** The decoder is shared by IMSI and ICCID paths and currently represents A–F as hexadecimal characters. Tightening malformed-value semantics would change public behavior and needs separate protocol-specific characterization; this focused fix corrects misplaced-filler truncation without widening scope.

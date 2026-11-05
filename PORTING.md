@@ -125,6 +125,12 @@ Deliberate differences: Phone-number formatting/detection is omitted; `display_n
 - The size formatter uses byte units and 1024-based adaptive thresholds, including the Dart `adaptive_si` quirk that labels binary-scaled values as KB/MB/GB.
 - The ICCID test pins Dart range behavior for the 20-character example: first 8 and final 6 positions are retained when enabled; overlap is clipped by source length.
 
+## SIM BCD decoder correction
+
+- `decode_bcd` keeps its existing infallible hexadecimal-output API. It now removes only a final high-nibble `F` filler; an `F` in any earlier or low-nibble position remains data, as do subsequent nibbles.
+- `test_decode_bcd_trims_only_final_high_nibble_filler` covers empty input, terminal filler, misplaced `F`, and final-byte low-nibble `F`.
+- Strict rejection of A–E or misplaced `F` is not introduced: the decoder is shared by IMSI and ICCID paths, and changing those semantics needs a separate protocol-specific parity review.
+
 ## Remaining issues
 
 - Run Flutter formatting, analysis, and tests with an installed Flutter SDK.

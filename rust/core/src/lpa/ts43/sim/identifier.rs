@@ -56,8 +56,8 @@ pub fn decode_bcd(data: &[u8]) -> String {
         out.push(char::from_digit(u32::from(lo), 16).unwrap_or('0'));
         out.push(char::from_digit(u32::from(hi), 16).unwrap_or('0'));
     }
-    if let Some(idx) = out.rfind('f') {
-        out.truncate(idx);
+    if data.last().is_some_and(|byte| byte >> 4 == 0x0F) {
+        out.pop();
     }
     out
 }
@@ -100,6 +100,15 @@ mod tests {
         let encoded = encode_bcd(raw).expect("encode");
         let decoded = decode_bcd(&encoded);
         assert_eq!(decoded, raw);
+    }
+
+    #[test]
+    fn test_decode_bcd_trims_only_final_high_nibble_filler() {
+        assert_eq!(decode_bcd(&[]), "");
+        assert_eq!(decode_bcd(&[0x21, 0xF3]), "123");
+        assert_eq!(decode_bcd(&[0xF1, 0x23]), "1f32");
+        assert_eq!(decode_bcd(&[0x1F, 0x23]), "f132");
+        assert_eq!(decode_bcd(&[0xF1]), "1");
     }
 
     #[test]
