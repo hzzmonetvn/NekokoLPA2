@@ -169,8 +169,47 @@ abstract class AppLocalizations {
   /// **'Stock MD3'**
   String get stockMD3;
 
-  /// AMOLED true-black theme.
-  String get amoledTheme => 'AMOLED Black';
+  /// No description provided for @amoledTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'AMOLED Black'**
+  String get amoledTheme;
+
+  /// No description provided for @customBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Background'**
+  String get customBackground;
+
+  /// No description provided for @customBackgroundSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an image for the app background'**
+  String get customBackgroundSubtitle;
+
+  /// No description provided for @backgroundSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom image selected'**
+  String get backgroundSelected;
+
+  /// No description provided for @chooseBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose background image'**
+  String get chooseBackground;
+
+  /// No description provided for @removeBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove background image'**
+  String get removeBackground;
+
+  /// No description provided for @backgroundLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load or save the selected image'**
+  String get backgroundLoadFailed;
 
   /// No description provided for @waterfallLayout.
   ///
@@ -399,6 +438,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configure RemoCard companion apps'**
   String get remoteReadersSubtitle;
+
   /// No description provided for @enableCcid.
   ///
   /// In en, this message translates to:
@@ -444,7 +484,7 @@ abstract class AppLocalizations {
   /// No description provided for @readerTypesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Manage enabled reader types (CCID, Bluetooth, Remote, etc.)'**
+  /// **'Manage enabled reader types (CCID, OMAPI, Remote, etc.)'**
   String get readerTypesSubtitle;
 
   /// No description provided for @enabledReaderTypes.
@@ -482,6 +522,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'USB smart card readers and PC/SC devices'**
   String get ccidReaderSubtitle;
+
   /// No description provided for @remoteReadersTitle.
   ///
   /// In en, this message translates to:
@@ -745,11 +786,13 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reconnect'**
   String get reconnect;
+
   /// No description provided for @bluetoothConnectionFailed.
   ///
   /// In en, this message translates to:
   /// **'Bluetooth Connection Failed'**
   String get bluetoothConnectionFailed;
+
   /// No description provided for @removeDevice.
   ///
   /// In en, this message translates to:
@@ -803,6 +846,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect a compatible reader to start.'**
   String get connectCompatibleReader;
+
   /// No description provided for @connectReaderMessageNoBle.
   ///
   /// In en, this message translates to:
@@ -820,6 +864,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The extension is required to access USB CCID readers in this browser.'**
   String get smartCardExtensionMessage;
+
   /// No description provided for @connectRemote.
   ///
   /// In en, this message translates to:
@@ -1533,6 +1578,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect a compatible reader to start.'**
   String get connectReader;
+
   /// No description provided for @connectReaderSubtitleCcid.
   ///
   /// In en, this message translates to:
@@ -1628,6 +1674,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use Remote Icon'**
   String get useRemoteIcon;
+
   /// No description provided for @cardStuckRefreshingMessage.
   ///
   /// In en, this message translates to:
@@ -2089,6 +2136,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Insert a compatible reader or scan for BLE devices to manage your eSIM profiles.'**
   String get noReadersFoundMessage;
+
   /// No description provided for @reminderDetails.
   ///
   /// In en, this message translates to:
@@ -2976,6 +3024,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh devices'**
   String get refreshDevices;
+
   /// No description provided for @lessThan1Kb.
   ///
   /// In en, this message translates to:
@@ -3797,6 +3846,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This device is connected with its default password. Renaming it will set the password to {password}. Save this password before reconnecting.'**
   String defaultPasswordWillChangeMessage(String password);
+
   /// No description provided for @deviceName.
   ///
   /// In en, this message translates to:
@@ -4558,6 +4608,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'USB CCID smart-card reader'**
   String get voWifiUSBCCIDSmartCardReader;
+
   /// No description provided for @voWifiMyNumber.
   ///
   /// In en, this message translates to:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../settings/app_settings.dart';
 
 /// A reusable scaffold with a stylized header for secondary pages
 /// Automatically handles safe area padding for mobile devices
@@ -40,7 +41,9 @@ class StyledHeaderScaffold extends StatelessWidget {
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: AppSettings().backgroundImagePath == null
+            ? theme.scaffoldBackgroundColor
+            : Colors.transparent,
         body: Column(
           children: [
             // Custom Header with safe area padding

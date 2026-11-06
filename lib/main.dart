@@ -1,20 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'l10n/app_localizations.dart';
+import 'package:logging/logging.dart';
 
+import 'l10n/app_localizations.dart';
 import 'config.dart';
 import 'theme/app_theme.dart';
 import 'settings/app_settings.dart';
-import 'package:logging/logging.dart';
-import 'package:flutter/foundation.dart';
 import 'services/db_init_native.dart';
 import 'services/log_buffer.dart';
 import 'services/local_notification_service.dart';
 import 'services/deep_link_service.dart';
 import 'widgets/profile_installation_dialog.dart';
 import 'plugins/plugin_manager.dart';
-
-import 'dart:convert';
 import 'pages/reminder_details_page.dart';
 import 'pages/main_tab_screen.dart';
 
@@ -245,6 +246,34 @@ class _AppSettingsScope extends StatefulWidget {
   State<_AppSettingsScope> createState() => _AppSettingsScopeState();
 }
 
+class _AppBackground extends StatelessWidget {
+  const _AppBackground({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppSettings(),
+      builder: (context, _) {
+        final imagePath = AppSettings().backgroundImagePath;
+        if (imagePath == null) return child;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.file(
+              File(imagePath),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const SizedBox(),
+            ),
+            child,
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _AppSettingsScopeState extends State<_AppSettingsScope> {
   late ThemeMode _themeMode;
   late AppThemeType _themeType;
@@ -301,6 +330,7 @@ class _AppSettingsScopeState extends State<_AppSettingsScope> {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: resolveSupportedLocale,
+      builder: (context, child) => _AppBackground(child: child!),
     );
   }
 }

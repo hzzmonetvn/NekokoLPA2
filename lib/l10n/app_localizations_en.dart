@@ -40,6 +40,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get amoledTheme => 'AMOLED Black';
 
   @override
+  String get customBackground => 'Custom Background';
+
+  @override
+  String get customBackgroundSubtitle =>
+      'Choose an image for the app background';
+
+  @override
+  String get backgroundSelected => 'Custom image selected';
+
+  @override
+  String get chooseBackground => 'Choose background image';
+
+  @override
+  String get removeBackground => 'Remove background image';
+
+  @override
+  String get backgroundLoadFailed =>
+      'Could not load or save the selected image';
+
+  @override
   String get waterfallLayout => 'Waterfall Layout';
 
   @override
@@ -162,6 +182,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteReadersSubtitle => 'Configure RemoCard companion apps';
+
   @override
   String get enableCcid => 'USB CCID Connector';
 
@@ -208,6 +229,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ccidReaderSubtitle => 'USB smart card readers and PC/SC devices';
+
   @override
   String get remoteReadersTitle => 'Remote Readers';
 
@@ -350,8 +372,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reconnect => 'Reconnect';
+
   @override
   String get bluetoothConnectionFailed => 'Bluetooth Connection Failed';
+
   @override
   String get removeDevice => 'Remove Device';
 
@@ -383,6 +407,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectCompatibleReader => 'Connect a compatible reader to start.';
+
   @override
   String get connectReaderMessageNoBle =>
       'Ensure your CCID reader is connected to your computer.';
@@ -393,6 +418,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get smartCardExtensionMessage =>
       'The extension is required to access USB CCID readers in this browser.';
+
   @override
   String get connectRemote => 'Connect Remote';
 
@@ -781,6 +807,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectReader => 'Connect a compatible reader to start.';
+
   @override
   String get connectReaderSubtitleCcid =>
       'Ensure your CCID reader is connected to your computer.';
@@ -835,6 +862,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useRemoteIcon => 'Use Remote Icon';
+
   @override
   String get cardStuckRefreshingMessage =>
       'Profile state change ongoing - try manually re-plug the SIM card if it stucks.';
@@ -1077,6 +1105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noReadersFoundMessage =>
       'Insert a compatible reader or scan for BLE devices to manage your eSIM profiles.';
+
   @override
   String get reminderDetails => 'Reminder Details';
 
@@ -1565,6 +1594,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshDevices => 'Refresh devices';
+
   @override
   String get lessThan1Kb => '< 1 KB';
 
@@ -2017,6 +2047,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String defaultPasswordWillChangeMessage(String password) {
     return 'This device is connected with its default password. Renaming it will set the password to $password. Save this password before reconnecting.';
   }
+
   @override
   String get deviceName => 'Device Name';
 
@@ -2428,6 +2459,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voWifiUSBCCIDSmartCardReader => 'USB CCID smart-card reader';
+
   @override
   String get voWifiMyNumber => 'My number';
 

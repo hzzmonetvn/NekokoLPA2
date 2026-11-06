@@ -220,6 +220,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
     }
 
     return Scaffold(
+      backgroundColor: settings.backgroundImagePath == null
+          ? null
+          : Colors.transparent,
       body: body,
       bottomNavigationBar: (showBottomBar && !isDesktop)
           ? Container(

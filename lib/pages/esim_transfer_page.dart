@@ -459,6 +459,9 @@ class _EsimTransferPageState extends State<EsimTransferPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppSettings().backgroundImagePath == null
+          ? null
+          : Colors.transparent,
       appBar: AppBar(title: Text(_l10n.transferTitle)),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -623,6 +626,9 @@ class _WebsheetPageState extends State<_WebsheetPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppSettings().backgroundImagePath == null
+          ? null
+          : Colors.transparent,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.transferTitle),
         leading: IconButton(

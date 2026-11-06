@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/adb_bridge_service.dart';
+import '../settings/app_settings.dart';
 
 /// Walks a person through connecting the card over a one-time ADB session.
 ///
@@ -105,6 +106,9 @@ class _AdbBridgeConnectPageState extends State<AdbBridgeConnectPage> {
     final windowOpen = _secondsLeft > 0;
 
     return Scaffold(
+      backgroundColor: AppSettings().backgroundImagePath == null
+          ? null
+          : Colors.transparent,
       appBar: AppBar(title: Text(l10n.adbBridgeTitle)),
       body: ListView(
         padding: const EdgeInsets.all(20),

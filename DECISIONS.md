@@ -329,3 +329,8 @@
 - **Choice:** Have the notification recovery flow validate nullable notification-server addresses through the Rust core validator exposed by FRB.
 - **Alternatives Considered:** Keep the duplicate Dart validator, or migrate the entire notification flow.
 - **Reasoning:** The Rust validator already mirrors the Dart null, ASCII, whitespace, label, and terminal-dot rules and has Rust tests. The two live validation sites are inside asynchronous notification processing, so the narrow bridge removes duplicate active validation without moving APDU, persistence, or UI responsibilities.
+
+## 39. Persist a User-Selected App Background Image
+- **Choice:** Copy the image selected in Display Settings into app-private support storage, persist its copied path in `AppSettings`, and render it behind routed content only while configured.
+- **Alternatives Considered:** Persisting the picker’s provider path or placing an image behind `MaterialApp` without adapting the opaque scaffold backgrounds.
+- **Reasoning:** The picker path may be temporary or inaccessible after restart. A copied private file remains available across launches, while conditional scaffold transparency exposes it without changing the existing theme appearance when no background is set. Existing cards, headers, and controls remain opaque for readability. Transfer routes are included; the QR camera view remains intentionally full-bleed.

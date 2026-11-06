@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../settings/app_settings.dart';
 import '../../theme/app_theme.dart';
@@ -28,6 +29,7 @@ class DisplaySettingsPage extends StatelessWidget {
                   title: l10n.general,
                   children: [
                     _buildThemeTypeSwitcher(context),
+                    _buildBackgroundImageSetting(context),
                     if (PlatformX.isMobile)
                       _buildForceDeviceDropdownSwitcher(context),
                     _buildUseWaterfallLayoutSwitcher(context),
@@ -327,6 +329,81 @@ class DisplaySettingsPage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _buildBackgroundImageSetting(BuildContext context) {
+    final settings = AppSettings();
+    final l10n = AppLocalizations.of(context)!;
+    final imagePath = settings.backgroundImagePath;
+
+    return _buildResponsiveTile(
+      context,
+      icon: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.wallpaper_outlined,
+          size: 20,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      title: l10n.customBackground,
+      subtitle: imagePath == null
+          ? l10n.customBackgroundSubtitle
+          : l10n.backgroundSelected,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (imagePath != null)
+            IconButton(
+              tooltip: l10n.removeBackground,
+              onPressed: settings.clearBackgroundImage,
+              icon: const Icon(Icons.close_rounded),
+            ),
+          IconButton(
+            tooltip: l10n.chooseBackground,
+            onPressed: () => _pickBackgroundImage(context),
+            icon: const Icon(Icons.image_outlined),
+          ),
+        ],
+      ),
+      onTap: () => _pickBackgroundImage(context),
+    );
+  }
+
+  Future<void> _pickBackgroundImage(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final picked = result.files.single;
+      final bytes = picked.bytes;
+      if (bytes == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.backgroundLoadFailed)));
+        }
+        return;
+      }
+      await AppSettings().setBackgroundImage(
+        bytes,
+        extension: picked.extension,
+      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.backgroundLoadFailed)));
+      }
+    }
   }
 
   Widget _buildForceDeviceDropdownSwitcher(BuildContext context) {

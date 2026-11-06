@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'background_image_store.dart';
 import '../adapter/qrtr/qrtr_host.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:logging/logging.dart';
@@ -168,6 +171,66 @@ class AppSettings extends ChangeNotifier {
 
   AppThemeType _themeType = AppThemeType.custom;
   AppThemeType get themeType => _themeType;
+
+  static const _backgroundImagePreferenceKey = 'backgroundImagePath';
+  final BackgroundImageStore _backgroundImageStore = BackgroundImageStore();
+  String? _backgroundImagePath;
+  Future<void> _backgroundImageOperation = Future<void>.value();
+  String? get backgroundImagePath => _backgroundImagePath;
+
+  Future<void> setBackgroundImage(List<int> bytes, {String? extension}) {
+    return _backgroundImageOperation = _backgroundImageOperation
+        .catchError((_) {})
+        .then((_) async {
+          final imagePath = await _backgroundImageStore.save(
+            Uint8List.fromList(bytes),
+            extension: extension,
+          );
+          final previousPath = _backgroundImagePath;
+          try {
+            final saved = await _prefs?.setString(
+              _backgroundImagePreferenceKey,
+              imagePath,
+            );
+            if (saved == false) {
+              throw StateError('Could not persist background image path');
+            }
+          } catch (_) {
+            await _backgroundImageStore.delete(imagePath);
+            rethrow;
+          }
+          _backgroundImagePath = imagePath;
+          notifyListeners();
+          if (previousPath != null) {
+            try {
+              await _backgroundImageStore.delete(previousPath);
+            } catch (_) {
+              // Keep the new selection active if cleanup of the old file fails.
+            }
+          }
+        });
+  }
+
+  Future<void> clearBackgroundImage() {
+    return _backgroundImageOperation = _backgroundImageOperation
+        .catchError((_) {})
+        .then((_) async {
+          final previousPath = _backgroundImagePath;
+          final removed = await _prefs?.remove(_backgroundImagePreferenceKey);
+          if (removed == false) {
+            throw StateError('Could not remove background image preference');
+          }
+          _backgroundImagePath = null;
+          notifyListeners();
+          if (previousPath != null) {
+            try {
+              await _backgroundImageStore.delete(previousPath);
+            } catch (_) {
+              // Keep the preference cleared if cleanup of the old file fails.
+            }
+          }
+        });
+  }
 
   bool _autoLoadProfiles = true;
   bool get autoLoadProfiles => _autoLoadProfiles;
@@ -493,6 +556,16 @@ class AppSettings extends ChangeNotifier {
       (type) => type.name == themeTypeStr,
       orElse: () => AppThemeType.custom,
     );
+    final savedBackgroundPath = _prefs?.getString(
+      _backgroundImagePreferenceKey,
+    );
+    if (savedBackgroundPath != null &&
+        await File(savedBackgroundPath).exists()) {
+      _backgroundImagePath = savedBackgroundPath;
+    } else if (savedBackgroundPath != null) {
+      await _prefs?.remove(_backgroundImagePreferenceKey);
+      _backgroundImagePath = null;
+    }
     _autoLoadProfiles = _prefs?.getBool('autoLoadProfiles') ?? true;
     _autoLoadRemoteDevices = _prefs?.getBool('autoLoadRemoteDevices') ?? false;
     _loadProfileIcons = _prefs?.getBool('loadProfileIcons_v2') ?? false;
