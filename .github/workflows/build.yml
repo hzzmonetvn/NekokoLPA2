@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(inputs.build_mode == 'arm64_only' && '{"flavor":["community","privileged"],"abi":["arm64-v8a"]}' || inputs.build_mode == 'armv7_only' && '{"flavor":["community"],"abi":["armeabi-v7a"]}' || inputs.build_mode == 'community_only' && '{"flavor":["community"],"abi":[null]}' || inputs.build_mode == 'privileged_only' && '{"flavor":["privileged"],"abi":[null]}' || '{"flavor":["community","privileged"],"abi":[null]}') }}
+      matrix: ${{ fromJSON(inputs.build_mode == 'arm64_only' && '{"flavor":["community","privileged"],"abi":["arm64-v8a"]}' || inputs.build_mode == 'armv7_only' && '{"flavor":["community"],"abi":["armeabi-v7a"]}' || inputs.build_mode == 'community_only' && '{"flavor":["community"],"abi":["all"]}' || inputs.build_mode == 'privileged_only' && '{"flavor":["privileged"],"abi":["all"]}' || '{"flavor":["community","privileged"],"abi":["all"]}') }}
     steps:
       - uses: actions/checkout@v4
       - name: Free runner disk space
@@ -104,7 +104,7 @@ jobs:
           BUILD_ABI: ${{ matrix.abi }}
         run: |
           args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart)
-          if [ -n "$BUILD_ABI" ]; then
+          if [ -n "$BUILD_ABI" ] && [ "$BUILD_ABI" != "all" ]; then
             cd android && ./gradlew "assemble${BUILD_FLAVOR}Release" -PbuildAbi="$BUILD_ABI" && cd ..
           fi
           if [ "$BUILD_FLAVOR" = privileged ]; then
