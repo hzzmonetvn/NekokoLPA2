@@ -62,7 +62,6 @@ jobs:
 
   android:
     name: Build Android (${{ matrix.flavor }}${{ matrix.abi && format(': {0}', matrix.abi) || '' }})
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_mode != 'otbridge_only' }}
     needs: meta
     runs-on: ubuntu-latest
     strategy:
@@ -151,7 +150,6 @@ jobs:
 
   otbridge:
     name: Build OTBridge helper and module
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_mode != 'arm64_only' && inputs.build_mode != 'armv7_only' && inputs.build_mode != 'community_only' }}
     needs: meta
     runs-on: ubuntu-latest
     steps:
