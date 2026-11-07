@@ -68,8 +68,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: ["community", "privileged"]
-        abi: ["all"]
+        include:
+          - flavor: community
+            abi: all
+          - flavor: privileged
+            abi: all
+          - flavor: community
+            abi: arm64-v8a
+          - flavor: privileged
+            abi: arm64-v8a
+          - flavor: community
+            abi: armeabi-v7a
     steps:
       - uses: actions/checkout@v4
       - name: Free runner disk space
