@@ -112,7 +112,7 @@ jobs:
           BUILD_FLAVOR: ${{ matrix.flavor }}
           BUILD_ABI: ${{ matrix.abi }}
         run: |
-          args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart)
+          args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart --split-per-abi)
           if [ "$BUILD_ABI" = all ]; then
             args+=(--target-platform android-arm,android-arm64)
           else
