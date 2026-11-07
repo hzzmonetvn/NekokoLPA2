@@ -82,7 +82,7 @@ android {
 
     flavorDimensions += "version"
 
-    val buildOnlyAbi = providers.gradleProperty("buildAbi").orNull
+    val buildOnlyAbi = providers.gradleProperty("buildAbi").orNull?.takeUnless { it.isEmpty() || it == "all" }
     splits {
         abi {
             isEnable = true
@@ -119,7 +119,7 @@ android {
 
     defaultConfig {
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += buildOnlyAbi?.let(::listOf) ?: listOf("arm64-v8a", "armeabi-v7a")
         }
         applicationId = "ee.nekoko.nlpa2.open"
         minSdk = flutter.minSdkVersion

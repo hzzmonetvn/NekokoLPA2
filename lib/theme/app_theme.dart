@@ -49,7 +49,7 @@ class AppTheme {
         brightness: Brightness.dark,
         colorScheme: colorScheme,
         scaffoldBackgroundColor: Colors.black,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           backgroundColor: Colors.black,
           surfaceTintColor: Colors.transparent,
           systemOverlayStyle: SystemUiOverlayStyle(

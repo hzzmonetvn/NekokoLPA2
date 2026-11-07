@@ -1,21 +1,32 @@
 name: Build NekokoLPA2
 
 on:
+  push:
+    branches: [release, master]
+  pull_request:
+    branches: [release, master]
   workflow_dispatch:
     inputs:
-      build_mode:
-        description: 'Build mode'
+      architecture:
+        description: Android architecture
         type: choice
         required: true
         default: all
         options:
           - all
-          - arm64_only
-          - armv7_only
-          - community_only
-          - privileged_only
-          - otbridge_only
-          - integrated_only
+          - arm64-v8a
+          - armeabi-v7a
+      component:
+        description: Component to build
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - community
+          - privileged
+          - otbridge
+          - integrated
       android_tools_only:
         description: Build rooted app and OTBridge only; attach to the existing app release
         type: boolean
@@ -46,7 +57,7 @@ jobs:
       - id: version
         env:
           GH_TOKEN: ${{ github.token }}
-          TOOLS_ONLY: ${{ inputs.android_tools_only || inputs.build_mode == 'otbridge_only' || inputs.build_mode == 'privileged_only' || inputs.build_mode == 'integrated_only' }}
+          TOOLS_ONLY: ${{ inputs.android_tools_only }}
         run: |
           version="$(awk '/^version:/ { print $2; exit }' pubspec.yaml)"
           version_clean="${version//+/-}"
@@ -57,17 +68,15 @@ jobs:
           fi
 
   android:
-    name: Build Android (${{ matrix.flavor }}${{ matrix.abi && format(': {0}', matrix.abi) || '' }})
+    name: 'Build Android (${{ matrix.flavor }}: ${{ matrix.abi }})'
+    if: inputs.android_tools_only || inputs.component != 'otbridge'
     needs: meta
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - flavor: community
-            abi: all
-          - flavor: privileged
-            abi: all
+        flavor: ${{ fromJSON(inputs.android_tools_only && '["privileged"]' || inputs.component == 'community' && '["community"]' || inputs.component == 'privileged' && '["privileged"]' || inputs.component == 'integrated' && '["privileged"]' || '["community","privileged"]') }}
+        abi: ${{ fromJSON((inputs.architecture == 'all' || inputs.architecture == '') && '["all"]' || format('["{0}"]', inputs.architecture)) }}
     steps:
       - uses: actions/checkout@v4
       - name: Free runner disk space
@@ -104,8 +113,14 @@ jobs:
           BUILD_ABI: ${{ matrix.abi }}
         run: |
           args=(--release --flavor "$BUILD_FLAVOR" --target lib/main.dart)
-          if [ -n "$BUILD_ABI" ] && [ "$BUILD_ABI" != "all" ]; then
-            cd android && ./gradlew "assemble${BUILD_FLAVOR}Release" -PbuildAbi="$BUILD_ABI" && cd ..
+          if [ "$BUILD_ABI" = all ]; then
+            args+=(--target-platform android-arm,android-arm64)
+          else
+            case "$BUILD_ABI" in
+              arm64-v8a) args+=(--target-platform android-arm64) ;;
+              armeabi-v7a) args+=(--target-platform android-arm) ;;
+              *) echo "Unsupported ABI: $BUILD_ABI" >&2; exit 1 ;;
+            esac
           fi
           if [ "$BUILD_FLAVOR" = privileged ]; then
             args+=(--dart-define=PRIVILEGED_BUILD=true --dart-define=APP_VARIANT=open-rooted)
@@ -113,35 +128,65 @@ jobs:
             args+=(--dart-define=APP_VARIANT=open)
           fi
           # Build Flutter app to bundle Dart/Flutter assets and Rust binaries via Cargokit
+          gradle_args=()
+          if [ "$BUILD_ABI" != "all" ]; then
+            gradle_args+=(-PbuildAbi="$BUILD_ABI")
+          fi
+          # Build Flutter assets and Rust binaries, then produce Gradle split APKs.
+          if [ "$BUILD_ABI" != "all" ]; then
+            export ORG_GRADLE_PROJECT_buildAbi="$BUILD_ABI"
+          fi
           flutter build apk "${args[@]}" --obfuscate --split-debug-info=build/app/outputs/symbols --dart-define=GM_PSK_URL="$GM_PSK_URL"
-          # Run Gradle directly to produce ABI split and universal APKs reliably
           cap_flavor="$(tr '[:lower:]' '[:upper:]' <<< "${BUILD_FLAVOR:0:1}")${BUILD_FLAVOR:1}"
-          cd android && ./gradlew "assemble${cap_flavor}Release" && cd ..
+          cd android && ./gradlew "assemble${cap_flavor}Release" "${gradle_args[@]}" && cd ..
       - name: Package Android artifacts
         env:
           VERSION_CLEAN: ${{ needs.meta.outputs.version_clean }}
           VERSION: ${{ needs.meta.outputs.version }}
           BUILD_FLAVOR: ${{ matrix.flavor }}
+          BUILD_ABI: ${{ matrix.abi }}
         run: |
           mkdir -p dist
           echo "Generated APK files in build output:"
           find build/app/outputs/ -name "*.apk" || true
+          first_existing() {
+            for candidate in "$@"; do
+              if [ -f "$candidate" ]; then
+                printf '%s\n' "$candidate"
+                return 0
+              fi
+            done
+            return 1
+          }
+          abi_suffix="$BUILD_ABI"
+          if [ "$BUILD_ABI" = all ]; then abi_suffix=arm64-v8a; fi
           if [ "$BUILD_FLAVOR" = privileged ]; then
-            APK=$(ls build/app/outputs/flutter-apk/app-arm64-v8a-privileged-release.apk build/app/outputs/apk/privileged/release/app-arm64-v8a-privileged-release.apk 2>/dev/null | head -n 1)
-            if [ -z "$APK" ] || [ ! -f "$APK" ]; then
-              APK=$(ls build/app/outputs/flutter-apk/*privileged*.apk build/app/outputs/apk/privileged/release/*privileged*.apk 2>/dev/null | head -n 1)
+            apk_name="app-${BUILD_ABI}-privileged-release.apk"
+            if [ "$BUILD_ABI" = all ]; then apk_name=app-arm64-v8a-privileged-release.apk; fi
+            APK=$(first_existing "build/app/outputs/flutter-apk/$apk_name" "build/app/outputs/apk/privileged/release/$apk_name") || {
+              echo "Missing privileged APK for $BUILD_ABI" >&2
+              exit 1
+            }
+            cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-rooted-${abi_suffix}.apk"
+            if [ "$BUILD_ABI" = all ] || [ "$BUILD_ABI" = arm64-v8a ]; then
+              python3 scripts/package_rooted_android.py --apk "$APK" \
+                --output "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-magisk.zip" --version "$VERSION"
             fi
-            echo "Selected privileged APK: $APK"
-            cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-rooted-arm64-v8a.apk"
-            python3 scripts/package_rooted_android.py --apk "$APK" \
-              --output "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-magisk.zip" --version "$VERSION"
           else
-            cp $(ls build/app/outputs/flutter-apk/app-armeabi-v7a-community-release.apk build/app/outputs/apk/community/release/app-armeabi-v7a-community-release.apk 2>/dev/null | head -n 1) \
-              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-armeabi-v7a.apk" || true
-            cp $(ls build/app/outputs/flutter-apk/app-arm64-v8a-community-release.apk build/app/outputs/apk/community/release/app-arm64-v8a-community-release.apk 2>/dev/null | head -n 1) \
-              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-arm64-v8a.apk" || true
-            cp $(ls build/app/outputs/flutter-apk/app-universal-community-release.apk build/app/outputs/apk/community/release/app-universal-community-release.apk build/app/outputs/flutter-apk/app-community-release.apk build/app/outputs/apk/community/release/app-community-release.apk 2>/dev/null | head -n 1) \
-              "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-universal.apk" || true
+            if [ "$BUILD_ABI" = all ]; then
+              for abi in armeabi-v7a arm64-v8a; do
+                APK=$(first_existing "build/app/outputs/flutter-apk/app-${abi}-community-release.apk" "build/app/outputs/apk/community/release/app-${abi}-community-release.apk") || continue
+                cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-${abi}.apk"
+              done
+              APK=$(first_existing build/app/outputs/flutter-apk/app-universal-community-release.apk build/app/outputs/apk/community/release/app-universal-community-release.apk build/app/outputs/flutter-apk/app-community-release.apk build/app/outputs/apk/community/release/app-community-release.apk) || true
+              if [ -n "$APK" ]; then cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-universal.apk"; fi
+            else
+              APK=$(first_existing "build/app/outputs/flutter-apk/app-${BUILD_ABI}-community-release.apk" "build/app/outputs/apk/community/release/app-${BUILD_ABI}-community-release.apk") || {
+                echo "Missing community APK for $BUILD_ABI" >&2
+                exit 1
+              }
+              cp "$APK" "dist/${ANDROID_PACKAGE_ID}-${VERSION_CLEAN}-${BUILD_ABI}.apk"
+            fi
           fi
       - uses: actions/upload-artifact@v4
         with:
@@ -151,6 +196,7 @@ jobs:
 
   otbridge:
     name: Build OTBridge helper and module
+    if: inputs.android_tools_only || inputs.component == '' || inputs.component == 'all' || inputs.component == 'otbridge' || inputs.component == 'integrated'
     needs: meta
     runs-on: ubuntu-latest
     steps:
@@ -185,8 +231,12 @@ jobs:
       always() && !cancelled() &&
       github.event_name != 'pull_request' &&
       (github.ref == 'refs/heads/release' || inputs.android_tools_only) &&
-      needs.meta.result == 'success' && needs.android.result == 'success' &&
-      needs.otbridge.result == 'success'
+      needs.meta.result == 'success' &&
+      needs.android.result == 'success' && needs.otbridge.result == 'success' &&
+      (inputs.android_tools_only || (
+        (inputs.component == 'all' || inputs.component == '') &&
+        (inputs.architecture == 'all' || inputs.architecture == '')
+      ))
     needs: [meta, android, otbridge]
     runs-on: ubuntu-latest
     steps:

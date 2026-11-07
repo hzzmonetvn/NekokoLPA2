@@ -330,6 +330,11 @@
 - **Alternatives Considered:** Keep the duplicate Dart validator, or migrate the entire notification flow.
 - **Reasoning:** The Rust validator already mirrors the Dart null, ASCII, whitespace, label, and terminal-dot rules and has Rust tests. The two live validation sites are inside asynchronous notification processing, so the narrow bridge removes duplicate active validation without moving APDU, persistence, or UI responsibilities.
 
+## CI build selectors
+- **Choice:** Restore `push` and `pull_request` builds for `release` and `master`, and expose separate manual architecture (`all`, `arm64-v8a`, `armeabi-v7a`) and component (`all`, `community`, `privileged`, `otbridge`, `integrated`) selectors. A single architecture is passed as Flutter's `--target-platform` and via the Gradle `buildAbi` property and `abiFilters`; `integrated` means the existing privileged app flavor. Keep `android_tools_only` as the existing explicit release-attachment behavior. The `hasCustomBackground`-dependent app-bar theme is non-const because it uses runtime state.
+- **Alternatives considered:** One combined build-mode selector, or adding a new integrated product flavor. Rejected because independent selectors allow combinations without duplicating options, and the repository already has a privileged flavor.
+- **Reasoning:** The previous edits removed automatic push/PR triggers and exposed build-mode choices that did not affect the matrix/build commands. Selective runs should build only requested work and must not implicitly depend on an existing GitHub release.
+
 ## 39. Persist a User-Selected App Background Image
 - **Choice:** Copy the image selected in Display Settings into app-private support storage, persist its copied path in `AppSettings`, and render it behind routed content only while configured.
 - **Alternatives Considered:** Persisting the picker’s provider path or placing an image behind `MaterialApp` without adapting the opaque scaffold backgrounds.
