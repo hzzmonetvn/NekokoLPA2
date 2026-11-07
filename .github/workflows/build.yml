@@ -67,7 +67,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(inputs.build_mode == 'arm64_only' && '{"flavor":["community","privileged"],"abi":["arm64-v8a"]}' || inputs.build_mode == 'armv7_only' && '{"flavor":["community"],"abi":["armeabi-v7a"]}' || inputs.build_mode == 'community_only' && '{"flavor":["community"],"abi":["all"]}' || inputs.build_mode == 'privileged_only' && '{"flavor":["privileged"],"abi":["all"]}' || '{"flavor":["community","privileged"],"abi":["all"]}') }}
+      matrix:
+        flavor: ${{ fromJSON(inputs.build_mode == 'arm64_only' || inputs.build_mode == 'armv7_only' && '["community"]' || inputs.build_mode == 'community_only' && '["community"]' || inputs.build_mode == 'privileged_only' && '["privileged"]' || '["community","privileged"]') }}
+        abi: ${{ fromJSON(inputs.build_mode == 'arm64_only' && '["arm64-v8a"]' || inputs.build_mode == 'armv7_only' && '["armeabi-v7a"]' || '["all"]') }}
     steps:
       - uses: actions/checkout@v4
       - name: Free runner disk space
