@@ -127,8 +127,11 @@ jobs:
           else
             args+=(--dart-define=APP_VARIANT=open)
           fi
-          # Build Flutter app to bundle Dart/Flutter assets and Rust binaries via Cargokit
-          gradle_args=()
+          # Flutter 3.47.2 injects arm64-v8a, armeabi-v7a, and x86_64 into
+          # defaultConfig.ndk unless filtering is disabled. Our explicit ABI
+          # splits own the selection, so disable Flutter's conflicting filter.
+          export GRADLE_OPTS="${GRADLE_OPTS:-} -Dorg.gradle.project.disable-abi-filtering=true"
+          gradle_args=(-Pdisable-abi-filtering=true)
           if [ "$BUILD_ABI" != "all" ]; then
             gradle_args+=(-PbuildAbi="$BUILD_ABI")
           fi

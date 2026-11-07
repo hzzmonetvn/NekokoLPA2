@@ -118,9 +118,6 @@ android {
     }
 
     defaultConfig {
-        ndk {
-            abiFilters += buildOnlyAbi?.let(::listOf) ?: listOf("arm64-v8a", "armeabi-v7a")
-        }
         applicationId = "ee.nekoko.nlpa2.open"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
