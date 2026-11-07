@@ -1,10 +1,6 @@
 name: Build NekokoLPA2
 
 on:
-  push:
-    branches: [release, master]
-  pull_request:
-    branches: [release, master]
   workflow_dispatch:
     inputs:
       build_mode:
