@@ -173,10 +173,14 @@ class AppSettings extends ChangeNotifier {
   AppThemeType get themeType => _themeType;
 
   static const _backgroundImagePreferenceKey = 'backgroundImagePath';
+  static const _backgroundImageOpacityPreferenceKey =
+      'backgroundImageOpacity';
   final BackgroundImageStore _backgroundImageStore = BackgroundImageStore();
   String? _backgroundImagePath;
+  double _backgroundImageOpacity = 0.7;
   Future<void> _backgroundImageOperation = Future<void>.value();
   String? get backgroundImagePath => _backgroundImagePath;
+  double get backgroundImageOpacity => _backgroundImageOpacity;
 
   Future<void> setBackgroundImage(List<int> bytes, {String? extension}) {
     return _backgroundImageOperation = _backgroundImageOperation
@@ -230,6 +234,13 @@ class AppSettings extends ChangeNotifier {
             }
           }
         });
+  }
+
+  Future<void> setBackgroundImageOpacity(double opacity) async {
+    final normalized = opacity.clamp(0.0, 1.0);
+    _backgroundImageOpacity = normalized;
+    await _prefs?.setDouble(_backgroundImageOpacityPreferenceKey, normalized);
+    notifyListeners();
   }
 
   bool _autoLoadProfiles = true;
@@ -559,6 +570,10 @@ class AppSettings extends ChangeNotifier {
     final savedBackgroundPath = _prefs?.getString(
       _backgroundImagePreferenceKey,
     );
+    final savedOpacity = _prefs?.getDouble(_backgroundImageOpacityPreferenceKey);
+    if (savedOpacity != null && savedOpacity >= 0 && savedOpacity <= 1) {
+      _backgroundImageOpacity = savedOpacity;
+    }
     if (savedBackgroundPath != null &&
         await File(savedBackgroundPath).exists()) {
       _backgroundImagePath = savedBackgroundPath;

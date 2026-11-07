@@ -15,6 +15,7 @@ class DisplaySettingsPage extends StatelessWidget {
     return ListenableBuilder(
       listenable: AppSettings(),
       builder: (context, _) {
+        final settings = AppSettings();
         final l10n = AppLocalizations.of(context)!;
         return StyledHeaderScaffold(
           title: l10n.displaySettings,
@@ -30,6 +31,8 @@ class DisplaySettingsPage extends StatelessWidget {
                   children: [
                     _buildThemeTypeSwitcher(context),
                     _buildBackgroundImageSetting(context),
+                    if (settings.backgroundImagePath != null)
+                      _buildBackgroundOpacitySetting(context),
                     if (PlatformX.isMobile)
                       _buildForceDeviceDropdownSwitcher(context),
                     _buildUseWaterfallLayoutSwitcher(context),
@@ -404,6 +407,40 @@ class DisplaySettingsPage extends StatelessWidget {
         ).showSnackBar(SnackBar(content: Text(l10n.backgroundLoadFailed)));
       }
     }
+  }
+
+  Widget _buildBackgroundOpacitySetting(BuildContext context) {
+    final settings = AppSettings();
+    final l10n = AppLocalizations.of(context)!;
+
+    return _buildResponsiveTile(
+      context,
+      icon: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.opacity_outlined,
+          size: 20,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      title: l10n.backgroundImageOpacity,
+      subtitle: l10n.backgroundImageOpacitySubtitle,
+      child: SizedBox(
+        width: 140,
+        child: Slider(
+          value: settings.backgroundImageOpacity,
+          min: 0,
+          max: 1,
+          divisions: 20,
+          label: '${(settings.backgroundImageOpacity * 100).round()}%',
+          onChanged: settings.setBackgroundImageOpacity,
+        ),
+      ),
+    );
   }
 
   Widget _buildForceDeviceDropdownSwitcher(BuildContext context) {

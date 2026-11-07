@@ -60,6 +60,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not load or save the selected image';
 
   @override
+  String get backgroundImageOpacity => 'Background opacity';
+
+  @override
+  String get backgroundImageOpacitySubtitle =>
+      'Adjust how visible the selected background image is';
+
+  @override
   String get waterfallLayout => 'Waterfall Layout';
 
   @override

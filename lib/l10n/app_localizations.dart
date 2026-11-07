@@ -211,6 +211,14 @@ abstract class AppLocalizations {
   /// **'Could not load or save the selected image'**
   String get backgroundLoadFailed;
 
+  /// In en, this message translates to:
+  /// **'Background opacity'**
+  String get backgroundImageOpacity;
+
+  /// In en, this message translates to:
+  /// **'Adjust how visible the selected background image is'**
+  String get backgroundImageOpacitySubtitle;
+
   /// No description provided for @waterfallLayout.
   ///
   /// In en, this message translates to:

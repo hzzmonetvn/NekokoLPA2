@@ -261,10 +261,13 @@ class _AppBackground extends StatelessWidget {
         return Stack(
           fit: StackFit.expand,
           children: [
-            Image.file(
-              File(imagePath),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const SizedBox(),
+            Opacity(
+              opacity: AppSettings().backgroundImageOpacity,
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox(),
+              ),
             ),
             child,
           ],

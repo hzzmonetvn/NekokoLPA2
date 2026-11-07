@@ -5127,6 +5127,9 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         return Stack(
           children: [
             Scaffold(
+              backgroundColor: AppSettings().backgroundImagePath == null
+                  ? null
+                  : Colors.transparent,
               appBar: PreferredSize(
                 preferredSize: isExtremelySmall
                     ? Size.fromHeight(40)
