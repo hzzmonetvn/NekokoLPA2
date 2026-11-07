@@ -67,18 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - flavor: community
-            abi: all
-          - flavor: privileged
-            abi: all
-          - flavor: community
-            abi: arm64-v8a
-          - flavor: privileged
-            abi: arm64-v8a
-          - flavor: community
-            abi: armeabi-v7a
+      matrix: ${{ fromJSON(inputs.build_mode == 'arm64_only' && '{"include":[{"flavor":"community","abi":"arm64-v8a"},{"flavor":"privileged","abi":"arm64-v8a"}]}' || inputs.build_mode == 'armv7_only' && '{"include":[{"flavor":"community","abi":"armeabi-v7a"}]}' || inputs.build_mode == 'community_only' && '{"include":[{"flavor":"community","abi":"all"}]}' || inputs.build_mode == 'privileged_only' && '{"include":[{"flavor":"privileged","abi":"all"}]}' || '{"include":[{"flavor":"community","abi":"all"},{"flavor":"privileged","abi":"all"}]}') }}
     steps:
       - uses: actions/checkout@v4
       - name: Free runner disk space
