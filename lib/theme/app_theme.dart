@@ -8,6 +8,31 @@ const Color kErrorColor = Color(0xFFE53935);
 const Color kSuccessColor = Color(0xFF43A047);
 
 class AppTheme {
+  static bool get hasCustomBackground =>
+      AppSettings().backgroundImagePath != null;
+
+  /// Translucent decoration used over a user-selected background image.
+  /// Non-wallpaper surfaces keep their existing solid theme treatment.
+  static BoxDecoration customBackgroundGlassDecoration(
+    BuildContext context, {
+    required double radius,
+    bool selected = false,
+    List<BoxShadow> boxShadow = const [],
+  }) {
+    final theme = Theme.of(context);
+    return BoxDecoration(
+      color: theme.colorScheme.primary.withValues(
+        alpha: selected ? 0.25 : 0.12,
+      ),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: theme.colorScheme.primary.withValues(alpha: 0.5),
+        width: selected ? 1.5 : 1,
+      ),
+      boxShadow: boxShadow,
+    );
+  }
+
   static ThemeData theme(bool isDark, [AppThemeType? type]) {
     final themeType = type ?? AppSettings().themeType;
 
@@ -31,7 +56,9 @@ class AppTheme {
             statusBarColor: Colors.transparent,
             statusBarIconBrightness: Brightness.light,
             statusBarBrightness: Brightness.dark,
-            systemNavigationBarColor: Colors.black,
+            systemNavigationBarColor: hasCustomBackground
+                ? Colors.transparent
+                : Colors.black,
             systemNavigationBarIconBrightness: Brightness.light,
           ),
         ),
@@ -244,9 +271,9 @@ class AppTheme {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
           statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-          systemNavigationBarColor: isDark
-              ? const Color(0xFF020617)
-              : const Color(0xFFF8F9FA),
+          systemNavigationBarColor: hasCustomBackground
+              ? Colors.transparent
+              : (isDark ? const Color(0xFF020617) : const Color(0xFFF8F9FA)),
           systemNavigationBarIconBrightness: isDark
               ? Brightness.light
               : Brightness.dark,

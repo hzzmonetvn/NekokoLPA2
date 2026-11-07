@@ -36,7 +36,13 @@ class ReaderTabs extends StatelessWidget implements PreferredSizeWidget {
           indicatorSize: TabBarIndicatorSize.tab,
           overlayColor: WidgetStateProperty.all(Colors.transparent),
           splashFactory: NoSplash.splashFactory,
-          indicator: BoxDecoration(
+          indicator: AppTheme.hasCustomBackground
+              ? AppTheme.customBackgroundGlassDecoration(
+                  context,
+                  radius: 20,
+                  selected: true,
+                )
+              : BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: theme.colorScheme.surface,
             boxShadow: theme.brightness == Brightness.dark

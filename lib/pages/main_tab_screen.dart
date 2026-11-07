@@ -227,7 +227,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
       bottomNavigationBar: (showBottomBar && !isDesktop)
           ? Container(
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.95),
+                color: settings.backgroundImagePath == null
+                    ? theme.colorScheme.surface.withValues(alpha: 0.95)
+                    : theme.colorScheme.primary.withValues(alpha: 0.12),
                 border: Border(
                   top: BorderSide(
                     color: theme.dividerColor.withValues(alpha: 0.1),

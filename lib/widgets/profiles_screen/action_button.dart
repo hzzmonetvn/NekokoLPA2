@@ -36,7 +36,9 @@ class ActionButton extends StatelessWidget {
       width: buttonSize,
       height: buttonSize,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: AppTheme.hasCustomBackground && !isPrimary && !isDestructive
+            ? AppTheme.customBackgroundGlassDecoration(context, radius: 14)
+            : BoxDecoration(
           color: isDestructive
               ? theme.colorScheme.errorContainer.withValues(alpha: 0.2)
               : (isPrimary

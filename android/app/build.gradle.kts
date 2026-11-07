@@ -82,12 +82,17 @@ android {
 
     flavorDimensions += "version"
 
+    val buildOnlyAbi = providers.gradleProperty("buildAbi").orNull
     splits {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = true
+            if (buildOnlyAbi != null) {
+                include(buildOnlyAbi)
+            } else {
+                include("armeabi-v7a", "arm64-v8a")
+            }
+            isUniversalApk = buildOnlyAbi == null
         }
     }
 

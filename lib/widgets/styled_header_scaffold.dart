@@ -57,12 +57,22 @@ class StyledHeaderScaffold extends StatelessWidget {
                 16,
                 compact ? 8 : 12,
               ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(color: theme.dividerColor, width: 1),
-                ),
-              ),
+              decoration: AppSettings().backgroundImagePath == null
+                  ? BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      border: Border(
+                        bottom: BorderSide(color: theme.dividerColor, width: 1),
+                      ),
+                    )
+                  : AppTheme.customBackgroundGlassDecoration(
+                      context,
+                      radius: 0,
+                    ).copyWith(
+                      borderRadius: BorderRadius.zero,
+                      border: Border(
+                        bottom: BorderSide(color: theme.dividerColor, width: 1),
+                      ),
+                    ),
               child: Row(
                 children: [
                   if (logoAsset != null) ...[

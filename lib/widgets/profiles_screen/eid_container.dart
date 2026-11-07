@@ -50,7 +50,9 @@ class EidContainer extends StatelessWidget {
           width: double.infinity,
           height: (isSmallWidth || eid == null) ? 40 : 54,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
+          decoration: AppTheme.hasCustomBackground
+              ? AppTheme.customBackgroundGlassDecoration(context, radius: 16)
+              : BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
