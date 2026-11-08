@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../utils/platform_adapter.dart';
+import '../../theme/app_theme.dart';
 import '../common/loading_spinner.dart';
 
 class ProfileLoadingOverlay extends StatefulWidget {
@@ -79,9 +80,13 @@ class _ProfileLoadingOverlayState extends State<ProfileLoadingOverlay> {
     return Material(
       color: Colors.transparent,
       child: Container(
-        color: theme.colorScheme.surface.withValues(
-          alpha: PlatformX.isAndroid ? 0.9 : 0.6,
-        ),
+        decoration: AppTheme.hasCustomBackground
+            ? AppTheme.customBackgroundGlassDecoration(context, radius: 0)
+            : BoxDecoration(
+                color: theme.colorScheme.surface.withValues(
+                  alpha: PlatformX.isAndroid ? 0.9 : 0.6,
+                ),
+              ),
         child: PlatformX.isAndroid
             ? _buildContent(context, theme)
             : BackdropFilter(

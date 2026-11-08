@@ -340,3 +340,9 @@
 - **Alternatives Considered:** Persisting the picker’s provider path or placing an image behind `MaterialApp` without adapting the opaque scaffold backgrounds.
 - **Reasoning:** The picker path may be temporary or inaccessible after restart. A copied private file remains available across launches, while conditional scaffold transparency exposes it without changing the existing theme appearance when no background is set. Existing cards, headers, and controls remain opaque for readability. Transfer routes are included; the QR camera view remains intentionally full-bleed.
 - **Opacity:** settings slider stores a 0–1 image opacity and the app background applies it only to the image layer, so the selected image can be made more or less visible without darkening the whole app. Profile home scaffold is transparent when a background is set to avoid default dark surfaces covering it.
+
+
+## Wallpaper Glass on Loading and Settings Surfaces
+- **Choice:** When a custom background exists, profile loading overlays use the shared low-alpha glass decoration, and settings section panels use its translucent fill. Without a custom background, their existing solid surface treatment remains.
+- **Alternatives Considered:** Removing the loading overlay fill or globally making theme surfaces transparent.
+- **Reasoning:** Local conditional styling reveals wallpaper without changing loading readability, default theme appearance, or unrelated components.
