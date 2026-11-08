@@ -346,3 +346,8 @@
 - **Choice:** When a custom background exists, profile loading overlays use the shared low-alpha glass decoration, and settings section panels use its translucent fill. Without a custom background, their existing solid surface treatment remains.
 - **Alternatives Considered:** Removing the loading overlay fill or globally making theme surfaces transparent.
 - **Reasoning:** Local conditional styling reveals wallpaper without changing loading readability, default theme appearance, or unrelated components.
+
+## 40. Wallpaper glass coverage for home and settings sub-pages
+- **Choice:** When `AppTheme.hasCustomBackground` is true, switch settings section panels, dropdown/popup containers, reader dropdown, switch-mode button, and `highlightedCardDecoration` to a 12% primary translucent fill (25% when selected); loading overlay goes to 6% borderless fill so wallpaper remains visible. Added `AppTheme.glassColor` as the shared fill so cards, dialogs, and sections reuse one alpha and cannot drift.
+- **Alternatives Considered:** Only patching the overlay and main settings page, or making popup menus fully transparent.
+- **Reasoning:** Screenshots showed wallpaper was hidden under a 12% bordered glass overlay and solid sub-page cards. A shared translucent fill preserves text/icon contrast while letting the image show through on every settings surface and profile card.

@@ -81,7 +81,12 @@ class _ProfileLoadingOverlayState extends State<ProfileLoadingOverlay> {
       color: Colors.transparent,
       child: Container(
         decoration: AppTheme.hasCustomBackground
-            ? AppTheme.customBackgroundGlassDecoration(context, radius: 0)
+            ? BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(0),
+              ).copyWith(
+                border: Border.all(color: Colors.transparent, width: 0),
+              )
             : BoxDecoration(
                 color: theme.colorScheme.surface.withValues(
                   alpha: PlatformX.isAndroid ? 0.9 : 0.6,

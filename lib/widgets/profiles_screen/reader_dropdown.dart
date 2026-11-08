@@ -20,7 +20,12 @@ Widget buildReaderDropdown({
   return Container(
     width: double.infinity,
     height: 54,
-    decoration: BoxDecoration(
+    decoration: AppTheme.hasCustomBackground
+        ? AppTheme.customBackgroundGlassDecoration(
+            context,
+            radius: 14,
+          )
+        : BoxDecoration(
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: theme.dividerColor),

@@ -151,7 +151,9 @@ class ReaderTypesSettingsPage extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: AppTheme.hasCustomBackground
+                ? AppTheme.glassColor(context)
+                : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(

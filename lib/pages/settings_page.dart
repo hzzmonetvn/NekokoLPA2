@@ -66,10 +66,7 @@ class SettingsPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: AppTheme.hasCustomBackground
-                ? AppTheme.customBackgroundGlassDecoration(
-                    context,
-                    radius: 12,
-                  ).color
+                ? AppTheme.glassColor(context)
                 : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: theme.dividerColor),
@@ -421,10 +418,7 @@ class SettingsPage extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: AppTheme.hasCustomBackground
-                  ? AppTheme.customBackgroundGlassDecoration(
-                      context,
-                      radius: 24,
-                    ).color
+                  ? AppTheme.glassColor(context)
                   : theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
@@ -879,7 +873,9 @@ class SettingsPage extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: AppTheme.hasCustomBackground
+            ? AppTheme.glassColor(context)
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

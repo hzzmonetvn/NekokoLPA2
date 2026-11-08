@@ -26,7 +26,12 @@ class SwitchModeButton extends StatelessWidget {
       width: buttonWidth,
       height: buttonHeight,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: AppTheme.hasCustomBackground
+            ? AppTheme.customBackgroundGlassDecoration(
+                context,
+                radius: 14,
+              )
+            : BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(

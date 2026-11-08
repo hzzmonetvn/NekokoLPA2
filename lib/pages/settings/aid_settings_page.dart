@@ -142,7 +142,9 @@ class _AidSettingsPageState extends State<AidSettingsPage> {
                   ),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
+                      color: AppTheme.hasCustomBackground
+                          ? AppTheme.glassColor(context)
+                          : theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: AppTheme.surfaceSubtle(context),

@@ -179,7 +179,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: AppTheme.hasCustomBackground
+            ? AppTheme.glassColor(context)
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.surfaceSubtle(context)),
       ),
@@ -248,7 +250,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: AppTheme.hasCustomBackground
+            ? AppTheme.glassColor(context)
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.surfaceSubtle(context)),
       ),

@@ -139,7 +139,9 @@ class _RemoteSettingsPageState extends State<RemoteSettingsPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
+                  color: AppTheme.hasCustomBackground
+                      ? AppTheme.glassColor(context)
+                      : theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppTheme.surfaceSubtle(context)),
                 ),
@@ -405,7 +407,9 @@ class _RemoteSettingsPageState extends State<RemoteSettingsPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
+                  color: AppTheme.hasCustomBackground
+                      ? AppTheme.glassColor(context)
+                      : theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppTheme.surfaceSubtle(context)),
                 ),
@@ -588,7 +592,9 @@ class _RemoteSettingsPageState extends State<RemoteSettingsPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
+                  color: AppTheme.hasCustomBackground
+                      ? AppTheme.glassColor(context)
+                      : theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppTheme.surfaceSubtle(context)),
                 ),
@@ -626,7 +632,9 @@ class _RemoteSettingsPageState extends State<RemoteSettingsPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: AppTheme.hasCustomBackground
+            ? AppTheme.glassColor(context)
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.surfaceSubtle(context)),
       ),

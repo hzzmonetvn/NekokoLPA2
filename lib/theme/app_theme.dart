@@ -13,6 +13,13 @@ class AppTheme {
 
   /// Translucent decoration used over a user-selected background image.
   /// Non-wallpaper surfaces keep their existing solid theme treatment.
+  static Color glassColor(BuildContext context, {bool selected = false}) {
+    final theme = Theme.of(context);
+    return theme.colorScheme.primary.withValues(
+      alpha: selected ? 0.25 : 0.12,
+    );
+  }
+
   static BoxDecoration customBackgroundGlassDecoration(
     BuildContext context, {
     required double radius,
@@ -21,9 +28,7 @@ class AppTheme {
   }) {
     final theme = Theme.of(context);
     return BoxDecoration(
-      color: theme.colorScheme.primary.withValues(
-        alpha: selected ? 0.25 : 0.12,
-      ),
+      color: glassColor(context, selected: selected),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
         color: theme.colorScheme.primary.withValues(alpha: 0.5),
@@ -443,6 +448,13 @@ class AppTheme {
     }
 
     // Non-MD3 / Custom Theme: Uses explicit borders and transparency effects
+    if (hasCustomBackground) {
+      return customBackgroundGlassDecoration(
+        context,
+        radius: 20,
+        selected: enabled,
+      );
+    }
     return BoxDecoration(
       color: enabled
           ? theme.colorScheme.primary.withValues(alpha: 0.12)
