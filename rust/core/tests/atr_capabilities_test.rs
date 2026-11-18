@@ -30,8 +30,10 @@ fn accepts_known_9esim_t15_global_ta_euicc_capability_byte() {
     let disabled_bytes = decode("3B9F96801F018031E073FE21136702434F537EC101FD");
     assert!(!is_likely_euicc_atr(&disabled_bytes));
 
-    // Pure 0x02 TA3 following TD2=0x1F with valid TCK (80 ^ 1F ^ 02 = 9D)
-    assert!(is_likely_euicc_atr(&decode("3B801F029D")));
+    // Pure 0x02 TA3 following TD2=0x1F with valid TCK (80 ^ 80 ^ 1F ^ 02 = 1D)
+    assert!(is_likely_euicc_atr(&decode("3B80801F021D")));
+    // Only TD1=0x1F puts 0x02 in TA2 (specific mode byte), not global TA3
+    assert!(!is_likely_euicc_atr(&decode("3B801F029D")));
 }
 
 #[test]
