@@ -82,12 +82,16 @@ jobs:
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
       - name: Run Clippy
+        if: ${{ !cancelled() }}
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Run Rust workspace tests
+        if: ${{ !cancelled() }}
         run: cargo test --workspace
       - name: Build Rust docs
+        if: ${{ !cancelled() }}
         run: cargo doc --workspace --no-deps
       - name: Run script unit tests
+        if: ${{ !cancelled() }}
         run: python3 -m unittest discover -s test/scripts -p "test_*.py" -v
 
   android:
@@ -131,7 +135,9 @@ jobs:
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi
       - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@cargo-ndk
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
       - name: Build Rust native libraries with cargo-ndk
         env:
           BUILD_ABI: ${{ matrix.abi }}
