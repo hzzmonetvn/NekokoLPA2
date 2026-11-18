@@ -11,7 +11,12 @@ pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
     let locale = model.locale;
     let nv = &model.notifications;
     let lbl_notifs = tr(catalog, locale, "notifications", "Notifications");
-    let lbl_history = tr(catalog, locale, "notificationHistory", "Notification History");
+    let lbl_history = tr(
+        catalog,
+        locale,
+        "notificationHistory",
+        "Notification History",
+    );
     let lbl_remove = tr(catalog, locale, "remove", "Remove");
     let lbl_all_caught_up = tr(
         catalog,

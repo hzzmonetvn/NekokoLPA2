@@ -112,7 +112,10 @@ pub fn build_gm_auth_apdu_with_rn(
     rn_host: &[u8; 16],
 ) -> Result<Vec<u8>, String> {
     if challenge.len() != 16 {
-        return Err(format!("GM challenge must be 16 bytes, got {}", challenge.len()));
+        return Err(format!(
+            "GM challenge must be 16 bytes, got {}",
+            challenge.len()
+        ));
     }
 
     let mut auth_data = [0u8; 16];
@@ -136,7 +139,14 @@ pub fn build_gm_auth_apdu_with_rn(
     bf71.push(inner.len() as u8);
     bf71.extend_from_slice(&inner);
 
-    Ok(frame_apdu_command(0x81, 0xE2, 0x91, 0x00, Some(&bf71), None))
+    Ok(frame_apdu_command(
+        0x81,
+        0xE2,
+        0x91,
+        0x00,
+        Some(&bf71),
+        None,
+    ))
 }
 
 fn generate_host_nonce(challenge: &[u8]) -> [u8; 16] {

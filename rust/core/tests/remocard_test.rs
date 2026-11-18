@@ -64,7 +64,10 @@ fn test_remocard_aes_cbc_codec_and_response_parsers() {
     let slots_plain = r#"{"slots":[{"name":"Slot 1","eid":"89012345678901234567890123456789"}]}"#;
     let slots_enc = encrypt_remocard_payload_with_iv(slots_plain, &key, &iv);
     assert!(slots_enc.contains(r#""data":"#));
-    assert_eq!(decrypt_remocard_payload(&slots_enc, &key).expect("decrypt"), slots_plain);
+    assert_eq!(
+        decrypt_remocard_payload(&slots_enc, &key).expect("decrypt"),
+        slots_plain
+    );
 
     let slots = parse_list_slots_response(&slots_enc, Some(&server)).expect("parse slots");
     assert_eq!(

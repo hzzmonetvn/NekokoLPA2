@@ -21,7 +21,10 @@ fn test_estk_constants_and_extra_aids() {
     assert!(estk_extra_aids("3B9F96801F038031E073FE21136702434F537EC101FF").is_empty());
 
     assert_eq!(build_estk_mgt_read_apdu(0), [0x00, 0x00, 0x00, 0x00, 0x00]);
-    assert_eq!(parse_estk_mgt_string(b"ESTK-2025\0\0\n"), Some("ESTK-2025".to_string()));
+    assert_eq!(
+        parse_estk_mgt_string(b"ESTK-2025\0\0\n"),
+        Some("ESTK-2025".to_string())
+    );
     assert_eq!(parse_estk_mgt_string(&[0x00, 0x00]), None);
 
     let info = EstkCardInfo {
@@ -70,15 +73,30 @@ fn test_gm_eid_range_and_auth_apdu() {
 
 #[test]
 fn test_provider_plugin_matching_and_response_parsing() {
-    assert_eq!(match_provider_plugin("8985223000000000001"), Some(ProviderPluginKind::EsimCc));
-    assert_eq!(match_provider_plugin("8937204010000000001"), Some(ProviderPluginKind::EsimGg));
-    assert_eq!(match_provider_plugin("8985231000000000001"), Some(ProviderPluginKind::ThreeHk));
-    assert_eq!(match_provider_plugin("8985203000000000001"), Some(ProviderPluginKind::ThreeHk));
+    assert_eq!(
+        match_provider_plugin("8985223000000000001"),
+        Some(ProviderPluginKind::EsimCc)
+    );
+    assert_eq!(
+        match_provider_plugin("8937204010000000001"),
+        Some(ProviderPluginKind::EsimGg)
+    );
+    assert_eq!(
+        match_provider_plugin("8985231000000000001"),
+        Some(ProviderPluginKind::ThreeHk)
+    );
+    assert_eq!(
+        match_provider_plugin("8985203000000000001"),
+        Some(ProviderPluginKind::ThreeHk)
+    );
     assert_eq!(match_provider_plugin("8901410000000000001"), None);
 
     let cc = esim_cc_badge("8985223000000000001").expect("eSIM.cc badge");
     assert_eq!(cc.kind, ProviderPluginKind::EsimCc);
-    assert_eq!(cc.portal_url.as_deref(), Some("https://www.esim.cc/card-bonus"));
+    assert_eq!(
+        cc.portal_url.as_deref(),
+        Some("https://www.esim.cc/card-bonus")
+    );
 
     let gg_json = r#"{
         "number": "3725000000",

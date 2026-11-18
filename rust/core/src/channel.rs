@@ -36,10 +36,7 @@ pub enum ChannelError {
     /// Logical channel already claimed by an active owner.
     ChannelAlreadyOwned { channel: u8 },
     /// Token mismatch or stale channel access.
-    StaleChannelToken {
-        channel: u8,
-        token: u64,
-    },
+    StaleChannelToken { channel: u8, token: u64 },
     /// OMAPI session has been poisoned by catastrophic transport corruption.
     SessionPoisoned(String),
 }

@@ -373,7 +373,10 @@ impl AppController {
             }
             UiAction::OpenDeleteProfile { iccid } => {
                 let display_name = self.display_name_for_iccid(&iccid);
-                self.modal = ModalState::ConfirmDeleteProfile { iccid, display_name };
+                self.modal = ModalState::ConfirmDeleteProfile {
+                    iccid,
+                    display_name,
+                };
             }
             UiAction::ConfirmDeleteProfile { iccid } => {
                 self.modal = ModalState::None;
@@ -553,13 +556,11 @@ impl AppController {
                 }
                 self.start_ts43_transfer();
             }
-            UiAction::SetTransferField { field, value } => {
-                match field.as_str() {
-                    "manual_server" => self.transfer.manual_entitlement_server = value,
-                    "delayed_iccid" => self.transfer.delayed_iccid_input = value,
-                    _ => {}
-                }
-            }
+            UiAction::SetTransferField { field, value } => match field.as_str() {
+                "manual_server" => self.transfer.manual_entitlement_server = value,
+                "delayed_iccid" => self.transfer.delayed_iccid_input = value,
+                _ => {}
+            },
             UiAction::SubmitTransferInput { accepted, text } => {
                 self.continue_ts43_user_input(accepted, text);
             }
@@ -821,9 +822,7 @@ impl AppController {
     }
 
     fn is_omapi_poisoned(&self) -> bool {
-        self.omapi_latch
-            .lock()
-            .is_ok_and(|g| g.is_poisoned())
+        self.omapi_latch.lock().is_ok_and(|g| g.is_poisoned())
     }
 
     fn push_log(&mut self, msg: String) {
@@ -955,11 +954,7 @@ impl AppController {
         }
     }
 
-    fn backup_notifications_to_history(
-        &mut self,
-        eid: &str,
-        pending: &[RetrievedNotification],
-    ) {
+    fn backup_notifications_to_history(&mut self, eid: &str, pending: &[RetrievedNotification]) {
         if pending.is_empty() {
             return;
         }
@@ -970,18 +965,21 @@ impl AppController {
                 h.seq_number == item.metadata.seq_number && (h.eid == eid || h.eid.is_empty())
             });
             if !exists {
-                self.state.notifications_history.push(PersistedNotification {
-                    eid: eid.to_string(),
-                    iccid: item.metadata.iccid.clone().unwrap_or_default(),
-                    seq_number: item.metadata.seq_number,
-                    operation: operation_label(item.metadata.profile_management_operation).into(),
-                    address: item.metadata.notification_address.clone(),
-                    content_base64: item.raw_notification_b64.clone(),
-                    status: "pending".into(),
-                    timestamp_ms: now_ms,
-                    response_code: None,
-                    response_content: None,
-                });
+                self.state
+                    .notifications_history
+                    .push(PersistedNotification {
+                        eid: eid.to_string(),
+                        iccid: item.metadata.iccid.clone().unwrap_or_default(),
+                        seq_number: item.metadata.seq_number,
+                        operation: operation_label(item.metadata.profile_management_operation)
+                            .into(),
+                        address: item.metadata.notification_address.clone(),
+                        content_base64: item.raw_notification_b64.clone(),
+                        status: "pending".into(),
+                        timestamp_ms: now_ms,
+                        response_code: None,
+                        response_content: None,
+                    });
                 changed = true;
             }
         }
@@ -1197,7 +1195,8 @@ impl AppController {
             hex,
         ) {
             Ok(rx) => {
-                self.apdu_history.push((hex.trim().to_ascii_uppercase(), rx));
+                self.apdu_history
+                    .push((hex.trim().to_ascii_uppercase(), rx));
             }
             Err(e) => {
                 self.apdu_history
@@ -1568,9 +1567,12 @@ impl AppController {
             return;
         };
         let source_iccid = source_iccid.or_else(|| {
-            self.active_snapshot
-                .as_ref()
-                .and_then(|s| s.profiles.iter().find(|p| p.enabled).map(|p| p.iccid.clone()))
+            self.active_snapshot.as_ref().and_then(|s| {
+                s.profiles
+                    .iter()
+                    .find(|p| p.enabled)
+                    .map(|p| p.iccid.clone())
+            })
         });
         let sim = crate::ts43_ops::CardSourceSim {
             host: Arc::clone(&self.host),
@@ -1630,8 +1632,8 @@ impl AppController {
             .as_ref()
             .map(|s| s.eid.clone())
             .unwrap_or_default();
-        let source_iccid = (!self.transfer.source_iccid.is_empty())
-            .then(|| self.transfer.source_iccid.clone());
+        let source_iccid =
+            (!self.transfer.source_iccid.is_empty()).then(|| self.transfer.source_iccid.clone());
         let mut client = build_ts43_client(
             Arc::clone(&self.host),
             reader,
@@ -1875,15 +1877,12 @@ impl AppController {
     }
 
     fn execute_send_pending_notification(&mut self, seq: u32) {
-        let item = self
-            .active_snapshot
-            .as_ref()
-            .and_then(|s| {
-                s.notifications
-                    .iter()
-                    .find(|n| n.metadata.seq_number == seq)
-                    .cloned()
-            });
+        let item = self.active_snapshot.as_ref().and_then(|s| {
+            s.notifications
+                .iter()
+                .find(|n| n.metadata.seq_number == seq)
+                .cloned()
+        });
         let Some(notif) = item else {
             self.notif_error = Some(format!("Notification #{seq} not found on card"));
             return;
@@ -2280,8 +2279,16 @@ impl AppController {
                 reader_name: sel.map(|r| r.label.clone()).unwrap_or_default(),
                 raw_eid: snap.eid.clone(),
                 display_eid: redact_eid(&snap.eid, false, &self.state.redaction),
-                default_smdp: snap.configured.default_smdp_address.clone().unwrap_or_default(),
-                root_smds: snap.configured.root_smds_address.clone().unwrap_or_default(),
+                default_smdp: snap
+                    .configured
+                    .default_smdp_address
+                    .clone()
+                    .unwrap_or_default(),
+                root_smds: snap
+                    .configured
+                    .root_smds_address
+                    .clone()
+                    .unwrap_or_default(),
                 free_nvram_bytes: Some(nvram),
                 free_nvram_text: format_size(i64::try_from(nvram).ok(), 1, SizeUnit::AdaptiveBi),
                 free_ram_bytes: ram,

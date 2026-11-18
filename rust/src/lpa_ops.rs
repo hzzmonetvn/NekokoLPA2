@@ -224,7 +224,8 @@ impl<'a> Es9Client<'a> {
             euicc_challenge_b64,
             euicc_info1_b64,
         );
-        let (status, text) = self.post_es9(smdp_address, ENDPOINT_INITIATE_AUTHENTICATION, &body)?;
+        let (status, text) =
+            self.post_es9(smdp_address, ENDPOINT_INITIATE_AUTHENTICATION, &body)?;
         parse_initiate_authentication_response(&text, Some(status))
             .map_err(|e| LpaOpError::Protocol(e.to_string()))
     }
@@ -305,7 +306,11 @@ pub fn validate_device_imei_input(input: &str) -> Result<String, String> {
 /// Encodes TAC (4 bytes) and optional full IMEI (8 bytes) for `AuthenticateServer` `DeviceInfo`.
 fn build_device_info_tlv(device_imei: &str) -> Vec<u8> {
     let digits: String = device_imei.chars().filter(char::is_ascii_digit).collect();
-    let tac_str = if digits.len() >= 8 { &digits[..8] } else { "35383741" };
+    let tac_str = if digits.len() >= 8 {
+        &digits[..8]
+    } else {
+        "35383741"
+    };
     let mut tac_bytes = [0x35_u8, 0x38, 0x37, 0x41];
     if let Ok(parsed) = hex_to_bytes(tac_str) {
         if parsed.len() == 4 {
@@ -458,10 +463,7 @@ fn read_profiles(ch: &mut CardChannel) -> Result<Vec<EuiccProfile>, LpaOpError> 
     Ok(profiles)
 }
 
-fn apply_profile_extra_tlvs(
-    item: &nlpa_core::asn1::Asn1Node,
-    profile: &mut EuiccProfile,
-) {
+fn apply_profile_extra_tlvs(item: &nlpa_core::asn1::Asn1Node, profile: &mut EuiccProfile) {
     if let Some(owner) = item.find_child(0xB7) {
         if let Some(mcc_mnc) = owner.find_child(0x80) {
             if let Some((mcc, mnc)) = parse_operator_id(&mcc_mnc.value) {
@@ -669,15 +671,8 @@ fn switch_profile_inner(
                     )));
                 }
             }
-            let (verify_logs, profiles) = verify_profile_convergence(
-                host,
-                reader,
-                state,
-                omapi_latch,
-                iccid,
-                enable,
-                3,
-            )?;
+            let (verify_logs, profiles) =
+                verify_profile_convergence(host, reader, state, omapi_latch, iccid, enable, 3)?;
             logs.extend(verify_logs);
             Ok((logs, profiles))
         }
@@ -720,9 +715,9 @@ fn verify_profile_convergence(
                 all_logs.extend(core::mem::take(&mut ch.apdu_log));
                 let _ = ch.close();
                 if let Ok(profiles) = res {
-                    let matched = profiles.iter().find(|p| {
-                        nlpa_core::iccid::iccid_for_display(&p.iccid) == clean_target
-                    });
+                    let matched = profiles
+                        .iter()
+                        .find(|p| nlpa_core::iccid::iccid_for_display(&p.iccid) == clean_target);
                     if matched.is_some_and(|p| p.enabled == target_enabled) {
                         return Ok((all_logs, profiles));
                     }
@@ -863,7 +858,9 @@ pub fn dispatch_notification_es9(
     pending_notification_b64: &str,
 ) -> Result<(), LpaOpError> {
     if server.trim().is_empty() {
-        return Err(LpaOpError::Protocol("Missing notification server address".into()));
+        return Err(LpaOpError::Protocol(
+            "Missing notification server address".into(),
+        ));
     }
     if pending_notification_b64.trim().is_empty() {
         return Err(LpaOpError::Protocol(
@@ -893,12 +890,10 @@ pub fn download_profile(
 
     let mut ch = open_reader_channel(Arc::clone(&host), reader, state, omapi_latch)?;
     let eid = read_eid(&mut ch).unwrap_or_default();
-    let free_nvram = read_euicc_info2_and_nxp(&mut ch)
-        .ok()
-        .map(|(info2, nxp)| {
-            nxp.and_then(|n| n.free_non_volatile_memory)
-                .unwrap_or(u64::from(info2.free_nvram))
-        });
+    let free_nvram = read_euicc_info2_and_nxp(&mut ch).ok().map(|(info2, nxp)| {
+        nxp.and_then(|n| n.free_non_volatile_memory)
+            .unwrap_or(u64::from(info2.free_nvram))
+    });
 
     let info1_tlv = encode_tlv(TAG_GET_EUICC_INFO1, &[]);
     let info1_bytes = ch.transmit_es10_tlv(&info1_tlv)?;
@@ -992,9 +987,10 @@ pub fn download_profile(
         });
     }
 
-    let signed2 = auth_client.smdp_signed2.as_deref().ok_or_else(|| {
-        LpaOpError::Protocol("Missing smdpSigned2 in AuthenticateClient".into())
-    })?;
+    let signed2 = auth_client
+        .smdp_signed2
+        .as_deref()
+        .ok_or_else(|| LpaOpError::Protocol("Missing smdpSigned2 in AuthenticateClient".into()))?;
     let sig2 = auth_client.smdp_signature2.as_deref().ok_or_else(|| {
         LpaOpError::Protocol("Missing smdpSignature2 in AuthenticateClient".into())
     })?;
@@ -1008,8 +1004,7 @@ pub fn download_profile(
         None
     };
 
-    let prep_req =
-        build_prepare_download_request(signed2, sig2, hash_cc.as_deref(), cert2);
+    let prep_req = build_prepare_download_request(signed2, sig2, hash_cc.as_deref(), cert2);
     let prep_resp = match transmit_download_tlv(&mut ch, hal_guard.as_ref(), &prep_req) {
         Ok(r) => r,
         Err(e) => {
@@ -1038,7 +1033,8 @@ pub fn download_profile(
         let dl_res = guard.client.se_hal_download(guard.slot, &segments_hex);
         guard.finish();
         let rx_hex = dl_res.map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
-        ch.apdu_log.push(("SE_HAL_DOWNLOAD_BPP".into(), rx_hex.clone()));
+        ch.apdu_log
+            .push(("SE_HAL_DOWNLOAD_BPP".into(), rx_hex.clone()));
         let _ = strip_hal_download_sw(&rx_hex)?;
     } else {
         for seg in &segments {
@@ -1217,7 +1213,10 @@ pub fn nine_esim_set_atr(
         .ccid_connect(reader_name)
         .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
     let rx1 = client
-        .ccid_transceive(reader_name, &bytes_to_hex(&enable_atr_programming_command()))
+        .ccid_transceive(
+            reader_name,
+            &bytes_to_hex(&enable_atr_programming_command()),
+        )
         .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
     ensure_9esim_ok(&rx1)?;
     let rx2 = client

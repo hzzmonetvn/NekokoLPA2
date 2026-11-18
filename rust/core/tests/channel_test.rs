@@ -1,8 +1,8 @@
 use nlpa_core::{
     build_manage_channel_close_apdu, build_manage_channel_open_apdu, chain_apdu_request,
     chain_apdu_request_with_default_mss, effective_store_data_mss, frame_apdu_command,
-    map_logical_channel_cla, ChannelError, OmapiChannelTracker, OmapiSafetyLatch,
-    ReassemblyAction, ResponseReassembler, DEFAULT_STORE_DATA_MSS,
+    map_logical_channel_cla, ChannelError, OmapiChannelTracker, OmapiSafetyLatch, ReassemblyAction,
+    ResponseReassembler, DEFAULT_STORE_DATA_MSS,
 };
 
 #[test]

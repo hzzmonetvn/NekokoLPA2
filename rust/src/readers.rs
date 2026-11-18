@@ -11,8 +11,8 @@ use std::sync::{Arc, Mutex};
 use nlpa_core::apdu::validate_apdu_sw;
 use nlpa_core::atr::is_likely_euicc_atr;
 use nlpa_core::channel::{
-    build_manage_channel_close_apdu, chain_apdu_request, map_logical_channel_cla,
-    OmapiSafetyLatch, ReassemblyAction, ResponseReassembler, DEFAULT_STORE_DATA_MSS,
+    build_manage_channel_close_apdu, chain_apdu_request, map_logical_channel_cla, OmapiSafetyLatch,
+    ReassemblyAction, ResponseReassembler, DEFAULT_STORE_DATA_MSS,
 };
 use nlpa_core::crypto::{base64_decode, base64_encode};
 use nlpa_core::hex::{bytes_to_hex, hex_to_bytes};
@@ -154,7 +154,10 @@ impl DiscoveredReader {
     pub fn looks_like_estk(&self) -> bool {
         if let Some(atr) = &self.atr_hex {
             if let Ok(bytes) = hex_to_bytes(atr) {
-                if bytes.windows(ESTK_ATR_MARKER.len()).any(|w| w == ESTK_ATR_MARKER) {
+                if bytes
+                    .windows(ESTK_ATR_MARKER.len())
+                    .any(|w| w == ESTK_ATR_MARKER)
+                {
                     return true;
                 }
             }
@@ -166,9 +169,7 @@ impl DiscoveredReader {
     #[must_use]
     pub fn looks_like_9esim(&self) -> bool {
         let lower = self.label.to_ascii_lowercase();
-        self.kind == TransportKind::Ccid
-            || lower.contains("9esim")
-            || lower.contains("esim writer")
+        self.kind == TransportKind::Ccid || lower.contains("9esim") || lower.contains("esim writer")
     }
 }
 
@@ -322,7 +323,9 @@ fn collect_telephony_readers(
     out: &mut Vec<DiscoveredReader>,
     logs: &mut Vec<String>,
 ) {
-    let has_perm = client.telephony_has_privileged_permission().unwrap_or(false);
+    let has_perm = client
+        .telephony_has_privileged_permission()
+        .unwrap_or(false);
     if !has_perm {
         return;
     }
@@ -484,8 +487,7 @@ fn collect_qrtr_readers(
     logs: &mut Vec<String>,
 ) {
     let client = HostClient::new(host.as_ref());
-    if !client.qrtr_is_supported().unwrap_or(false)
-        || !client.qrtr_is_available().unwrap_or(false)
+    if !client.qrtr_is_supported().unwrap_or(false) || !client.qrtr_is_available().unwrap_or(false)
     {
         return;
     }
@@ -1247,9 +1249,7 @@ impl CardChannel {
                 bytes_to_hex(&raw)
             }
             Some(ChannelBackend::SeHal { slot, .. }) => client.se_hal_read(*slot, &tx_hex)?,
-            Some(ChannelBackend::Ccid { reader, .. }) => {
-                client.ccid_transceive(reader, &tx_hex)?
-            }
+            Some(ChannelBackend::Ccid { reader, .. }) => client.ccid_transceive(reader, &tx_hex)?,
             Some(ChannelBackend::Remote {
                 server,
                 reader_name,

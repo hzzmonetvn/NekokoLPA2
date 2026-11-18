@@ -3,8 +3,8 @@
 use nlpa_core::i18n::{LocaleChoice, ALL_LOCALE_CHOICES};
 use nlpa_core::storage::{ColorMode, ThemeStyle};
 use nlpa_ui::models::{
-    all_locale_options, BatchItemView, DiscoveredSmdsEventView, DownloadMetadataView,
-    EstkInfoView, EuiccInfoView, HistoryNotifView, ModalState, PendingNotifView, ProfileCardView,
+    all_locale_options, BatchItemView, DiscoveredSmdsEventView, DownloadMetadataView, EstkInfoView,
+    EuiccInfoView, HistoryNotifView, ModalState, PendingNotifView, ProfileCardView,
     ProfileLoadingState, ProviderBadgeView, ReaderChipView, TabKind, UiAction, UiModel,
     UpdateCandidateView,
 };
@@ -137,12 +137,18 @@ fn settings_language_selector_exposes_all_12_choices_and_vietnamese_renders() {
     let options = all_locale_options();
     assert_eq!(options.len(), ALL_LOCALE_CHOICES.len());
     assert_eq!(options.len(), 12);
-    assert!(options.iter().any(|o| o.choice == LocaleChoice::Vi && o.code == "vi"));
+    assert!(options
+        .iter()
+        .any(|o| o.choice == LocaleChoice::Vi && o.code == "vi"));
 
     let html = render_fragment(&model);
     for opt in &options {
         let val_attr = format!("value=\"{}\"", opt.code);
-        assert!(html.contains(&val_attr), "missing locale option {}", opt.code);
+        assert!(
+            html.contains(&val_attr),
+            "missing locale option {}",
+            opt.code
+        );
         assert!(html.contains(opt.native_name));
     }
     assert!(html.contains("Tiếng Việt (vi)"));
@@ -295,9 +301,7 @@ fn all_tabs_and_modals_render_cleanly() {
             atr: "3B9F".into(),
             euicc_mode: true,
         },
-        ModalState::GmPskPrompt {
-            eid: "8904".into(),
-        },
+        ModalState::GmPskPrompt { eid: "8904".into() },
         ModalState::BatchExport {
             csv_text: "a,b\n1,2".into(),
         },
