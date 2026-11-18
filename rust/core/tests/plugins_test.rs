@@ -49,7 +49,8 @@ fn test_gm_eid_range_and_auth_apdu() {
     let apdu = build_gm_auth_apdu_with_rn(&psk, &challenge, &rn_host).expect("valid GM APDU");
     // 81 E2 91 00 1B BF 71 18 80 04 <mac:4> 81 10 <rn_host:16>
     assert_eq!(apdu.len(), 32);
-    assert_eq!(&apdu[0..8], &[0x81, 0xE2, 0x91, 0x00, 0x1B, 0xBF, 0x71, 0x18]);
+    assert_eq!(&apdu[0..4], &[0x81, 0xE2, 0x91, 0x00]);
+    assert_eq!(&apdu[4..8], &[0x1B, 0xBF, 0x71, 0x18]);
     assert_eq!(&apdu[8..10], &[0x80, 0x04]);
     assert_eq!(&apdu[14..16], &[0x81, 0x10]);
     assert_eq!(&apdu[16..32], &rn_host);
@@ -97,7 +98,13 @@ fn test_provider_plugin_matching_and_response_parsing() {
     assert!(gg_summary.contains("2026-11-01"));
 
     // Bulk results format stripping trailing F
-    let gg_bulk = r#"{"results":[{"iccid":"8937204010000000001","number":"+3725000000","balance":5.0}]}"#;
+    let gg_bulk = r#"{
+        "results": [{
+            "iccid": "8937204010000000001",
+            "number": "+3725000000",
+            "balance": 5.0
+        }]
+    }"#;
     let gg2 = parse_esim_gg_response(gg_bulk, "8937204010000000001F").expect("bulk match");
     assert_eq!(gg2.label, "eSIM.gg · 5.00 €");
 

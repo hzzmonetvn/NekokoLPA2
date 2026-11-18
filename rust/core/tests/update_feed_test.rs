@@ -9,7 +9,14 @@ fn make_release_json(build: u64, sigs: &[&str]) -> String {
         .collect::<Vec<_>>()
         .join(",");
     format!(
-        r#"{{"version":"2.5.1","build":{build},"url":"https://github.com/hzzmonetvn/NekokoLPA2/releases/tag/v2.5.1%2B{build}","download_url":"https://example.invalid/{build}.apk","changelog":"Fix","signatures":[{sig_json}]}}"#
+        r#"{{
+        "version": "2.5.1",
+        "build": {build},
+        "url": "https://github.com/hzzmonetvn/NekokoLPA2/releases/tag/v2.5.1%2B{build}",
+        "download_url": "https://example.invalid/{build}.apk",
+        "changelog": "Fix",
+        "signatures": [{sig_json}]
+    }}"#
     )
 }
 

@@ -1,3 +1,4 @@
+use nlpa_core::asn1::rsp::encode_iccid_bytes;
 use nlpa_core::{
     parse_profile_package, validate_profile_elements, Asn1Reader, DeleteProfileRequest,
     DisableProfileRequest, EnableProfileRequest, EuiccChallenge, EuiccConfiguredAddresses,
@@ -96,15 +97,39 @@ fn test_set_nickname_request_roundtrip() {
 
 #[test]
 fn test_enable_disable_delete_profile_requests() {
+    let bcd = encode_iccid_bytes("8984040000000000001");
+    assert_eq!(bcd.len(), 10);
+    assert_eq!(&bcd[0..5], &[0x98, 0x48, 0x40, 0x00, 0x00]);
+    assert_eq!(&bcd[5..10], &[0x00, 0x00, 0x00, 0x00, 0xF1]);
+
     let en = EnableProfileRequest::new("8984040000000000001".to_string(), true);
     let en_enc = en.encode();
+    let expected_en = [
+        0xBF, 0x31, 0x11, 0xA0, 0x0C, 0x5A, 0x0A, 0x98, 0x48, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0xF1, 0x81, 0x01, 0xFF,
+    ];
+    assert_eq!(en_enc, expected_en);
     let en_dec =
         EnableProfileRequest::decode(&Asn1Reader::new(&en_enc).read_next().unwrap().unwrap())
             .unwrap();
     assert_eq!(en_dec, en);
 
+    let legacy_en = [
+        0xBF, 0x31, 0x0F, 0x5A, 0x0A, 0x98, 0x48, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF1,
+        0x81, 0x01, 0x01,
+    ];
+    let legacy_en_dec =
+        EnableProfileRequest::decode(&Asn1Reader::new(&legacy_en).read_next().unwrap().unwrap())
+            .unwrap();
+    assert_eq!(legacy_en_dec, en);
+
     let dis = DisableProfileRequest::new("8984040000000000001".to_string(), false);
     let dis_enc = dis.encode();
+    let expected_dis = [
+        0xBF, 0x32, 0x11, 0xA0, 0x0C, 0x5A, 0x0A, 0x98, 0x48, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0xF1, 0x81, 0x01, 0x00,
+    ];
+    assert_eq!(dis_enc, expected_dis);
     let dis_dec =
         DisableProfileRequest::decode(&Asn1Reader::new(&dis_enc).read_next().unwrap().unwrap())
             .unwrap();
@@ -112,6 +137,10 @@ fn test_enable_disable_delete_profile_requests() {
 
     let del = DeleteProfileRequest::new("8984040000000000001".to_string());
     let del_enc = del.encode();
+    let expected_del = [
+        0xBF, 0x33, 0x0C, 0x5A, 0x0A, 0x98, 0x48, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF1,
+    ];
+    assert_eq!(del_enc, expected_del);
     let del_dec =
         DeleteProfileRequest::decode(&Asn1Reader::new(&del_enc).read_next().unwrap().unwrap())
             .unwrap();
@@ -133,6 +162,32 @@ fn test_notification_metadata_and_memory_reset() {
     assert_eq!(meta_dec.seq_number, 42);
     assert_eq!(meta_dec.profile_management_operation, 2);
     assert_eq!(meta_dec.notification_address, "smdp.carrier.com");
+    assert_eq!(meta_dec.iccid.as_deref(), Some("8984040000000000001"));
+
+    // Verify SGP.22 wire format: 0x80 IMPLICIT INTEGER & 0x81 BIT STRING (Delete 0x08 -> 04 10)
+    let wire_meta = NotificationMetadata {
+        seq_number: 7,
+        profile_management_operation: 0x08,
+        notification_address: "smdp.carrier.com".to_string(),
+        iccid: None,
+    };
+    let wire_enc = wire_meta.encode();
+    let mut expected_wire = vec![0xBF, 0x2F, 0x19, 0x80, 0x01, 0x07];
+    expected_wire.extend_from_slice(&[0x81, 0x02, 0x04, 0x10]);
+    expected_wire.extend_from_slice(&[0x0C, 0x10]);
+    expected_wire.extend_from_slice(b"smdp.carrier.com");
+    assert_eq!(wire_enc, expected_wire);
+
+    let raw = [
+        0xBF, 0x2F, 0x17, 0x02, 0x01, 0x2A, 0x81, 0x01, 0x02, 0x0C, 0x0F, b's', b'm', b'd', b'p',
+        b'.', b'c', b'a', b'r', b'r', b'i', b'e', b'r', b'.', b'c', b'o',
+    ];
+    let raw_dec =
+        NotificationMetadata::decode(&Asn1Reader::new(&raw).read_next().unwrap().unwrap())
+            .unwrap();
+    assert_eq!(raw_dec.seq_number, 42);
+    assert_eq!(raw_dec.profile_management_operation, 2);
+    assert_eq!(raw_dec.notification_address, "smdp.carrier.co");
 
     let rst = EuiccMemoryResetRequest::new(0x03);
     let rst_enc = rst.encode();

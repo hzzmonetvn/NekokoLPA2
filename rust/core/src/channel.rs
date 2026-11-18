@@ -36,7 +36,10 @@ pub enum ChannelError {
     /// Logical channel already claimed by an active owner.
     ChannelAlreadyOwned { channel: u8 },
     /// Token mismatch or stale channel access.
-    StaleChannelToken { channel: u8, token: u64 },
+    StaleChannelToken {
+        channel: u8,
+        token: u64,
+    },
     /// OMAPI session has been poisoned by catastrophic transport corruption.
     SessionPoisoned(String),
 }
@@ -178,7 +181,7 @@ pub fn chain_apdu_request(
     le: Option<usize>,
     mss: usize,
 ) -> Vec<Vec<u8>> {
-    let effective_mss = if mss == 0 || mss > 255 { 255 } else { mss };
+    let effective_mss = effective_store_data_mss(Some(mss));
     if data.len() <= effective_mss {
         return vec![frame_apdu_command(cla, ins, p1, p2, Some(data), le)];
     }
@@ -190,7 +193,7 @@ pub fn chain_apdu_request(
     while offset < data.len() {
         let remaining = data.len() - offset;
         let is_last = remaining <= effective_mss;
-        let chunk_size = if is_last { remaining } else { effective_mss };
+        let chunk_size = remaining.min(effective_mss);
         let chunk = &data[offset..offset + chunk_size];
 
         let mut current_cla = cla;
@@ -198,7 +201,11 @@ pub fn chain_apdu_request(
         let mut current_p2 = p2;
 
         if ins == 0xE2 {
-            current_p1 = if is_last { p1 | 0x80 } else { p1 & 0x7F };
+            if is_last {
+                current_p1 = p1 | 0x80;
+            } else {
+                current_p1 = p1 & 0x7F;
+            }
             current_p2 = block_num;
             block_num = block_num.wrapping_add(1);
         } else if !is_last {
