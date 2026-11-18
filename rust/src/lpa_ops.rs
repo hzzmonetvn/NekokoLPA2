@@ -592,7 +592,8 @@ pub fn switch_profile(
     enable: bool,
     expected_eid: Option<&str>,
 ) -> Result<(Vec<(String, String)>, Vec<EuiccProfile>), LpaOpError> {
-    let client = HostClient::new(host.as_ref());
+    let client_host = Arc::clone(&host);
+    let client = HostClient::new(client_host.as_ref());
     let is_omapi = reader.kind == TransportKind::Omapi;
     if is_omapi {
         let _ = client.omapi_set_profile_switch_in_progress(true);
@@ -1004,7 +1005,8 @@ pub fn download_profile(
         None
     };
 
-    let prep_req = build_prepare_download_request(signed2, sig2, hash_cc.as_deref(), cert2);
+    let hash_slice = hash_cc.as_ref().map(<[u8; 32]>::as_slice);
+    let prep_req = build_prepare_download_request(signed2, sig2, hash_slice, cert2);
     let prep_resp = match transmit_download_tlv(&mut ch, hal_guard.as_ref(), &prep_req) {
         Ok(r) => r,
         Err(e) => {

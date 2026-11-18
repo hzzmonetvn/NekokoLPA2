@@ -42,7 +42,7 @@ use nlpa_ui::models::{
 
 use crate::host::{HostClient, HostTransport, HttpRequestArgs};
 use crate::lpa_ops::{
-    self, delete_profile, discover_smds_events, dispatch_notification_es9, download_profile,
+    delete_profile, discover_smds_events, dispatch_notification_es9, download_profile,
     execute_estk_command, fetch_provider_badge, load_card_snapshot, nine_esim_set_atr,
     nine_esim_set_password, remove_notification_safe, rename_profile, reset_euicc_memory,
     send_raw_apdu, switch_profile, validate_device_imei_input, CardSnapshot, DownloadOutcome,
@@ -669,8 +669,8 @@ impl AppController {
                 self.refresh_readers_and_snapshot(false);
             }
             UiAction::AdbStartConnect => {
-                let client = HostClient::new(self.host.as_ref());
                 self.sync_adb_status();
+                let client = HostClient::new(self.host.as_ref());
                 match client.adb_begin_connect(60_000) {
                     Ok(()) => {
                         self.adb_waiting = true;
