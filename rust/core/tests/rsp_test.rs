@@ -183,8 +183,7 @@ fn test_notification_metadata_and_memory_reset() {
         b'.', b'c', b'a', b'r', b'r', b'i', b'e', b'r', b'.', b'c', b'o',
     ];
     let raw_dec =
-        NotificationMetadata::decode(&Asn1Reader::new(&raw).read_next().unwrap().unwrap())
-            .unwrap();
+        NotificationMetadata::decode(&Asn1Reader::new(&raw).read_next().unwrap().unwrap()).unwrap();
     assert_eq!(raw_dec.seq_number, 42);
     assert_eq!(raw_dec.profile_management_operation, 2);
     assert_eq!(raw_dec.notification_address, "smdp.carrier.co");

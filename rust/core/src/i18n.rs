@@ -144,7 +144,10 @@ const LOCALE_ARB_SOURCES: [(LocaleChoice, &str); 11] = [
     (LocaleChoice::En, include_str!("../../../l10n/app_en.arb")),
     (LocaleChoice::Vi, include_str!("../../../l10n/app_vi.arb")),
     (LocaleChoice::Zh, include_str!("../../../l10n/app_zh.arb")),
-    (LocaleChoice::ZhTw, include_str!("../../../l10n/app_zh-TW.arb")),
+    (
+        LocaleChoice::ZhTw,
+        include_str!("../../../l10n/app_zh-TW.arb"),
+    ),
     (LocaleChoice::Ja, include_str!("../../../l10n/app_ja.arb")),
     (LocaleChoice::Ko, include_str!("../../../l10n/app_ko.arb")),
     (LocaleChoice::De, include_str!("../../../l10n/app_de.arb")),
@@ -308,9 +311,7 @@ fn evaluate_placeholder(expr: &str, args: &[(&str, &str)]) -> Option<String> {
 }
 
 fn lookup_arg<'a>(name: &str, args: &[(&str, &'a str)]) -> Option<&'a str> {
-    args.iter()
-        .find(|(k, _)| *k == name)
-        .map(|(_, v)| *v)
+    args.iter().find(|(k, _)| *k == name).map(|(_, v)| *v)
 }
 
 fn pick_plural_branch(body: &str, count: i64) -> Option<&str> {

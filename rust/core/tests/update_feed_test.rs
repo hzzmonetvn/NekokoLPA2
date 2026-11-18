@@ -86,8 +86,7 @@ fn test_select_android_update_supports_legacy_open_and_multi_channels() {
         Some(610)
     );
     assert_eq!(
-        select_android_update(&legacy_feed, "open-rooted", &[COMMUNITY_CERT], 600)
-            .map(|u| u.build),
+        select_android_update(&legacy_feed, "open-rooted", &[COMMUNITY_CERT], 600).map(|u| u.build),
         Some(611)
     );
 

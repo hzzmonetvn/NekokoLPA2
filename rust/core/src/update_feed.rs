@@ -41,7 +41,12 @@ pub fn check_update_feed(
         "community"
     };
 
-    select_android_update(feed_json, variant, &[normalized_cert.as_str()], current_build)
+    select_android_update(
+        feed_json,
+        variant,
+        &[normalized_cert.as_str()],
+        current_build,
+    )
 }
 
 /// General Android update feed selector supporting multi-platform `nlpa2.json` objects or

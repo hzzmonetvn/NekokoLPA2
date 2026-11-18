@@ -32,23 +32,71 @@ fn test_all_11_arb_locales_load_with_vietnamese_included() {
 #[test]
 fn test_locale_resolution_and_placeholder_formatting() {
     assert_eq!(resolve_locale(LocaleChoice::Vi, "en-US"), LocaleChoice::Vi);
-    assert_eq!(resolve_locale(LocaleChoice::System, "vi-VN"), LocaleChoice::Vi);
-    assert_eq!(resolve_locale(LocaleChoice::System, "vi_VN"), LocaleChoice::Vi);
-    assert_eq!(resolve_locale(LocaleChoice::System, "zh-TW"), LocaleChoice::ZhTw);
-    assert_eq!(resolve_locale(LocaleChoice::System, "zh_HK"), LocaleChoice::ZhTw);
-    assert_eq!(resolve_locale(LocaleChoice::System, "zh_MO"), LocaleChoice::ZhTw);
-    assert_eq!(resolve_locale(LocaleChoice::System, "zh-Hant-HK"), LocaleChoice::ZhTw);
-    assert_eq!(resolve_locale(LocaleChoice::System, "zh-CN"), LocaleChoice::Zh);
-    assert_eq!(resolve_locale(LocaleChoice::System, "zh_Hans"), LocaleChoice::Zh);
-    assert_eq!(resolve_locale(LocaleChoice::System, "ja-JP"), LocaleChoice::Ja);
-    assert_eq!(resolve_locale(LocaleChoice::System, "ko-KR"), LocaleChoice::Ko);
-    assert_eq!(resolve_locale(LocaleChoice::System, "de-DE"), LocaleChoice::De);
-    assert_eq!(resolve_locale(LocaleChoice::System, "es-ES"), LocaleChoice::Es);
-    assert_eq!(resolve_locale(LocaleChoice::System, "fr-FR"), LocaleChoice::Fr);
-    assert_eq!(resolve_locale(LocaleChoice::System, "it-IT"), LocaleChoice::It);
-    assert_eq!(resolve_locale(LocaleChoice::System, "ru-RU"), LocaleChoice::Ru);
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "vi-VN"),
+        LocaleChoice::Vi
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "vi_VN"),
+        LocaleChoice::Vi
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "zh-TW"),
+        LocaleChoice::ZhTw
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "zh_HK"),
+        LocaleChoice::ZhTw
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "zh_MO"),
+        LocaleChoice::ZhTw
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "zh-Hant-HK"),
+        LocaleChoice::ZhTw
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "zh-CN"),
+        LocaleChoice::Zh
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "zh_Hans"),
+        LocaleChoice::Zh
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "ja-JP"),
+        LocaleChoice::Ja
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "ko-KR"),
+        LocaleChoice::Ko
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "de-DE"),
+        LocaleChoice::De
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "es-ES"),
+        LocaleChoice::Es
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "fr-FR"),
+        LocaleChoice::Fr
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "it-IT"),
+        LocaleChoice::It
+    );
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "ru-RU"),
+        LocaleChoice::Ru
+    );
     assert_eq!(resolve_locale(LocaleChoice::System, ""), LocaleChoice::En);
-    assert_eq!(resolve_locale(LocaleChoice::System, "pt-BR"), LocaleChoice::En);
+    assert_eq!(
+        resolve_locale(LocaleChoice::System, "pt-BR"),
+        LocaleChoice::En
+    );
 
     let catalog = I18nCatalog::new();
     let msg = catalog.format(
@@ -58,7 +106,16 @@ fn test_locale_resolution_and_placeholder_formatting() {
     );
     assert!(msg.contains("timeout"));
 
-    assert_eq!(catalog.format(LocaleChoice::En, "profileCount", &[("count", "1")]), "1 profile");
-    assert_eq!(catalog.format(LocaleChoice::En, "profileCount", &[("count", "5")]), "5 profiles");
-    assert_eq!(catalog.format(LocaleChoice::Vi, "missingKeyFallback", &[]), "missingKeyFallback");
+    assert_eq!(
+        catalog.format(LocaleChoice::En, "profileCount", &[("count", "1")]),
+        "1 profile"
+    );
+    assert_eq!(
+        catalog.format(LocaleChoice::En, "profileCount", &[("count", "5")]),
+        "5 profiles"
+    );
+    assert_eq!(
+        catalog.format(LocaleChoice::Vi, "missingKeyFallback", &[]),
+        "missingKeyFallback"
+    );
 }

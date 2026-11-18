@@ -64,7 +64,10 @@ fn test_decompose_bpp_segments_match_sgp22_order_and_reconstruct_exact_der() {
 
 #[test]
 fn test_decompose_bpp_rejects_invalid_root_or_empty() {
-    assert!(matches!(decompose_bpp(&[]), Err(Asn1Error::UnexpectedEof { .. })));
+    assert!(matches!(
+        decompose_bpp(&[]),
+        Err(Asn1Error::UnexpectedEof { .. })
+    ));
 
     let wrong = encode_tlv(0xBF20, &[0x82, 0x03, 0x02, 0x03, 0x00]);
     assert!(matches!(
@@ -79,12 +82,18 @@ fn test_decompose_bpp_rejects_invalid_root_or_empty() {
 #[test]
 fn test_cancel_session_request_der_matches_sgp22_vector() {
     let der = build_cancel_session_request_der(&[0x01, 0x02, 0x03, 0x04], 0x00);
-    assert_eq!(bytes_to_hex(&der).to_ascii_uppercase(), "BF4109800401020304810100");
+    assert_eq!(
+        bytes_to_hex(&der).to_ascii_uppercase(),
+        "BF4109800401020304810100"
+    );
 }
 
 #[test]
 fn test_euicc_memory_reset_apdu_data_matches_lpac() {
-    assert_eq!(bytes_to_hex(EUICC_MEMORY_RESET_APDU_DATA).to_ascii_uppercase(), "BF3404820205E0");
+    assert_eq!(
+        bytes_to_hex(EUICC_MEMORY_RESET_APDU_DATA).to_ascii_uppercase(),
+        "BF3404820205E0"
+    );
 }
 
 #[test]
