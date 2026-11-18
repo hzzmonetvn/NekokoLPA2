@@ -176,7 +176,11 @@ fn ensure_sw_ok(resp: &[u8], op: &str) -> Result<(), Box<dyn Error + Send + Sync
     if (sw1 == 0x90 && sw2 == 0x00) || sw1 == 0x91 {
         Ok(())
     } else {
-        Err(format!("{op} returned SW={sw1:02X}{sw2:02X} ({})", bytes_to_hex(resp)).into())
+        Err(format!(
+            "{op} returned SW={sw1:02X}{sw2:02X} ({})",
+            bytes_to_hex(resp)
+        )
+        .into())
     }
 }
 

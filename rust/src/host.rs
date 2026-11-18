@@ -27,8 +27,7 @@ impl HostCallError {
     /// Returns `true` when Android OMAPI signaled a corrupted/wedged Secure Element session.
     #[must_use]
     pub fn is_omapi_session_corrupted(&self) -> bool {
-        self.code == "OMAPI_SESSION_CORRUPTED"
-            || self.message.contains("OMAPI_SESSION_CORRUPTED")
+        self.code == "OMAPI_SESSION_CORRUPTED" || self.message.contains("OMAPI_SESSION_CORRUPTED")
     }
 }
 
@@ -249,8 +248,7 @@ impl<'a> HostClient<'a> {
         let v = self
             .transport
             .call_op("omapi.connect", json!({ "reader": reader }))?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn omapi_disconnect(&self, reader: &str) -> Result<(), HostCallError> {
@@ -273,13 +271,14 @@ impl<'a> HostClient<'a> {
             "omapi.openChannel",
             json!({ "reader": reader, "aids": aids }),
         )?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn omapi_close_channel(&self, reader: &str, aid: &str) -> Result<(), HostCallError> {
-        self.transport
-            .call_op("omapi.closeChannel", json!({ "reader": reader, "aid": aid }))?;
+        self.transport.call_op(
+            "omapi.closeChannel",
+            json!({ "reader": reader, "aid": aid }),
+        )?;
         Ok(())
     }
 
@@ -310,8 +309,10 @@ impl<'a> HostClient<'a> {
     }
 
     pub fn omapi_set_profile_switch_in_progress(&self, value: bool) -> Result<(), HostCallError> {
-        self.transport
-            .call_op("omapi.setProfileSwitchInProgress", json!({ "value": value }))?;
+        self.transport.call_op(
+            "omapi.setProfileSwitchInProgress",
+            json!({ "value": value }),
+        )?;
         Ok(())
     }
 
@@ -324,8 +325,7 @@ impl<'a> HostClient<'a> {
 
     pub fn telephony_list_slots(&self) -> Result<Vec<TelephonySlot>, HostCallError> {
         let v = self.transport.call_op("telephony.listSlots", json!({}))?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn telephony_open_channel(
@@ -338,8 +338,7 @@ impl<'a> HostClient<'a> {
             "telephony.openChannel",
             json!({ "slotIndex": slot_index, "portIndex": port_index, "aid": aid }),
         )?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn telephony_transmit(
@@ -410,8 +409,7 @@ impl<'a> HostClient<'a> {
 
     pub fn nbridge_list_slots(&self) -> Result<Vec<BridgeSlot>, HostCallError> {
         let v = self.transport.call_op("nbridge.listSlots", json!({}))?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn nbridge_connect_logical_channel(
@@ -423,8 +421,7 @@ impl<'a> HostClient<'a> {
             "nbridge.connectLogicalChannel",
             json!({ "slotId": slot_id, "aids": aids }),
         )?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn nbridge_transmit_logical(
@@ -460,9 +457,7 @@ impl<'a> HostClient<'a> {
     }
 
     pub fn adb_get_connect_command(&self) -> Result<String, HostCallError> {
-        let v = self
-            .transport
-            .call_op("adb.getConnectCommand", json!({}))?;
+        let v = self.transport.call_op("adb.getConnectCommand", json!({}))?;
         Ok(v.as_str()
             .or_else(|| v.get("command").and_then(Value::as_str))
             .unwrap_or_default()
@@ -492,8 +487,7 @@ impl<'a> HostClient<'a> {
 
     pub fn adb_list_slots(&self) -> Result<Vec<BridgeSlot>, HostCallError> {
         let v = self.transport.call_op("adb.listSlots", json!({}))?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn adb_connect_logical_channel(
@@ -505,8 +499,7 @@ impl<'a> HostClient<'a> {
             "adb.connectLogicalChannel",
             json!({ "slotId": slot_id, "aids": aids }),
         )?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn adb_transmit_logical(
@@ -626,10 +619,9 @@ impl<'a> HostClient<'a> {
     }
 
     pub fn se_hal_read(&self, slot: i32, apdu_hex: &str) -> Result<String, HostCallError> {
-        let v = self.transport.call_op(
-            "seHal.read",
-            json!({ "slot": slot, "apduHex": apdu_hex }),
-        )?;
+        let v = self
+            .transport
+            .call_op("seHal.read", json!({ "slot": slot, "apduHex": apdu_hex }))?;
         parse_hex_response(&v)
     }
 
@@ -771,8 +763,7 @@ impl<'a> HostClient<'a> {
 
     pub fn cert_get_info(&self) -> Result<CertInfoResult, HostCallError> {
         let v = self.transport.call_op("cert.getInfo", json!({}))?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn http_request(&self, args: &HttpRequestArgs) -> Result<HttpResponseData, HostCallError> {
@@ -781,8 +772,7 @@ impl<'a> HostClient<'a> {
             serde_json::to_value(args)
                 .map_err(|e| HostCallError::new("SERIALIZE_ERROR", e.to_string()))?,
         )?;
-        serde_json::from_value(v)
-            .map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
+        serde_json::from_value(v).map_err(|e| HostCallError::new("DECODE_ERROR", e.to_string()))
     }
 
     pub fn ui_copy_clipboard(&self, text: &str) -> Result<(), HostCallError> {

@@ -25,7 +25,12 @@ pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
         "Paste from Clipboard",
     );
     let lbl_scan = tr(catalog, locale, "scanQrCodeTooltip", "Scan QR Code");
-    let lbl_discover = tr(catalog, locale, "discoverProfiles", "Discover profiles (SM-DS)");
+    let lbl_discover = tr(
+        catalog,
+        locale,
+        "discoverProfiles",
+        "Discover profiles (SM-DS)",
+    );
     let lbl_cancel = tr(catalog, locale, "cancel", "Cancel");
 
     rsx! {

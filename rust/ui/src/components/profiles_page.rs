@@ -48,11 +48,8 @@ pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
     );
     let reader_count = model.readers.len();
 
-    let filtered = filter_and_sort_profiles(
-        &model.profiles,
-        &model.profile_search,
-        model.profile_sort,
-    );
+    let filtered =
+        filter_and_sort_profiles(&model.profiles, &model.profile_search, model.profile_sort);
 
     rsx! {
         div { class: "nlpa-col",

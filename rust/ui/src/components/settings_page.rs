@@ -22,8 +22,18 @@ pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
     let lbl_light = tr(catalog, locale, "light", "Light");
     let lbl_system = tr(catalog, locale, "system", "System");
     let lbl_wallpaper = tr(catalog, locale, "customBackground", "Custom Background");
-    let lbl_choose_bg = tr(catalog, locale, "chooseBackground", "Choose background image");
-    let lbl_remove_bg = tr(catalog, locale, "removeBackground", "Remove background image");
+    let lbl_choose_bg = tr(
+        catalog,
+        locale,
+        "chooseBackground",
+        "Choose background image",
+    );
+    let lbl_remove_bg = tr(
+        catalog,
+        locale,
+        "removeBackground",
+        "Remove background image",
+    );
     let lbl_opacity = tr(
         catalog,
         locale,
@@ -37,7 +47,12 @@ pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
     let lbl_adb_disconnect = tr(catalog, locale, "adbBridgeDisconnect", "Disconnect");
     let lbl_adb_copy = tr(catalog, locale, "adbBridgeCopy", "Copy ADB command");
     let lbl_remote_readers = tr(catalog, locale, "remoteReaders", "Remote Readers");
-    let lbl_mss = tr(catalog, locale, "apduMaxSegmentSize", "APDU Max Segment Size");
+    let lbl_mss = tr(
+        catalog,
+        locale,
+        "apduMaxSegmentSize",
+        "APDU Max Segment Size",
+    );
     let lbl_save = tr(catalog, locale, "save", "Save");
     let lbl_imei = tr(catalog, locale, "deviceImei", "Device TAC");
     let lbl_aids = tr(
@@ -54,7 +69,12 @@ pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
     let lbl_omapi = tr(catalog, locale, "enableOmapi", "OMAPI Connector");
     let lbl_tmapi = tr(catalog, locale, "enableTmapi", "Telephony API Connector");
     let lbl_qrtr = tr(catalog, locale, "qrtrReaderTitle", "Qualcomm modem (QRTR)");
-    let lbl_se_hal = tr(catalog, locale, "seHalReaderTitle", "SE HAL (direct access)");
+    let lbl_se_hal = tr(
+        catalog,
+        locale,
+        "seHalReaderTitle",
+        "SE HAL (direct access)",
+    );
     let lbl_ccid = tr(catalog, locale, "enableCcid", "USB CCID Connector");
     let opacity_value = format!("{:.2}", model.wallpaper_opacity.clamp(0.05, 0.95));
 

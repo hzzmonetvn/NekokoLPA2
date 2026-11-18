@@ -429,7 +429,10 @@ fn reader_eid_deduplication_follows_exact_priority_order() {
     );
 
     assert_eq!(ctrl.discovered_readers().len(), 1);
-    assert_eq!(ctrl.discovered_readers()[0].kind, TransportKind::NBridgeTmapi);
+    assert_eq!(
+        ctrl.discovered_readers()[0].kind,
+        TransportKind::NBridgeTmapi
+    );
 
     // Disable NBridge -> Telephony wins over OMAPI and ADB
     ctrl.dispatch_json(
@@ -561,7 +564,10 @@ fn se_hal_uncertain_switch_verifies_via_readback_without_double_switch() {
         .iter()
         .filter(|(op, _)| op == "seHal.switchProfile")
         .count();
-    assert_eq!(switch_calls, 1, "SE HAL must not double-submit switchProfile");
+    assert_eq!(
+        switch_calls, 1,
+        "SE HAL must not double-submit switchProfile"
+    );
     let snap = ctrl.active_snapshot().expect("snapshot present");
     assert!(snap.profiles[0].enabled);
 
@@ -672,7 +678,10 @@ fn notification_removal_requires_local_history_backup() {
         false,
         Some(TEST_EID),
     );
-    assert!(blocked.is_err(), "unbacked-up notification removal must fail safely");
+    assert!(
+        blocked.is_err(),
+        "unbacked-up notification removal must fail safely"
+    );
 
     let allowed = rust_lib_nlpa2::lpa_ops::remove_notification_safe(
         host,
@@ -683,7 +692,10 @@ fn notification_removal_requires_local_history_backup() {
         true,
         Some(TEST_EID),
     );
-    assert!(allowed.is_ok(), "backed-up notification removal must succeed");
+    assert!(
+        allowed.is_ok(),
+        "backed-up notification removal must succeed"
+    );
 }
 
 fn assert_allowed_hal_read_apdu(apdu_hex: &str) {
@@ -788,9 +800,7 @@ fn se_hal_download_uses_single_begin_end_and_valid_read_apdus() {
             ..AppConfig::default()
         },
     );
-    ctrl.dispatch_json(
-        r#"{"action":"toggle_reader_type","reader_type":"se_hal","enabled":true}"#,
-    );
+    ctrl.dispatch_json(r#"{"action":"toggle_reader_type","reader_type":"se_hal","enabled":true}"#);
     let reader = ctrl
         .discovered_readers()
         .first()
@@ -903,11 +913,13 @@ fn omapi_discovery_skips_empty_slots_with_pipe_and_flags_euicc_atr() {
         .calls
         .iter()
         .filter(|(op, args)| {
-            op == "omapi.connect"
-                && args["reader"].as_str().is_some_and(|r| r.contains('|'))
+            op == "omapi.connect" && args["reader"].as_str().is_some_and(|r| r.contains('|'))
         })
         .count();
-    assert_eq!(pipe_connects, 0, "empty slot strings with '|' must not be connected");
+    assert_eq!(
+        pipe_connects, 0,
+        "empty slot strings with '|' must not be connected"
+    );
 
     let _ = std::fs::remove_dir_all(&files_dir);
 }
