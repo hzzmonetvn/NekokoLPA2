@@ -1777,9 +1777,9 @@ impl AppController {
                 self.transfer.prompt_title = Some(msg.title);
                 self.transfer.prompt_text = Some(msg.text);
                 self.transfer.prompt_accept_label =
-                    msg.accept_button.then(|| msg.accept_button_label);
+                    msg.accept_button.then_some(msg.accept_button_label);
                 self.transfer.prompt_reject_label =
-                    msg.reject_button.then(|| msg.reject_button_label);
+                    msg.reject_button.then_some(msg.reject_button_label);
                 self.transfer.prompt_free_text = msg.accept_free_text;
                 self.active_transfer_client = Some(client);
                 self.active_transfer_result = Some(res);
@@ -1842,7 +1842,7 @@ impl AppController {
                     "Carrier is activating your subscription; check again shortly.".into();
                 self.transfer.is_busy = false;
             }
-            Some(Ts43Event::SmdsDiscovery { target_eid: _, .. }) => {
+            Some(Ts43Event::SmdsDiscovery { .. }) => {
                 self.transfer.state_label = "SM-DS Discovery".into();
                 self.execute_smds_discovery();
                 self.transfer.is_busy = false;
