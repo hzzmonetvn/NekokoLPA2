@@ -182,18 +182,13 @@ impl LpaEngine {
     /// Returns [`LpaError::ProfileNotFound`] if the ICCID is not in inventory.
     pub fn delete_profile(&mut self, iccid: &str) -> Result<EuiccProfile, LpaError> {
         let clean = iccid_for_display(iccid).to_string();
-        let prof = self
-            .profiles
-            .get(&clean)
-            .ok_or_else(|| LpaError::ProfileNotFound {
-                iccid: clean.clone(),
-            })?;
-
-        if prof.enabled {
+        if self.profiles.get(&clean).is_some_and(|prof| prof.enabled) {
             return Err(LpaError::CannotDeleteActiveProfile { iccid: clean });
         }
 
-        Ok(self.profiles.remove(&clean).expect("profile exists"))
+        self.profiles
+            .remove(&clean)
+            .ok_or(LpaError::ProfileNotFound { iccid: clean })
     }
 
     /// Updates the nickname of an existing profile.

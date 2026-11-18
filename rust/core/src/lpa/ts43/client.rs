@@ -558,21 +558,23 @@ impl Ts43Client {
             }
         };
 
+        let source_iccid = if source_profile_deletion_required(&manage_resp) {
+            first_non_empty(&[&offer.source_device.iccid, &offer.source_identity.iccid])
+        } else {
+            String::new()
+        };
         let mut result = Ts43Result {
             manage_subscription: Some(manage_resp.clone()),
             session: Some(TransferSession {
                 offer: offer.clone(),
-                source_profile_iccid: String::new(),
+                source_profile_iccid: source_iccid.clone(),
             }),
             ..Default::default()
         };
 
         if source_profile_deletion_required(&manage_resp) {
-            let session = result.session.as_mut().unwrap();
-            session.source_profile_iccid =
-                first_non_empty(&[&offer.source_device.iccid, &offer.source_identity.iccid]);
             result.state = Ts43State::PendingSourceProfileDeletion;
-            let ev = Ts43Event::SourceProfileDeletion(session.source_profile_iccid.clone());
+            let ev = Ts43Event::SourceProfileDeletion(source_iccid);
             result.event = Some(ev.clone());
             self.emit(ev);
             return Ok(result);

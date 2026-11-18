@@ -5,6 +5,21 @@ use core::fmt;
 use std::collections::BTreeMap;
 use std::error::Error;
 
+/// Default Maximum Segment Size (MSS) for APDU `STORE DATA` chaining, aligned with lpac.
+pub const DEFAULT_STORE_DATA_MSS: usize = 120;
+
+/// Normalizes an optional APDU `STORE DATA` segment size, defaulting to [`DEFAULT_STORE_DATA_MSS`]
+/// (`120`) and clamping `0` or values above `255` to `255`.
+#[must_use]
+pub fn effective_store_data_mss(mss: Option<usize>) -> usize {
+    let raw = mss.unwrap_or(DEFAULT_STORE_DATA_MSS);
+    if raw == 0 || raw > 255 {
+        255
+    } else {
+        raw
+    }
+}
+
 /// Error arising during logical channel management, APDU chaining, or OMAPI transport.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChannelError {
@@ -215,6 +230,21 @@ pub fn chain_apdu_request(
     }
 
     chained_packets
+}
+
+/// Splits an outgoing APDU payload into chained APDUs, defaulting `mss` to
+/// [`DEFAULT_STORE_DATA_MSS`] (`120`) when `None`.
+#[must_use]
+pub fn chain_apdu_request_with_default_mss(
+    cla: u8,
+    ins: u8,
+    p1: u8,
+    p2: u8,
+    data: &[u8],
+    le: Option<usize>,
+    mss: Option<usize>,
+) -> Vec<Vec<u8>> {
+    chain_apdu_request(cla, ins, p1, p2, data, le, effective_store_data_mss(mss))
 }
 
 /// Action determined by the [`ResponseReassembler`] after evaluating an APDU response.

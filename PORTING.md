@@ -1,157 +1,48 @@
-# Porting and verification status
+# Porting and verification status (`2.5.0+606` Pure Rust Rewrite)
 
 ## Implemented scope
 
-The current changes keep NekokoLPA2 Android-focused for this porting phase, retain the Rust backend, constrain Android packaging to ARM, add Vietnamese localization source assets, and add an AMOLED theme option. The community Android build targets ARMv7 and ARM64; the privileged app build is ARM64-only. The active CI workflows in this checkout include Android build/release and update-feed publication plus the separate `otbridge` Android APK. Removed workflows include iOS VoWiFi and web publishing. The `build.yml` workflow has no web, Linux, or Windows app build jobs. This does not imply every Rust helper or dependency is Android-specific.
+NekokoLPA2 (`2.5.0+606`) is now a **100% Pure Rust** Android-only (`arm64-v8a` / `armeabi-v7a`) application:
+- Flutter, Dart (`lib/`, `pubspec.yaml`, `l10n.yaml`, `test/**/*.dart`, `local_packages/`, `rust_builder/`), and `flutter_rust_bridge` are completely removed.
+- `nlpa_core` (`rust/core`, `v2.5.0`) implements the complete SGP.22/ES9+/ES10x/ES11/TS.43/SCP03 protocol stack, Bound Profile Package segmentation (`bpp`), ATR capability inspection (`atr`), eSTK/GM/provider plugins (`plugins`), RemoCard V2 codec (`remocard`), 11-locale ARB catalog (`i18n`), atomic JSON settings/history model (`storage`), and pinned update feed checker (`update_feed`).
+- `nlpa_ui` (`rust/ui`, `v2.5.0`) implements the Dioxus `0.6` SSR UI rendered inside an Android `WebView` with `#000000` AMOLED theme, translucent wallpaper glass across profile loading and Settings, `0.05..=0.95` opacity control, and all 11 locales (including selectable `Tiếng Việt (vi)`).
+- `rust_lib_nlpa2` (`rust`, `v2.5.0`) implements the native `AppController`, hardware transport adapters over `NativeHostBridge`, and direct JNI entry points (`RustBridge` + preserved `qrtr_bus.rs`), while Android Kotlin retains all native hardware and OMAPI/SE HAL/CCID/ADB/OTBridge safety boundaries.
 
-## Flutter Rust Bridge bindings
+## Verification policy & results
 
-Generated Flutter Rust Bridge 2.13.0 bindings are committed under `lib/src/rust` and `rust/src/frb_generated.rs`. The GitHub Actions Android job regenerates them after `flutter pub get` and fails if tracked outputs drift or new generated files are untracked. The generated API now includes the Rust ES11 discovery, profile-size prediction, telecom, and CCID bridge functions.
-
-## Verification results
-
-Run from `/home/opc/lpa/NekokoLPA2` unless noted.
+> Local builds/compilers (`cargo`, `rustc`, `rustfmt`, `clippy`, `gradle`) are disabled on the local development machine. All Rust workspace checks (`cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, `cargo doc --no-deps`) and Android APK builds execute on GitHub Actions (`.github/workflows/build.yml`).
 
 | Check | Result | Notes |
 |---|---|---|
-| `git diff --check` | PASS | No whitespace errors in the working-tree diff at time of check. |
-| Vietnamese ARB JSON | PASS | Both English and Vietnamese ARB files parse as JSON. |
-| ARB key parity | PASS | English and Vietnamese each have 926 message keys; no missing or extra keys. |
-| ICU/placeholder parity | PASS | Placeholder metadata and ICU argument names match for all messages, including plural messages. |
-| `dart format` | NOT RUN | Dart is not available on `PATH`. |
-| `flutter analyze` | NOT RUN | Flutter is not available on `PATH`. |
-| `flutter test` | NOT RUN | Flutter is not available on `PATH`. |
-| `cargo fmt --check` in workspace | PASS | Completed successfully. |
-| `cargo test --workspace` | PASS | Completed successfully across all crates (97 tests passed before profile-redaction tests were added; 11 redaction tests + error_codes + profile_tag added after). |
-| `cargo clippy --all-targets --all-features -- -D warnings` | PASS | Completed successfully without warnings across all workspace crates after redaction integration. |
-| `cargo fmt --check` in workspace | PASS | Completed successfully with zero formatting discrepancies after redaction integration. |
-| `cargo doc --no-deps` | PASS | Generated documentation cleanly with zero broken links or doc test warnings prior to redaction changes. |
-| Android ABI configuration inspection | PASS | `android/app/build.gradle.kts` filters `arm64-v8a` and `armeabi-v7a`; `android/gradle.properties` requests `android-arm,android-arm64`; CI privileged target is ARM64 only. No x86/x86_64 app ABI target appears in these active configurations. |
-| Android APK build | NOT RUN | Local VPS builds are strictly disabled; all APK packaging runs on GitHub Actions CI. |
-| `cargo test -p nlpa_core --test redaction_test` | PASS | 11 redaction tests pass. |
-| `cargo clippy -p nlpa_core -- -D warnings` | PASS | Zero warnings (field-reassign lint fixed). |
+| `git diff --check` | PASS | Executed locally; zero whitespace/conflict-marker issues. |
+| All 11 ARB JSON files (`json.load`) | PASS | Executed locally across `l10n/app_*.arb`. |
+| `python3 scripts/check_l10n.py` | PASS | 927 keys in `app_en.arb`, 10 translation files verified with zero duplicate or unknown keys. |
+| `cargo fmt --all -- --check` | CI (GitHub Actions) | Not run locally per local-build restriction. |
+| `cargo clippy --workspace --all-targets -- -D warnings` | CI (GitHub Actions) | Not run locally per local-build restriction. |
+| `cargo test --workspace` | CI (GitHub Actions) | Not run locally per local-build restriction. |
+| `cargo doc --no-deps` | CI (GitHub Actions) | Not run locally per local-build restriction. |
+| Android APK & Magisk ZIP packaging | CI (GitHub Actions) | Built via `cargo ndk` + `./gradlew assembleCommunityRelease` / `assemblePrivilegedRelease`. |
 
-## Ported Rust Modules (`nlpa_core` & `rust_lib_nlpa2`)
+## Complete Rust Core Modules (`nlpa_core`)
 
-| Original Dart Module | Rust Module | Porting Details |
+| Former Dart Module | Rust Module (`rust/core/src/`) | Porting Details |
 |---|---|---|
-| `lib/utils/profile_redaction.dart` and `lib/utils/size_formatter.dart` | `nlpa_core::redaction` | Pure redaction settings, profile display and operator helpers, country/flag formatting, tag filtering, and byte-size formatting. Async metadata warmup is represented by caller-supplied placeholders. |
-| `lib/utils/hex_utils.dart` | `nlpa_core::hex` | Rust equivalents exist, but active Dart paths remain authoritative: synchronous hex conversion is used on APDU/profile-package hot paths, while FRB calls are async. Do not count this as runtime-migrated without a sync bridge and parity/performance evidence. |
-| `lib/models/activation_code.dart` | `nlpa_core::activation_code` | Robust GSMA SGP.22 Activation Code parser/formatter (`LPA:1$<SMDP>$<MatchingId>[$<SMDP_OID>][$<CC>]`) with typed `ActivationCodeError`. |
-| `lib/utils/iccid_formatter.dart` | `nlpa_core::iccid` | ICCID BCD trailing filler stripper (`iccid_for_display`) and 4-digit grouped industrial formatter (`format_iccid_grouped`). |
-| `lib/utils/apdu_exception.dart` | `nlpa_core::apdu` | ISO 7816 / GSMA SGP.22 APDU status word validator returning typed `Result<(), ApduError>` (0x6985, 0x6881, 0x6A80, 0x6A88, 0x91XX proactive refresh). |
-| `lib/utils/imei_codec.dart` | `nlpa_core::imei` | 3GPP IMEI Luhn checksum algorithm (`calculate_imei_luhn_checksum`) and 8-byte packed BCD encoder/decoder (`imei_digits_from_stored_bytes`, `encode_stored_imei_bytes`). |
-| `lib/models/asn1/simple_reader.dart` | `nlpa_core::asn1` | ASN.1 DER stream parser and TLV hierarchy (`Asn1Reader`, `Asn1Node`), multi-byte tag parsing, length handling, and recursive sequence navigation. |
-| `lib/models/asn1/rsp_definitions.g.dart` | `nlpa_core::asn1::rsp` | Strongly typed GSMA SGP.22 RSP ASN.1 DER data structures and codecs in Rust. |
-| `lib/models/asn1/pe.dart` | `nlpa_core::asn1::pe` | GSMA SGP.22 Bound Profile Package (BPP) Profile Element stream parser and structural sequence validator. |
-| `lib/adapter/omapi_reader.dart` & `es10.dart` | `nlpa_core::lpa::es10` | ISO 7816-4 APDU STORE DATA builders targeting ISD-R AID and response validation. |
-| `lib/logic/lpa_engine.dart` | `nlpa_core::lpa::engine` | In-memory eUICC operational state machine with profile operation safety. |
-| `lib/logic/notification_dispatcher.dart` | `nlpa_core::lpa::notifications` | eUICC Notification Queue manager and ES10b.HandleNotification ACK APDU generator. |
-| `lib/ts43/` | `nlpa_core::lpa::ts43` | GSMA TS.43 carrier entitlement client configurations and HTTP headers generator. |
-| `lib/models/euicc_profile.dart` | `nlpa_core::profile` | GSMA eUICC profile representation, raw vs display ICCID separation, display name resolution logic. |
-| `lib/utils/cat_proactive.dart` | `nlpa_core::cat` | ETSI TS 102 221 / TS 102 223 / 3GPP TS 31.111 Card Application Toolkit proactive command encoder/decoder. Orphaned Dart implementation and tests deleted. |
-| `lib/utils/crypto_utils.dart` | `nlpa_core::crypto` | Standard SHA-256, GSMA SGP.22 HashCc, FIPS AES, CBC mode, PKCS#7, Base64, and telecom MAC support. |
-| `lib/utils/mcc_utils.dart` | `nlpa_core::mcc` | ITU-T E.212 MCC mapping, Unicode regional indicator flag emojis, and PLMN decoder. |
-| `lib/utils/notification_address_validator.dart` | `nlpa_core::notification_address` | Strict GSMA SGP.22 notification server address validator. |
-| `lib/adapter/omapi_channel.dart` & `channel_transport.dart` | `nlpa_core::channel` | ISO/IEC 7816-4 APDU transport, channel mapping, APDU framing and reassembly. |
-| `lib/es9/es9_client.dart` & `es9_models.dart` | `nlpa_core::es9` | GSMA SGP.22 ES9+ protocol endpoints and typed response DTO decoders. |
-| `lib/logic/profile_download_session.dart` | `nlpa_core::lpa::download_session` & `rust_lib_nlpa2::api::lpa` | GSMA SGP.22 eSIM profile download session lifecycle controller and bridge. |
-| `lib/logic/profile_state_transition.dart` | `nlpa_core::lpa::state_transition` & `rust_lib_nlpa2::api::lpa` | Idempotent profile state transition convergence controller. |
-| `lib/adapter/ccid/nine_esim_usb_protocol.dart` | `nlpa_core::atr`, `nlpa_core::ccid::nine_esim` & `rust_lib_nlpa2::api::ccid` | ATR parser, capability toggles, CRC-24, and vendor commands. |
-| `lib/models/isdp.dart` & `scp03.dart` | `nlpa_core::lpa::isdp`, `nlpa_core::lpa::scp03` & `rust_lib_nlpa2::api::lpa` | ISD-P lifecycle, SELECT/DELETE APDU builders, and GlobalPlatform SCP03 support. |
-| `lib/models/x509.dart` & `ci_verification.dart` | `nlpa_core::asn1::x509` & `rust_lib_nlpa2::api::lpa` | RFC 5280 X.509 certificate parsing and GSMA CI constraint verification. |
-| `lib/services/smds_discovery_service.dart` | `nlpa_core::lpa::es11` & `rust_lib_nlpa2::api::lpa` | GSMA SGP.22 ES11 SM-DS discovery protocol, host FQDN sanitization, authentication request builders, and response event decoder. |
-| `lib/services/profile_size_prediction_service.dart` | `nlpa_core::profile_size_predictor` & `rust_lib_nlpa2::api::lpa` | Multi-criteria profile size prediction and scoring catalog (RSP, PLMN, SPN, EUM prefix from EID). |
-| Bridge Layer | `rust_lib_nlpa2::api::telecom`, `api::lpa` & `api::ccid` | Flutter Rust Bridge exports for telecom, profile, LPA, and CCID operations. |
-
-## Profile tag and utility port notes
-
-| Dart API | Rust equivalent | Notes |
-|---|---|---|
-| `ProfileTagUtils.escapeContent`, `unescapeContent` | `profile_tag::{escape_content,unescape_content}` | Preserves replacement order. |
-| `ProfileTagUtils.parse`, `format`; `ProfileTag`, `TextTag`, `DateTag` | `profile_tag::{parse_nickname,format_nickname,ProfileTag}` | Hand-scanned tag matching; display names equal parsed names. |
-| `Tlv.parse`, `FileInfo.parse`, `SimApplication.parseRecord` | `nlpa_core::asn1::fcp::{parse_fcp,parse_application_record}` via `rust_lib_nlpa2::api::sim` | FCP and EF_DIR parsing is exposed through FRB; `lib/ts43/sim/tlv.dart` is deleted. Reuses DER length/value parsing while retaining SIM child-tag and byte-label behavior. |
-| `SizeFormatter.format` | `size_formatter::format_size` | Reuses `redaction::SizeUnit`. |
-| `locale_utils.dart` | Not ported | Flutter `Locale` resolution is UI/framework-specific. |
-
-Deliberate differences: Phone-number formatting/detection is omitted; `display_name` equals `name`. Date parsing avoids `chrono`; valid common date forms are formatted directly, and invalid dates have no display date instead of substituting the current date. Tag detection uses a byte scan rather than a regex crate. The SIM channel’s APDU sequencing and channel lifecycle remain in Dart; only FCP and EF_DIR record parsing moved to Rust. FCP parser errors cross FRB as strings.
-
-### SIM FCP and EF_DIR parser port
-
-- **Bridge API:** `parse_sim_fcp` returns `SimFileInfoDto` (structure, record size/count, file size); `parse_sim_application_record` returns an optional `SimApplicationDto` (AID and label).
-- **Preserved behavior:** EF_DIR trailing `0xff` padding is removed; all-padding records are absent; labels map each source byte to a Unicode code point as Dart `String.fromCharCodes` does; child extended tags are ignored for SIM field matching.
-- **Characterization tests:** `parses_file_control_fields`, `parses_descriptor_without_record_fields_and_ignores_extended_tags`, `rejects_missing_descriptor_and_bad_field_lengths`, `parses_application_record_and_trailing_padding`, and `handles_padding_missing_aid_and_dart_label_code_units` in `rust/core/src/asn1/fcp.rs`.
-- **Verification:** `cargo fmt --all -- --check`, `cargo test --workspace`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `dart format lib/ts43/source_sim_channel.dart lib/src/rust/api/sim.dart`, and `dart analyze lib/ts43/source_sim_channel.dart lib/src/rust` passed. APK packaging was not run locally; CI remains the Android build environment.
-
-## Profile redaction port notes
-
-### API mapping
-
-| Dart API | Rust equivalent |
-|---|---|
-| `redactEid`, `redactEidPreview` | `redact_eid`, `redact_eid_preview` |
-| `redactIccid`, `redactIccidPreview` | `redact_iccid`, `redact_iccid_preview` |
-| `displayName`, `operatorSummary` | `display_name`, `operator_summary` |
-| `tags` | `filter_tags` |
-| `flagUrl`, `flagEmoji` | `flag_url`, `profile_flag_emoji` |
-| `hideFlag`, `hideIcon`, `randomIcon` | `hide_flag`, `hide_icon`, `random_icon` |
-| `stableIndex` | `stable_index` |
-| `countryName`, `operatorTitle`, `operatorPlaceholder` | `country_name`, `operator_title`, `operator_placeholder` |
-| `_placeholderLabelFromMetadata` | `placeholder_label_from_metadata` |
-| `SizeFormatter.format` | `size_formatter::format_size` (shares `redaction::SizeUnit`) |
-
-### Test mapping
-
-| Characterization behavior | Rust integration test |
-|---|---|
-| Stable index determinism and zero modulo | `stable_index_is_deterministic_and_zero_modulo_is_zero` |
-| All-disabled EID preview mask collapse | `eid_redaction_preview_collapses_mask_runs` |
-| EID full reveal | `eid_reveal_full_returns_unchanged` |
-| ICCID preview ranges | `iccid_preview_keeps_enabled_ranges` |
-| Hidden nickname fallback | `display_name_hides_nickname_with_fallback` |
-| Country-name operator summary | `operator_summary_uses_country_name_mode` |
-| Hidden tags | `hide_tags_returns_empty` |
-| Shuffled flag URL form | `shuffled_flag_url_has_expected_shape` |
-| Regional indicator emoji | `flag_emoji_uses_regional_indicators` |
-| Known and unknown country codes | `country_name_known_and_unknown_codes` |
-| Flag/icon visibility and size units | `redaction_visibility_modes_and_size_formatter` |
-
-### Deliberate differences and preserved quirks
-
-- `stable_index` hashes UTF-8 bytes, unlike Dart's UTF-16 code units; results may differ for non-ASCII seeds.
-- Phone number detection is a hand-scanned approximation rather than Dart's regular expression; unusual Unicode or punctuation-heavy candidates may differ.
-- Async profile-metadata warmup and `AppSettings` singleton access are omitted; callers provide placeholder slices and a settings value explicitly.
-- Redaction mask runs of nine or more stars collapse to exactly eight, as in the Dart implementation.
-- The size formatter uses byte units and 1024-based adaptive thresholds, including the Dart `adaptive_si` quirk that labels binary-scaled values as KB/MB/GB.
-- The ICCID test pins Dart range behavior for the 20-character example: first 8 and final 6 positions are retained when enabled; overlap is clipped by source length.
-
-## SIM BCD decoder correction
-
-- `decode_bcd` keeps its existing infallible hexadecimal-output API. It now removes only a final high-nibble `F` filler; an `F` in any earlier or low-nibble position remains data, as do subsequent nibbles. `decode_swapped_bcd`, used by source-SIM ICCID/IMSI paths, separately trims only a final decoded `f` to match Dart's existing trailing-filler behavior.
-- `test_decode_bcd_trims_only_final_high_nibble_filler` covers empty input, terminal filler, misplaced `F`, and final-byte low-nibble `F`.
-- `parse_fcp` now rejects an unterminated extended child tag instead of interpreting its last tag byte as the TLV length. `rejects_unterminated_extended_child_tag` covers a malformed `0x9F` child at the end of an FCP template.
-- Strict rejection of A–E or misplaced `F` is not introduced: the decoder is shared by IMSI and ICCID paths, and changing those semantics needs a separate protocol-specific parity review.
-
-## Live SIM identifier decoder migration
-
-- **Runtime path:** `SourceSimChannel._readIccid` and `_readImsi` now call the Rust SIM FRB API after the Dart-owned APDU reads. APDU sequencing and channel lifecycle remain in Dart.
-- **API mapping:** `decodeSwappedBcd(..., stripLeadingNine: true)` → `decode_sim_iccid`; `Imsi.fromBytes(...).toString()` → `decode_sim_imsi`.
-- **Parity note:** The Rust swapped-BCD helper preserves the active Dart decoder's existing behavior of truncating at the last decoded `f`, then optionally removing a leading `9`. The general `decode_bcd` API remains unchanged for its other shared callers.
-- **Verification:** Rust decoder and bridge tests pass; `cargo fmt --all -- --check` and workspace Clippy pass. FRB 2.13.0 bindings were regenerated with the Flutter SDK at `/tmp/flutter-sdk-3.47.2/flutter`; Dart analysis and Flutter tests have not yet been run.
-
-## Live notification-address validator migration
-
-- **Runtime path:** `ProfileManager.retrieveNotifications` now awaits the Rust FRB validator for both the initial ListNotification address and the address recovered from the signed notification. Null remains invalid; APDU and recovery orchestration remain Dart-owned.
-- **API mapping:** `isValidNotificationAddress(String?)` → `is_valid_notification_address_bridge(Option<String>)` → `nlpa_core::is_valid_notification_address`.
-- **Parity:** Preserves whitespace rejection, ASCII-only input, the 253-byte limit, optional trailing dot, at least two labels, label length/hyphen rules, and alphabetic-leading TLD behavior.
-- **Verification:** Rust validator tests cover valid, malformed, whitespace, invalid labels, numeric TLD, and non-ASCII inputs; a Rust bridge unit test covers nullable behavior. `flutter analyze lib/logic/profile_manager.dart lib/src/rust` and Dart formatting passed. The focused notification recovery test uses the existing Dart validator through the constructor's injectable validator to avoid requiring native FRB initialization in the Flutter test runner; FRB boundary behavior is covered by a Rust unit test.
-
-## Rust utility migration assessment
-
-- `HexUtils.bytesToHex` and `hexToBytes` remain Dart-owned in live runtime paths. The generated FRB functions are asynchronous, while these helpers are synchronous and used for APDU and profile-package conversion; routing large payloads through the bridge would add copies and scheduling overhead. Their behavior is not interchangeable until parity is characterized (including spaces, odd digit counts, invalid characters, and nibble swapping). Do not remove the Dart implementation based solely on the existence of Rust helpers.
-- `ImeiCodec` and ICCID display helpers also have synchronous Dart callers and behavior that has not been proven equivalent to their Rust APIs. Defer those until caller graphs and parity are established.
-
-## Remaining issues
-
-- Run Flutter formatting, analysis, and tests with an installed Flutter SDK.
-- Build and inspect the Android APK using a supported Flutter/Android/JDK environment; no APK success is claimed here.
+| `lib/models/activation_code.dart` | `activation_code.rs` | SGP.22 activation code parser/formatter (`ActivationCode`, `ActivationCodeError`). |
+| `lib/utils/apdu_exception.dart` | `apdu.rs` | ISO 7816 / SGP.22 SW validator (`validate_apdu_sw`, `ApduError`). |
+| `lib/models/asn1/*` | `asn1/{der,fcp,pe,rsp,x509}.rs` | DER TLV reader/writer, SGP.22 RSP codecs, PE stream parser, SIM FCP/EF_DIR parser, RFC 5280 X.509 & CI verification. |
+| `lib/utils/atr_capabilities.dart` | `atr.rs` | `Atr` T=15/TCK parser plus `supports_euicc` (ETSI TS 102 221 V17.1.0 §6.3.3/Table 6.7) and `is_likely_euicc_atr`. |
+| `lib/logic/profile_manager.dart` (`_decomposeBpp`, `cancelSession`, `resetEuiccMemory`, NXP `DF25`) | `bpp.rs` | `decompose_bpp`, `build_cancel_session_request_der`, `EUICC_MEMORY_RESET_APDU_DATA`, `NxpMemoryInfo`, `parse_nxp_memory_tlv`. |
+| `lib/utils/cat_proactive.dart` | `cat.rs` | ETSI TS 102 223 / 3GPP TS 31.111 CAT proactive command codec. |
+| `lib/adapter/ccid/nine_esim_usb_protocol.dart` | `ccid/nine_esim.rs` | 9eSIM CRC-24, password, and ATR programming commands. |
+| `lib/adapter/euicc_adapter.dart`, `omapi_safety.dart` | `channel.rs` | `DEFAULT_STORE_DATA_MSS = 120`, logical channel CLA mapping, `chain_apdu_request`, `ResponseReassembler`, `OmapiChannelTracker`, `OmapiSafetyLatch`. |
+| `lib/utils/crypto_utils.dart`, `aes_cipher.dart` | `crypto.rs` | Zero-dependency SHA-1, SHA-256, HMAC-SHA1, FIPS-197 AES-128/256 CBC/PKCS#7, AES-CMAC, Base64, `HashCc`, `calc_host_mac`. |
+| `lib/utils/error_codes.dart` | `error_codes.rs` | Typed `AppErrorCode` and `AppException`. |
+| `lib/services/es9plus_service.dart` | `es9.rs` | ES9+ endpoint constants, headers, JSON builders, and response parsers. |
+| `lib/utils/hex_utils.dart`, `iccid_formatter.dart`, `imei_codec.dart`, `mcc_mapper.dart`, `notification_address.dart` | `hex.rs`, `iccid.rs`, `imei.rs`, `mcc.rs`, `notification_address.rs` | Pure Rust codecs, Luhn check, MCC/flag mapping, FQDN validator. |
+| `lib/utils/locale_utils.dart`, `l10n/app_*.arb` | `i18n.rs` | `LocaleChoice` (12 choices incl. `Vi` -> `Tiếng Việt`), `resolve_locale`, `I18nCatalog` embedding all 11 ARB files. |
+| `lib/logic/*`, `lib/services/*`, `lib/ts43/*` | `lpa/{download_session,engine,es10,es11,isdp,notifications,scp03,state_transition,ts43/*}.rs` | Download session, LPA state machine, ES10/ES11 builders/parsers, notification planner, SCP03, TS.43 EAP-AKA/ODSA client. |
+| `lib/plugins/{estk,gm,esim_cc,esim_gg,thk}_plugin.dart` | `plugins.rs` | `estk_extra_aids` / MGT helpers, `is_gm_eid` / `build_gm_auth_apdu`, `match_provider_plugin` / `eSIM.cc` / `eSIM.gg` / `3HK` badge parsers. |
+| `lib/models/euicc_profile.dart`, `profile_size_predictor.dart`, `profile_tag.dart`, `profile_redaction.dart`, `size_formatter.dart` | `profile.rs`, `profile_size_predictor.rs`, `profile_tag.rs`, `redaction.rs`, `size_formatter.rs` | Profile model, size catalog predictor, nickname tag parser, serde-enabled redaction rules, byte formatter. |
+| `lib/adapter/remote/remocard_adapter.dart` | `remocard.rs` | `RemoCardServer`, V2 request/response JSON codecs, and AES-256-CBC payload encryption/decryption. |
+| `lib/settings/app_settings.dart`, `lib/services/database_service.dart` | `storage.rs` | `ThemeStyle`, `ColorMode`, `PersistedNotification`, and `PersistedState` JSON persistence schema. |
+| `lib/services/update_feed.dart`, `update_service.dart` | `update_feed.rs` | `COMMUNITY_CERT` pinning, `open`/`community` vs `open-rooted`/`community-rooted` channel isolation, `check_update_feed`. |
