@@ -848,7 +848,9 @@ pub fn remove_notification_safe(
         return Ok(vec![("SE_HAL_REMOVE_NOTIF".into(), rx)]);
     }
     let mut ch = open_reader_channel(host, reader, state, omapi_latch)?;
-    let req_tlv = encode_tlv(TAG_REMOVE_NOTIFICATION, &encode_integer(i64::from(seq_number)));
+    let int_tlv = encode_integer(i64::from(seq_number));
+    let seq_octets = int_tlv.get(2..).unwrap_or(&[0x00]);
+    let req_tlv = encode_tlv(TAG_REMOVE_NOTIFICATION, &encode_tlv(0x80, seq_octets));
     let _ = ch.transmit_es10_tlv(&req_tlv)?;
     Ok(core::mem::take(&mut ch.apdu_log))
 }
