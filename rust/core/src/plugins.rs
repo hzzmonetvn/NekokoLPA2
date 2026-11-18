@@ -88,8 +88,7 @@ pub fn is_gm_eid(eid: &str) -> bool {
     let trimmed = eid.trim();
     trimmed.len() == 32
         && trimmed.bytes().all(|b| b.is_ascii_digit())
-        && trimmed >= GM_EID_MIN
-        && trimmed <= GM_EID_MAX
+        && (GM_EID_MIN..=GM_EID_MAX).contains(&trimmed)
 }
 
 /// Builds the GM card `BF71` mutual-authentication APDU (`81 E2 91 00`) using a fresh 16-byte

@@ -4,7 +4,6 @@ version = "2.5.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1"
 rm-client-core = "0.1.0"
 rm-qmi = { version = "0.1.0", features = ["qrtr"] }
 serde = { version = "1.0.229", features = ["derive"] }

@@ -141,7 +141,7 @@ fn parse_nxp_memory_tlv_internal(
     let mut b3_value: u64 = 0;
     let mut b14_value: u64 = 0;
 
-    for chunk in payload.chunks_exact(6) {
+    for chunk in payload.as_chunks::<6>().0 {
         let kind = chunk[0];
         let val = u64::from(u32::from_be_bytes([chunk[2], chunk[3], chunk[4], chunk[5]]));
         match kind {
