@@ -595,13 +595,13 @@ fn jni_lifecycle_wallpaper_opacity_vietnamese_roundtrip_and_atomic_persistence()
     assert!(doc.contains("#000000"));
 
     // Toggle wallpaper + opacity + locale vi + switch to Settings tab
-    handle_platform_event_json(concat!(
+    let _ = handle_platform_event_json(concat!(
         r#"{"type":"wallpaper_changed","active":true,"#,
         r#""path":"/data/user/0/app/files/wallpaper.img"}"#
     ));
-    dispatch_action_json(r#"{"action":"set_wallpaper_opacity","opacity":0.45}"#);
-    dispatch_action_json(r#"{"action":"set_locale","locale":"vi"}"#);
-    dispatch_action_json(r#"{"action":"set_theme_style","style":"amoled"}"#);
+    let _ = dispatch_action_json(r#"{"action":"set_wallpaper_opacity","opacity":0.45}"#);
+    let _ = dispatch_action_json(r#"{"action":"set_locale","locale":"vi"}"#);
+    let _ = dispatch_action_json(r#"{"action":"set_theme_style","style":"amoled"}"#);
     let render_json = dispatch_action_json(r#"{"action":"switch_tab","tab":"settings"}"#);
 
     let meta: RenderMeta = serde_json::from_str(&render_json).expect("valid RenderMeta JSON");

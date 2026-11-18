@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONObject
 
-class MainActivity : Activity(), UiHostHandler {
+class MainActivity : Activity() {
     private lateinit var rootLayout: FrameLayout
     private lateinit var wallpaperView: ImageView
     private lateinit var webView: WebView
@@ -172,7 +172,11 @@ class MainActivity : Activity(), UiHostHandler {
                 certificatePlugin = certificatePlugin,
                 ccidPlugin = ccidPlugin,
                 httpClient = httpClient,
-                uiHandler = this,
+                uiHandler =
+                    object : UiHostHandler {
+                        override fun handleUiOp(op: String, args: JSONObject): HostCallResult =
+                            this@MainActivity.handleUiOp(op, args)
+                    },
                 onStateUpdatedCallback = { scheduleAsyncRender() },
             )
 
@@ -496,7 +500,7 @@ class MainActivity : Activity(), UiHostHandler {
         }
     }
 
-    override fun handleUiOp(op: String, args: JSONObject): HostCallResult {
+    private fun handleUiOp(op: String, args: JSONObject): HostCallResult {
         return when (op) {
             "ui.copyClipboard" -> {
                 val text = args.optString("text", "")

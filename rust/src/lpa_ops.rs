@@ -89,6 +89,15 @@ impl From<ReaderError> for LpaOpError {
     }
 }
 
+/// Pairs of `(TX APDU/tag hex, RX response hex)` recorded during card operations.
+pub type ApduLog = Vec<(String, String)>;
+
+/// Outcome of a profile enable/disable convergence flow: `(apdu_log, refreshed_profiles)`.
+pub type SwitchOutcome = (ApduLog, Vec<EuiccProfile>);
+
+/// Outcome of an ES11 SM-DS event discovery call: `(events, apdu_log)`.
+pub type DiscoveryOutcome = (Vec<DiscoveredEvent>, ApduLog);
+
 /// Complete chip & profile snapshot loaded for a selected reader.
 #[derive(Debug, Clone, Default)]
 pub struct CardSnapshot {
@@ -360,9 +369,10 @@ pub fn load_card_snapshot(
     omapi_latch: &Arc<Mutex<OmapiSafetyLatch>>,
 ) -> Result<CardSnapshot, LpaOpError> {
     let mut ch = open_reader_channel(Arc::clone(&host), reader, state, omapi_latch)?;
-    let mut snap = CardSnapshot::default();
-
-    snap.eid = read_eid(&mut ch)?;
+    let mut snap = CardSnapshot {
+        eid: read_eid(&mut ch)?,
+        ..CardSnapshot::default()
+    };
     if !ch.is_se_hal() {
         if let Ok(cfg) = read_configured_addresses(&mut ch) {
             snap.configured = cfg;
@@ -591,7 +601,7 @@ pub fn switch_profile(
     iccid: &str,
     enable: bool,
     expected_eid: Option<&str>,
-) -> Result<(Vec<(String, String)>, Vec<EuiccProfile>), LpaOpError> {
+) -> Result<SwitchOutcome, LpaOpError> {
     let client_host = Arc::clone(&host);
     let client = HostClient::new(client_host.as_ref());
     let is_omapi = reader.kind == TransportKind::Omapi;
@@ -623,7 +633,7 @@ fn switch_profile_inner(
     iccid: &str,
     enable: bool,
     expected_eid: Option<&str>,
-) -> Result<(Vec<(String, String)>, Vec<EuiccProfile>), LpaOpError> {
+) -> Result<SwitchOutcome, LpaOpError> {
     let client = HostClient::new(host.as_ref());
     let policy = ProfileStateTransition::default();
 
@@ -704,7 +714,7 @@ fn verify_profile_convergence(
     iccid: &str,
     target_enabled: bool,
     attempts: usize,
-) -> Result<(Vec<(String, String)>, Vec<EuiccProfile>), LpaOpError> {
+) -> Result<SwitchOutcome, LpaOpError> {
     let clean_target = nlpa_core::iccid::iccid_for_display(iccid);
     let mut all_logs = Vec::new();
     let mut last_err = None;
@@ -1062,7 +1072,7 @@ pub fn discover_smds_events(
     state: &PersistedState,
     omapi_latch: &Arc<Mutex<OmapiSafetyLatch>>,
     smds_address: &str,
-) -> Result<(Vec<DiscoveredEvent>, Vec<(String, String)>), LpaOpError> {
+) -> Result<DiscoveryOutcome, LpaOpError> {
     let clean_smds = clean_smds_host(smds_address);
     let mut ch = open_reader_channel(Arc::clone(&host), reader, state, omapi_latch)?;
     let info1_tlv = encode_tlv(TAG_GET_EUICC_INFO1, &[]);
@@ -1284,7 +1294,7 @@ fn se_hal_iccid_bcd_hex(iccid: &str) -> String {
         .filter(|c| c.is_ascii_hexdigit())
         .collect::<String>()
         .to_ascii_uppercase();
-    if clean.len() % 2 != 0 {
+    if !clean.len().is_multiple_of(2) {
         clean.push('F');
     }
     swap_nibbles(&clean).to_ascii_uppercase()
