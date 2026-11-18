@@ -1,15 +1,17 @@
 [package]
 name = "rust_lib_nlpa2"
-version = "0.1.0"
+version = "2.5.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "staticlib", "rlib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = "1"
-flutter_rust_bridge = "=2.13.0"
 nlpa_core = { path = "core" }
+nlpa_ui = { path = "ui" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
 # Published crates: nothing here may point outside this repository, or a clean
 # checkout has nothing to resolve. `qrtr` is the only feature wanted, and with
 # it `rm-qmi` pulls in no USB: those sit behind its `usb` feature.

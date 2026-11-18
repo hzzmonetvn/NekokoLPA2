@@ -409,7 +409,7 @@ class OmapiCleanupCoordinatorTest {
     }
 
     @Test
-    fun flutterEngineRecreationDoesNotClearPoison() {
+    fun hostEngineRecreationDoesNotClearPoison() {
         assertRecreationDoesNotClearPoison()
     }
 

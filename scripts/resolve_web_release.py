@@ -10,6 +10,44 @@ from pathlib import Path
 from urllib.parse import quote
 
 TAG = re.compile(r"v\d+\.\d+\.\d+\+\d+")
+VERSION = re.compile(r"\d+\.\d+\.\d+\+\d+")
+
+
+def extract_version_from_gradle(gradle_text):
+    name_match = re.search(r'^\s*versionName\s*=\s*"([^"]+)"', gradle_text, re.M)
+    code_match = re.search(r'^\s*versionCode\s*=\s*(\d+)', gradle_text, re.M)
+    if name_match and code_match:
+        candidate = f"{name_match[1]}+{code_match[1]}"
+        if VERSION.fullmatch(candidate):
+            return candidate
+    return None
+
+
+def extract_version_from_pubspec(pubspec_text):
+    match = re.search(r"^version:\s*(\d+\.\d+\.\d+\+\d+)\s*$", pubspec_text, re.M)
+    return match[1] if match else None
+
+
+def resolve_version_for_sha(sha, api):
+    try:
+        source = api(f"contents/android/app/build.gradle.kts?ref={sha}")
+        gradle = base64.b64decode(source["content"]).decode()
+        version = extract_version_from_gradle(gradle)
+        if version is not None:
+            return version
+    except (KeyError, subprocess.CalledProcessError):
+        pass
+
+    try:
+        source = api(f"contents/pubspec.yaml?ref={sha}")
+        pubspec = base64.b64decode(source["content"]).decode()
+        version = extract_version_from_pubspec(pubspec)
+        if version is not None:
+            return version
+    except (KeyError, subprocess.CalledProcessError):
+        pass
+
+    return None
 
 
 def select_release(event_name, event, repository, api):
@@ -24,12 +62,10 @@ def select_release(event_name, event, repository, api):
             or run["head_repository"]["full_name"] != repository
         ):
             raise ValueError("Only successful release builds from this repository qualify")
-        source = api(f"contents/pubspec.yaml?ref={run['head_sha']}")
-        pubspec = base64.b64decode(source["content"]).decode()
-        version = re.search(r"^version:\s*(\d+\.\d+\.\d+\+\d+)\s*$", pubspec, re.M)
+        version = resolve_version_for_sha(run["head_sha"], api)
         if version is None:
             raise ValueError("The completed build has no release version")
-        tag = "v" + version[1]
+        tag = "v" + version
     elif event_name == "release":
         if event["release"]["draft"] or event["release"]["prerelease"]:
             return None

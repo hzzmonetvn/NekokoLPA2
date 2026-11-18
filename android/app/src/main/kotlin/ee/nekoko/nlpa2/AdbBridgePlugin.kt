@@ -1,16 +1,13 @@
 package ee.nekoko.nlpa2
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.plugin.common.EventChannel
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.Executors
 
 /**
  * The app's side of the ADB bridge.
@@ -18,103 +15,83 @@ import java.util.concurrent.Executors
  * It shows the command a person runs over ADB, holds the connection window
  * open while they do, and — once a `shell` helper has registered through
  * [AdbBridgeProvider] — forwards the card operations to it. The operations are
- * the ones [NBridgeAdapter] already drives, so the Dart adapter is shared in
+ * the ones [NBridgePlugin] already drives, so the host protocol is shared in
  * shape; only the transport differs.
  *
- * Calls into the helper block on the binder, so they run off the UI thread. A
- * separate event channel tells Dart when a helper comes and goes, so the
- * connect screen can follow along without polling.
+ * Calls into the helper block on the binder, so they run off the UI thread.
+ * State changes are forwarded to the host event sink when a helper comes and goes.
  */
-class AdbBridgePlugin :
-    FlutterPlugin,
-    MethodChannel.MethodCallHandler,
-    EventChannel.StreamHandler,
-    AdbBridgeHub.Listener {
-    private lateinit var channel: MethodChannel
-    private lateinit var events: EventChannel
-    private lateinit var context: Context
+internal class AdbBridgePlugin : AdbBridgeHub.Listener {
+    private var context: Context? = null
+    private var eventSink: HostEventSink? = null
+    private var worker: ExecutorService? = null
 
-    private val worker = Executors.newSingleThreadExecutor()
-    private val main = Handler(Looper.getMainLooper())
-
-    private var eventSink: EventChannel.EventSink? = null
-
-    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        context = binding.applicationContext
-        channel = MethodChannel(binding.binaryMessenger, CHANNEL)
-        channel.setMethodCallHandler(this)
-        events = EventChannel(binding.binaryMessenger, EVENTS)
-        events.setStreamHandler(this)
+    fun attach(appContext: Context, sink: HostEventSink) {
+        context = appContext.applicationContext
+        eventSink = sink
+        if (worker == null || worker?.isShutdown == true) {
+            worker = Executors.newSingleThreadExecutor()
+        }
         AdbBridgeHub.listener = this
     }
 
-    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
-        events.setStreamHandler(null)
-        if (AdbBridgeHub.listener === this) AdbBridgeHub.listener = null
+    fun detach() {
+        if (AdbBridgeHub.listener === this) {
+            AdbBridgeHub.listener = null
+        }
         AdbBridgeHub.closeWindow()
-        worker.shutdown()
-    }
-
-    override fun onListen(arguments: Any?, sink: EventChannel.EventSink) {
-        eventSink = sink
-        sink.success(if (AdbBridgeHub.isConnected()) STATE_CONNECTED else STATE_DISCONNECTED)
-    }
-
-    override fun onCancel(arguments: Any?) {
         eventSink = null
+        worker?.shutdown()
+        worker = null
+        context = null
     }
 
     override fun onBridgeConnected() {
-        main.post { eventSink?.success(STATE_CONNECTED) }
+        eventSink?.emit("adb_bridge_state", mapOf("connected" to true))
     }
 
     override fun onBridgeDisconnected() {
-        main.post { eventSink?.success(STATE_DISCONNECTED) }
+        eventSink?.emit("adb_bridge_state", mapOf("connected" to false))
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        when (call.method) {
-            "getConnectCommand" -> result.success(connectCommand())
-            "isConnected" -> result.success(AdbBridgeHub.isConnected())
-
+    fun call(method: String, args: JSONObject): HostCallResult {
+        return when (method) {
+            "getConnectCommand" -> HostCallResult.Success(connectCommand())
+            "isConnected" -> HostCallResult.Success(AdbBridgeHub.isConnected())
             "beginConnect" -> {
-                val timeout = (call.argument<Number>("timeoutMs") ?: DEFAULT_WINDOW_MS).toLong()
+                val requested = args.optLong("timeoutMs", DEFAULT_WINDOW_MS)
+                val timeout = if (requested > 0) requested else DEFAULT_WINDOW_MS
                 AdbBridgeHub.openWindow(timeout)
-                result.success(timeout)
+                HostCallResult.Success(timeout)
             }
             "cancelConnect" -> {
                 AdbBridgeHub.closeWindow()
-                result.success(null)
+                HostCallResult.Success(true)
             }
-            "disconnect" -> disconnect(result)
-
-            "listSlots" -> forward(result) { it.listSlots() }
-            "connectLogicalChannel" -> forward(result) {
-                it.openLogicalChannel(
-                    call.argument<String>("slotId") ?: invalid("slotId"),
-                    call.argument<List<String>>("aids") ?: emptyList(),
-                )
+            "disconnect" -> disconnect()
+            "listSlots" -> forward("listSlots") { it.listSlots() }
+            "connectLogicalChannel" -> {
+                val slotId = args.optString("slotId").ifBlank { invalid("slotId") }
+                val aids = args.optStringList("aids")
+                forward("connectLogicalChannel") { it.openLogicalChannel(slotId, aids) }
             }
-            "transmitLogical" -> forward(result) {
-                it.transmitLogical(
-                    call.argument<String>("connectionId") ?: invalid("connectionId"),
-                    call.argument<String>("apdu") ?: invalid("apdu"),
-                )
+            "transmitLogical" -> {
+                val connectionId =
+                    args.optString("connectionId").ifBlank { invalid("connectionId") }
+                val apdu = args.optString("apdu").ifBlank { invalid("apdu") }
+                forward("transmitLogical") { it.transmitLogical(connectionId, apdu) }
             }
-            "transmitBasic" -> forward(result) {
-                it.transmitBasic(
-                    call.argument<String>("slotId") ?: invalid("slotId"),
-                    call.argument<String>("apdu") ?: invalid("apdu"),
-                )
+            "transmitBasic" -> {
+                val slotId = args.optString("slotId").ifBlank { invalid("slotId") }
+                val apdu = args.optString("apdu").ifBlank { invalid("apdu") }
+                forward("transmitBasic") { it.transmitBasic(slotId, apdu) }
             }
-            "closeLogicalChannel" -> forward(result) {
-                it.closeLogicalChannel(
-                    call.argument<String>("connectionId") ?: invalid("connectionId"),
-                )
+            "closeLogicalChannel" -> {
+                val connectionId =
+                    args.optString("connectionId").ifBlank { invalid("connectionId") }
+                forward("closeLogicalChannel") { it.closeLogicalChannel(connectionId) }
             }
-
-            else -> result.notImplemented()
+            else -> HostCallResult.Error("UNSUPPORTED_METHOD", "Unknown ADB bridge method: $method")
         }
     }
 
@@ -122,71 +99,87 @@ class AdbBridgePlugin :
 
     /** Build the command for whichever flavour is installed. */
     private fun connectCommand(): String {
-        val pkg = context.packageName
+        val pkg = context?.packageName ?: BuildConfig.APPLICATION_ID
         return "adb shell \"CLASSPATH=\\\$(pm path $pkg | sed -n 's/^package://p' | " +
             "head -n1) app_process / ee.nekoko.nlpa2.AdbBridgeStarter $pkg\""
     }
 
-    /** Run `call` against the helper off the UI thread, JSON answer to a map. */
-    private fun forward(result: MethodChannel.Result, call: (IAdbBridge) -> String) {
+    /** Run `call` against the helper off the calling thread, JSON answer to [HostCallResult]. */
+    private fun forward(method: String, call: (IAdbBridge) -> String): HostCallResult {
         val binder = AdbBridgeHub.bridge()
         if (binder == null || !binder.isBinderAlive) {
-            main.post {
-                result.success(errorMap("NO_BRIDGE", "No computer connection is active"))
-            }
-            return
+            return HostCallResult.Error("NO_BRIDGE", "No computer connection is active")
         }
 
+        val executor =
+            worker ?: return HostCallResult.Error("ERROR", "ADB bridge worker unavailable")
         val service = IAdbBridge.Stub.asInterface(binder)
-        worker.execute {
-            val answer = try {
-                jsonToMap(JSONObject(call(service)))
+        val future = CompletableFuture<HostCallResult>()
+        executor.execute {
+            try {
+                val obj = JSONObject(call(service))
+                val ok = obj.optBoolean("ok", false)
+                if (!ok) {
+                    val code = obj.optString("errorCode", "ERROR").ifBlank { "ERROR" }
+                    val message =
+                        obj.optString("errorMessage", "Unknown ADB bridge error")
+                            .ifBlank { "Unknown ADB bridge error" }
+                    future.complete(HostCallResult.Error(code, message, obj.jsonObjectToMap()))
+                } else {
+                    val data: Any? =
+                        when (method) {
+                            "listSlots" -> obj.optJSONArray("slots") ?: JSONArray()
+                            "transmitLogical", "transmitBasic" ->
+                                obj.optString("responseApdu", "")
+                            "closeLogicalChannel" -> true
+                            else -> obj.jsonObjectToMap()
+                        }
+                    future.complete(HostCallResult.Success(data))
+                }
             } catch (e: Throwable) {
                 Log.w(TAG, "helper call failed", e)
-                errorMap("BRIDGE_CALL_FAILED", e.message ?: e.toString())
+                future.complete(
+                    HostCallResult.Error("BRIDGE_CALL_FAILED", e.message ?: e.toString()),
+                )
             }
-            main.post { result.success(answer) }
+        }
+        return try {
+            future.get(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            HostCallResult.Error("BRIDGE_CALL_FAILED", e.message ?: "ADB bridge timed out")
         }
     }
 
-    private fun disconnect(result: MethodChannel.Result) {
+    private fun disconnect(): HostCallResult {
         val binder = AdbBridgeHub.bridge()
-        worker.execute {
+        val executor = worker
+        if (executor == null) {
+            AdbBridgeHub.disconnect()
+            return HostCallResult.Success(true)
+        }
+        val future = CompletableFuture<HostCallResult>()
+        executor.execute {
             if (binder != null && binder.isBinderAlive) {
                 try {
                     // The helper exits while answering, so a dead binder here is
                     // the expected outcome, not a failure.
                     IAdbBridge.Stub.asInterface(binder).shutdown()
-                } catch (_: Throwable) {
-                }
+                } catch (_: Throwable) {}
             }
             AdbBridgeHub.disconnect()
-            main.post { result.success(null) }
+            future.complete(HostCallResult.Success(true))
         }
-    }
-
-    private fun errorMap(code: String, message: String): Map<String, Any?> =
-        linkedMapOf("ok" to false, "errorCode" to code, "errorMessage" to message)
-
-    private fun jsonToMap(obj: JSONObject): Map<String, Any?> {
-        val map = linkedMapOf<String, Any?>()
-        for (key in obj.keys()) map[key] = normalize(obj.get(key))
-        return map
-    }
-
-    private fun normalize(value: Any?): Any? = when (value) {
-        is JSONObject -> jsonToMap(value)
-        is JSONArray -> (0 until value.length()).map { normalize(value.get(it)) }
-        JSONObject.NULL -> null
-        else -> value
+        return try {
+            future.get(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (_: Exception) {
+            AdbBridgeHub.disconnect()
+            HostCallResult.Success(true)
+        }
     }
 
     companion object {
         private const val TAG = "AdbBridgePlugin"
-        private const val CHANNEL = "nlpa2/adb_bridge"
-        private const val EVENTS = "nlpa2/adb_bridge/events"
-        private const val STATE_CONNECTED = "connected"
-        private const val STATE_DISCONNECTED = "disconnected"
         private const val DEFAULT_WINDOW_MS = 120_000L
+        private const val CALL_TIMEOUT_SECONDS = 60L
     }
 }

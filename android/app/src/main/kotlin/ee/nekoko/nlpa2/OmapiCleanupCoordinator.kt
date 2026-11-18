@@ -57,7 +57,7 @@ internal interface OmapiCleanupBackend<C> {
 
 /**
  * Process-local ownership complements the durable ARMED marker. A surviving in-process owner means
- * an overlapping Flutter engine must wait for that owner's asynchronous cleanup instead of treating
+ * an overlapping host engine must wait for that owner's asynchronous cleanup instead of treating
  * the marker as evidence of a process crash. The registry disappears on real process death, while
  * the durable marker does not.
  */
