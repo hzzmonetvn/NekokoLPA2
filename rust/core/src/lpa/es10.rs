@@ -1,36 +1,33 @@
 //! GSMA SGP.22 ES10 (eUICC <-> LPA) APDU command builders and response parsers.
 
 use crate::apdu::{validate_apdu_sw, ApduError};
+use crate::asn1::encode_tlv;
 use crate::asn1::rsp::{
-    DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest, EuiccMemoryResetRequest,
-    SetNicknameRequest, TAG_GET_CONFIGURED_ADDRESSES, TAG_GET_EUICC_CHALLENGE, TAG_GET_EUICC_INFO1,
-    TAG_GET_EUICC_INFO2, TAG_GET_PROFILES_INFO, TAG_LIST_NOTIFICATION,
+    encode_implicit_integer, encode_mgmt_op_bit_string, DeleteProfileRequest,
+    DisableProfileRequest, EnableProfileRequest, EuiccMemoryResetRequest, SetNicknameRequest,
+    TAG_GET_CONFIGURED_ADDRESSES, TAG_GET_EUICC_CHALLENGE, TAG_GET_EUICC_INFO1,
+    TAG_GET_EUICC_INFO2, TAG_GET_PROFILES_INFO, TAG_LIST_NOTIFICATION, TAG_PROFILE_MGMT_OP,
+    TAG_REMOVE_NOTIFICATION, TAG_SEQ_NUMBER,
 };
-use crate::asn1::{encode_integer, encode_tlv};
 
 /// Standard ISD-R (Issuer Security Domain Root) Application Identifier.
 pub const ISDR_AID: [u8; 16] = [
     0xA0, 0x00, 0x00, 0x05, 0x59, 0x10, 0x10, 0xFF, 0xFF, 0xFF, 0xFF, 0x89, 0x00, 0x00, 0x01, 0x00,
 ];
 
-/// Encapsulates a command payload into an ISO 7816-4 Case 4 APDU:
-/// `CLA=0x80 / 0x81`, `INS=0xE2` (STORE DATA), `P1=0x88` (last block / command), `P2=0x00`.
+/// Encapsulates a command payload into a GSMA SGP.22 §5.7.2 `STORE DATA` APDU:
+/// `CLA=0x80`, `INS=0xE2` (`STORE DATA`), `P1=0x91` (last block) or `0x11` (more blocks),
+/// `P2=0x00` (block number), `Lc`, and `payload` (no trailing `Le` byte).
 #[must_use]
-pub fn wrap_store_data_apdu(payload: &[u8], is_first: bool, is_last: bool) -> Vec<u8> {
-    let p1 = match (is_first, is_last) {
-        (true, true) => 0x88,
-        (true, false) => 0x08,
-        (false, true) => 0x80,
-        (false, false) => 0x00,
-    };
-    let mut apdu = Vec::with_capacity(5 + payload.len() + 1);
-    apdu.push(0x80); // CLA (GlobalPlatform / proprietary)
+pub fn wrap_store_data_apdu(payload: &[u8], _is_first: bool, is_last: bool) -> Vec<u8> {
+    let p1 = if is_last { 0x91 } else { 0x11 };
+    let mut apdu = Vec::with_capacity(5 + payload.len());
+    apdu.push(0x80); // CLA (GlobalPlatform / SGP.22)
     apdu.push(0xE2); // INS (STORE DATA)
-    apdu.push(p1); // P1 (Block qualifiers)
+    apdu.push(p1); // P1 (SGP.22: 0x91 last block, 0x11 more blocks)
     apdu.push(0x00); // P2 (Block number)
     apdu.push(payload.len() as u8); // Lc
     apdu.extend_from_slice(payload);
-    apdu.push(0x00); // Le
     apdu
 }
 
@@ -115,22 +112,26 @@ pub fn build_set_nickname_apdu(iccid: &str, nickname: &str) -> Vec<u8> {
     wrap_store_data_apdu(&payload, true, true)
 }
 
-/// Builds an ES10b.ListNotification APDU.
+/// Builds an ES10b.ListNotification APDU (`0xBF28`), optionally filtering by
+/// `profileManagementOperation` BIT STRING (`0x81`).
 #[must_use]
 pub fn build_list_notifications_apdu(seq: Option<u32>) -> Vec<u8> {
     let payload = match seq {
-        Some(s) => encode_integer(i64::from(s)),
+        Some(op) => {
+            let bits = encode_mgmt_op_bit_string(op.to_le_bytes()[0]);
+            encode_tlv(TAG_PROFILE_MGMT_OP, &bits)
+        }
         None => Vec::new(),
     };
     let tlv = encode_tlv(TAG_LIST_NOTIFICATION, &payload);
     wrap_store_data_apdu(&tlv, true, true)
 }
 
-/// Builds an ES10b.RemoveNotificationFromList APDU.
+/// Builds an ES10b.RemoveNotificationFromList APDU (`NotificationSentRequest`, `0xBF30`).
 #[must_use]
 pub fn build_remove_notification_apdu(seq_number: u32) -> Vec<u8> {
-    let payload = encode_integer(i64::from(seq_number));
-    let tlv = encode_tlv(0xBF30, &payload);
+    let payload = encode_implicit_integer(TAG_SEQ_NUMBER, i64::from(seq_number));
+    let tlv = encode_tlv(TAG_REMOVE_NOTIFICATION, &payload);
     wrap_store_data_apdu(&tlv, true, true)
 }
 

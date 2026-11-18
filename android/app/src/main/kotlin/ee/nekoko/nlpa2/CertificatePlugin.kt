@@ -4,68 +4,53 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.Signature
 import android.os.Build
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
 import java.security.MessageDigest
-import java.util.*
 
-class CertificatePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
-    private lateinit var channel: MethodChannel
-    private lateinit var context: Context
+internal class CertificatePlugin {
+    private var context: Context? = null
 
-    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        context = binding.applicationContext
-        channel = MethodChannel(binding.binaryMessenger, "ee.nekoko.certificate_plugin")
-        channel.setMethodCallHandler(this)
+    fun attach(appContext: Context) {
+        context = appContext.applicationContext
     }
 
-    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
+    fun detach() {
+        context = null
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        if (call.method == "getCertificateHashes") {
-            try {
-                val currentHashes = getHashes(getCurrentSignatures())
-                val aramHashes = getHashes(getAramSignatures())
-
-                result.success(
-                        mapOf(
-                                "sha256" to currentHashes.sha256,
-                                "sha1" to currentHashes.sha1,
-                                "aramSha256" to aramHashes.sha256,
-                                "aramSha1" to aramHashes.sha1
-                        )
-                )
-            } catch (e: Exception) {
-                result.error("ERROR", e.message, null)
-            }
-        } else if (call.method == "getAbi") {
-            try {
-                result.success(Build.SUPPORTED_ABIS.toList())
-            } catch (e: Exception) {
-                result.error("ERROR", e.message, null)
-            }
-        } else {
-            result.notImplemented()
+    fun getInfo(): HostCallResult {
+        val appContext =
+            context ?: return HostCallResult.Error("NOT_ATTACHED", "Context unavailable")
+        return try {
+            val currentHashes = getHashes(getCurrentSignatures(appContext))
+            val aramHashes = getHashes(getAramSignatures(appContext))
+            HostCallResult.Success(
+                mapOf(
+                    "sha256" to currentHashes.sha256,
+                    "sha1" to currentHashes.sha1,
+                    "aramSha256" to aramHashes.sha256,
+                    "aramSha1" to aramHashes.sha1,
+                    "abis" to Build.SUPPORTED_ABIS.toList(),
+                ),
+            )
+        } catch (e: Exception) {
+            HostCallResult.Error("ERROR", e.message ?: "Failed to read certificate info")
         }
     }
 
     @Suppress("DEPRECATION")
-    private fun getCurrentSignatures(): Array<Signature>? {
+    private fun getCurrentSignatures(appContext: Context): Array<Signature>? {
         val info =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    context.packageManager.getPackageInfo(
-                            context.packageName,
-                            PackageManager.GET_SIGNING_CERTIFICATES
-                    )
-                } else {
-                    context.packageManager.getPackageInfo(
-                            context.packageName,
-                            PackageManager.GET_SIGNATURES
-                    )
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                appContext.packageManager.getPackageInfo(
+                    appContext.packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES,
+                )
+            } else {
+                appContext.packageManager.getPackageInfo(
+                    appContext.packageName,
+                    PackageManager.GET_SIGNATURES,
+                )
+            }
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             info.signingInfo?.apkContentsSigners
@@ -75,20 +60,20 @@ class CertificatePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     @Suppress("DEPRECATION")
-    private fun getAramSignatures(): Array<Signature>? {
+    private fun getAramSignatures(appContext: Context): Array<Signature>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            return context.packageManager
-                    .getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES)
-                    .signatures
+            return appContext.packageManager
+                .getPackageInfo(appContext.packageName, PackageManager.GET_SIGNATURES)
+                .signatures
         }
 
         val signingInfo =
-                context.packageManager
-                        .getPackageInfo(
-                                context.packageName,
-                                PackageManager.GET_SIGNING_CERTIFICATES
-                        )
-                        .signingInfo ?: return null
+            appContext.packageManager
+                .getPackageInfo(
+                    appContext.packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES,
+                )
+                .signingInfo ?: return null
 
         // Existing Android SecureElement releases authorize the oldest signer after a key
         // rotation, while newer native OMAPI releases authorize the current signer. Returning
@@ -97,15 +82,15 @@ class CertificatePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             signingInfo.apkContentsSigners
         } else {
             signingInfo.signingCertificateHistory?.takeIf { it.isNotEmpty() }
-                    ?: signingInfo.apkContentsSigners
+                ?: signingInfo.apkContentsSigners
         }
     }
 
     private fun getHashes(signatures: Array<Signature>?): CertificateHashes {
         val certificates = signatures.orEmpty().map { it.toByteArray() }
         return CertificateHashes(
-                sha256 = certificates.map { getHash(it, "SHA-256") }.distinct(),
-                sha1 = certificates.map { getHash(it, "SHA-1") }.distinct()
+            sha256 = certificates.map { getHash(it, "SHA-256") }.distinct(),
+            sha1 = certificates.map { getHash(it, "SHA-1") }.distinct(),
         )
     }
 

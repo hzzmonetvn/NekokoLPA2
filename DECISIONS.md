@@ -346,3 +346,17 @@
 - **Choice:** When a custom background exists, profile loading overlays use the shared low-alpha glass decoration, and settings section panels use its translucent fill. Without a custom background, their existing solid surface treatment remains.
 - **Alternatives Considered:** Removing the loading overlay fill or globally making theme surfaces transparent.
 - **Reasoning:** Local conditional styling reveals wallpaper without changing loading readability, default theme appearance, or unrelated components.
+
+## 40. 100% Pure Rust Android Rewrite (`2.5.0+606`, Dioxus 0.6 SSR + Direct JNI)
+- **Choice:** Completely removed Flutter, Dart (`lib/`, `pubspec.yaml`, `local_packages/`, `rust_builder/`), and `flutter_rust_bridge`, rewriting the entire application logic and UI in Pure Rust (`nlpa_core`, `nlpa_ui` with `dioxus-ssr = "0.6"`, and `rust_lib_nlpa2` JNI controller) paired with a pure-Kotlin Android `MainActivity` hosting a full-bleed `WebView` + `wallpaperView` and native hardware transports (`Omapi*`, `Telephony*`, `NBridge*`, `AdbBridge*`, `QrtrUserService`, `CcidManager`).
+- **New Core Modules (`nlpa_core`):**
+  - `channel::DEFAULT_STORE_DATA_MSS = 120` aligned with upstream `62d7b0c`.
+  - `atr::supports_euicc` and `atr::is_likely_euicc_atr` porting ETSI TS 102 221 V17.1.0 §6.3.3/Table 6.7 plus 9eSIM `T=15` global interface capability detection.
+  - `bpp` (`decompose_bpp`, `build_cancel_session_request_der`, `EUICC_MEMORY_RESET_APDU_DATA`, `parse_nxp_memory_tlv`).
+  - `plugins` (`estk_extra_aids` / MGT helpers, `is_gm_eid` / `build_gm_auth_apdu`, `eSIM.cc` / `eSIM.gg` / `3HK` provider badges).
+  - `remocard` (RemoCard V2 JSON builders/parsers and AES-256-CBC payload encryption).
+  - `i18n` (compile-time embedding of all 11 `l10n/app_*.arb` files including explicit `Tiếng Việt (vi)` selector support and `{name}` / ICU plural formatting).
+  - `storage` (`PersistedState` atomic JSON persistence replacing SQLite/SharedPreferences) and `update_feed` (`COMMUNITY_CERT` pinning and `community`/`open` vs `community-rooted`/`open-rooted` channel isolation).
+- **UI Fixes & Verification Policy:** Preserved `#000000` AMOLED styling, fixed wallpaper transparency during profile loading and inside Settings alongside the `0.05..=0.95` glass opacity slider, and exposed all 11 locales including `Tiếng Việt` in Settings. Local builds (`cargo`, `rustc`, `gradle`, etc.) are disabled; all builds, `cargo clippy`, `cargo test --workspace`, and APK packaging run on GitHub Actions CI.
+- **Alternatives Considered:** Incremental FRB migration or keeping Flutter UI on top of Rust core.
+- **Reasoning:** Eliminating the Dart/Flutter runtime and FRB codegen boundary eliminates dual-language duplication, slashes APK size, removes async FFI bottlenecks, and keeps 100% of business logic, UI rendering, and SGP.22/TS.43 protocol handling in memory-safe Rust.

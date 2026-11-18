@@ -1,13 +1,23 @@
-pub mod apdu_console;
-pub mod download_modal;
-pub mod euicc_dialog;
-pub mod profile_card;
-pub mod profile_list;
-pub mod reader_selector;
+//! Dioxus 0.6 SSR UI components and localization lookup helpers.
 
-pub use apdu_console::*;
-pub use download_modal::*;
-pub use euicc_dialog::*;
-pub use profile_card::*;
-pub use profile_list::*;
-pub use reader_selector::*;
+pub mod app;
+pub mod download_page;
+pub mod modals;
+pub mod notifications_page;
+pub mod profiles_page;
+pub mod settings_page;
+pub mod transfer_page;
+
+use nlpa_core::i18n::{resolve_locale, I18nCatalog, LocaleChoice};
+
+/// Translates an ARB key using [`I18nCatalog`], falling back to `fallback` if missing.
+#[must_use]
+pub fn tr(catalog: &I18nCatalog, locale: LocaleChoice, key: &str, fallback: &str) -> String {
+    let resolved = resolve_locale(locale, "");
+    let value = catalog.get(resolved, key);
+    if value.is_empty() || value == key {
+        fallback.to_string()
+    } else {
+        value.to_string()
+    }
+}

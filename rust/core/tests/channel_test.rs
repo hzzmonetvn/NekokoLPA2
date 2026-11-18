@@ -1,7 +1,8 @@
 use nlpa_core::{
     build_manage_channel_close_apdu, build_manage_channel_open_apdu, chain_apdu_request,
-    frame_apdu_command, map_logical_channel_cla, ChannelError, OmapiChannelTracker,
-    OmapiSafetyLatch, ReassemblyAction, ResponseReassembler,
+    chain_apdu_request_with_default_mss, effective_store_data_mss, frame_apdu_command,
+    map_logical_channel_cla, ChannelError, OmapiChannelTracker, OmapiSafetyLatch, ReassemblyAction,
+    ResponseReassembler, DEFAULT_STORE_DATA_MSS,
 };
 
 #[test]
@@ -166,4 +167,35 @@ fn test_omapi_channel_tracker_and_safety_latch() {
     latch.recover();
     assert!(!latch.is_poisoned());
     assert!(latch.check_safety().is_ok());
+}
+
+#[test]
+fn test_default_store_data_mss_and_clamping() {
+    assert_eq!(DEFAULT_STORE_DATA_MSS, 120);
+    assert_eq!(effective_store_data_mss(None), 120);
+    assert_eq!(effective_store_data_mss(Some(0)), 255);
+    assert_eq!(effective_store_data_mss(Some(300)), 255);
+    assert_eq!(effective_store_data_mss(Some(120)), 120);
+
+    // 250 bytes at default MSS=120 -> 3 blocks (120 + 120 + 10)
+    let payload = vec![0xCC; 250];
+    let packets = chain_apdu_request_with_default_mss(0x80, 0xE2, 0x11, 0x00, &payload, None, None);
+    assert_eq!(packets.len(), 3);
+    assert_eq!(packets[0][2], 0x11); // not last
+    assert_eq!(packets[0][3], 0x00); // block 0
+    assert_eq!(packets[0][4], 120);
+    assert_eq!(packets[1][2], 0x11); // not last
+    assert_eq!(packets[1][3], 0x01); // block 1
+    assert_eq!(packets[1][4], 120);
+    assert_eq!(packets[2][2], 0x91); // last (bit 7 set)
+    assert_eq!(packets[2][3], 0x02); // block 2
+    assert_eq!(packets[2][4], 10);
+
+    // Clamping 0 -> 255 in default wrapper
+    let payload_300 = [0x11u8; 300];
+    let clamped =
+        chain_apdu_request_with_default_mss(0x80, 0xE2, 0x11, 0x00, &payload_300, None, Some(0));
+    assert_eq!(clamped.len(), 2);
+    assert_eq!(clamped[0][4], 255);
+    assert_eq!(clamped[1][4], 45);
 }

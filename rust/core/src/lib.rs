@@ -2,6 +2,7 @@ pub mod activation_code;
 pub mod apdu;
 pub mod asn1;
 pub mod atr;
+pub mod bpp;
 pub mod cat;
 pub mod ccid;
 pub mod channel;
@@ -9,17 +10,22 @@ pub mod crypto;
 pub mod error_codes;
 pub mod es9;
 pub mod hex;
+pub mod i18n;
 pub mod iccid;
 pub mod imei;
 pub mod lpa;
 pub mod mcc;
 pub mod modem;
 pub mod notification_address;
+pub mod plugins;
 pub mod profile;
 pub mod profile_size_predictor;
 pub mod profile_tag;
 pub mod redaction;
+pub mod remocard;
 pub mod size_formatter;
+pub mod storage;
+pub mod update_feed;
 
 pub use activation_code::{ActivationCode, ActivationCodeError};
 pub use apdu::{validate_apdu_sw, ApduError};
@@ -34,7 +40,11 @@ pub use asn1::{
     SetNicknameRequest, SubjectPublicKeyInfo, Validity, X509Certificate, X509Error, X509Extension,
     X509Name,
 };
-pub use atr::{Atr, AtrError, DEFAULT_EUICC_ATR};
+pub use atr::{is_likely_euicc_atr, supports_euicc, Atr, AtrError, DEFAULT_EUICC_ATR};
+pub use bpp::{
+    build_cancel_session_request_der, decompose_bpp, parse_nxp_memory_tlv,
+    parse_nxp_memory_tlv_with_firmware, NxpMemoryInfo, EUICC_MEMORY_RESET_APDU_DATA,
+};
 pub use cat::{
     CatProactive, CatProactiveError, CatResponseDecision, ProactiveCommandDetails, RESULT_SUCCESS,
     RESULT_UNABLE_TO_PROCESS,
@@ -45,8 +55,9 @@ pub use ccid::nine_esim::{
 };
 pub use channel::{
     build_manage_channel_close_apdu, build_manage_channel_open_apdu, chain_apdu_request,
-    frame_apdu_command, map_logical_channel_cla, ChannelError, OmapiChannelTracker,
-    OmapiSafetyLatch, ReassemblyAction, ResponseReassembler,
+    chain_apdu_request_with_default_mss, effective_store_data_mss, frame_apdu_command,
+    map_logical_channel_cla, ChannelError, OmapiChannelTracker, OmapiSafetyLatch, ReassemblyAction,
+    ResponseReassembler, DEFAULT_STORE_DATA_MSS,
 };
 pub use crypto::{
     aes_cbc_decrypt, aes_cbc_encrypt, aes_cmac, aes_cmac_8, base64_decode, base64_encode,
@@ -64,6 +75,7 @@ pub use es9::{
     ENDPOINT_INITIATE_AUTHENTICATION,
 };
 pub use hex::{bytes_to_hex, hex_to_bytes, swap_nibbles, HexError};
+pub use i18n::{resolve_locale, I18nCatalog, LocaleChoice, ALL_LOCALE_CHOICES};
 pub use iccid::{format_iccid_grouped, iccid_for_display};
 pub use imei::{
     calculate_imei_luhn_checksum, encode_stored_imei_bytes, imei_digits_from_stored_bytes,
@@ -92,6 +104,12 @@ pub use lpa::{
 pub use mcc::{get_flag_emoji, mcc_to_country_code, parse_operator_id};
 pub use modem::*;
 pub use notification_address::is_valid_notification_address;
+pub use plugins::{
+    build_estk_mgt_read_apdu, build_gm_auth_apdu, build_gm_auth_apdu_with_rn, esim_cc_badge,
+    estk_extra_aids, is_gm_eid, match_provider_plugin, parse_esim_gg_response,
+    parse_estk_mgt_string, parse_three_hk_response, EstkCardInfo, ProfileProviderBadge,
+    ProviderPluginKind, ESTK_AID_CHAN1, ESTK_AID_CHAN2, ESTK_ATR_MARKER, ESTK_MGT_AID,
+};
 pub use profile::EuiccProfile;
 pub use profile_size_predictor::{ProfileSizeCatalog, ReferenceSizeEntry};
 pub use redaction::{
@@ -101,4 +119,18 @@ pub use redaction::{
     redact_eid_preview, redact_iccid, redact_iccid_preview, stable_index, FlagRedactionMode,
     IconRedactionMode, NicknameRedactionMode, OperatorPlaceholder, OperatorRedactionMode,
     ProfileView, RedactionSettings, SizeUnit, TagsRedactionMode,
+};
+pub use remocard::{
+    build_close_channel_request, build_open_channel_request, build_remocard_headers,
+    build_send_apdu_request, build_send_raw_apdu_request, clean_remocard_url,
+    decrypt_remocard_payload, encrypt_remocard_payload, encrypt_remocard_payload_with_iv,
+    parse_list_slots_response, parse_open_channel_response, parse_send_apdu_response,
+    resolve_remocard_key, RemoCardError, RemoCardServer, RemoCardSlot,
+};
+pub use storage::{
+    clamp_wallpaper_opacity, ColorMode, PersistedNotification, PersistedState, ThemeStyle,
+};
+pub use update_feed::{
+    check_update_feed, select_android_update, UpdateCandidate, COMMUNITY_CERT,
+    DEFAULT_UPDATE_FEED_URL,
 };

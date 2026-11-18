@@ -197,3 +197,102 @@ impl Atr {
         self.raw[last_idx] = checksum;
     }
 }
+
+/// Checks ETSI TS 102 221 V17.1.0 §6.3.3 / Table 6.7 eUICC capability advertisement on a raw ATR.
+///
+/// Validates TS (`0x3B` direct or `0x3F` inverse convention), maximum ATR length (33 bytes),
+/// interface byte chain structure, historical byte length, and TCK XOR checksum whenever any
+/// protocol other than `T=0` is indicated. Returns `Some(true)` only when the first global `TB`
+/// byte (`group > 2`) after a `TD` indicating `T=15` has both `b8` and `b2` (`0x82`) set,
+/// `Some(false)` when structurally valid without that flag, and `None` when malformed or truncated.
+#[must_use]
+pub fn supports_euicc(atr_bytes: &[u8]) -> Option<bool> {
+    parse_atr_euicc_flags(atr_bytes).map(|flags| flags.etsi_tb_euicc)
+}
+
+/// Returns `true` if `atr_bytes` is a structurally valid ISO/IEC 7816-3 ATR that advertises eUICC
+/// capabilities either via ETSI TS 102 221 `TB(i > 2)` (`(tb & 0x82) == 0x82`) or via the
+/// 9eSIM/known `T=15` global interface capability byte (`TA` `0x02`/`0x03` when `TB` is absent).
+#[must_use]
+pub fn is_likely_euicc_atr(atr_bytes: &[u8]) -> bool {
+    let Some(flags) = parse_atr_euicc_flags(atr_bytes) else {
+        return false;
+    };
+    flags.etsi_tb_euicc || flags.legacy_global_ta_euicc
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ParsedAtrEuiccFlags {
+    etsi_tb_euicc: bool,
+    legacy_global_ta_euicc: bool,
+}
+
+fn parse_atr_euicc_flags(bytes: &[u8]) -> Option<ParsedAtrEuiccFlags> {
+    if bytes.len() < 2 || bytes.len() > 33 {
+        return None;
+    }
+    if bytes[0] != 0x3B && bytes[0] != 0x3F {
+        return None;
+    }
+
+    let historical_count = usize::from(bytes[1] & 0x0F);
+    let mut present = bytes[1] >> 4;
+    let mut offset = 2usize;
+    let mut group = 1usize;
+    let mut protocol = 0u8;
+    let mut needs_checksum = false;
+    let mut global_euicc: Option<bool> = None;
+    let mut first_t15_ta: Option<u8> = None;
+    let mut saw_t15_tb = false;
+
+    loop {
+        if (present & 1) != 0 {
+            let ta = *bytes.get(offset)?;
+            offset += 1;
+            if protocol == 15 && group > 2 && first_t15_ta.is_none() {
+                first_t15_ta = Some(ta);
+            }
+        }
+        if (present & 2) != 0 {
+            let tb = *bytes.get(offset)?;
+            offset += 1;
+            if protocol == 15 && group > 2 && global_euicc.is_none() {
+                saw_t15_tb = true;
+                global_euicc = Some((tb & 0x82) == 0x82);
+            }
+        }
+        if (present & 4) != 0 {
+            if offset >= bytes.len() {
+                return None;
+            }
+            offset += 1;
+        }
+        if (present & 8) == 0 {
+            break;
+        }
+        let td = *bytes.get(offset)?;
+        offset += 1;
+        protocol = td & 0x0F;
+        needs_checksum |= protocol != 0;
+        present = td >> 4;
+        group += 1;
+    }
+
+    let expected_len = offset + historical_count + usize::from(needs_checksum);
+    if expected_len != bytes.len() {
+        return None;
+    }
+    if needs_checksum {
+        let xor_sum = bytes[1..].iter().fold(0u8, |acc, &b| acc ^ b);
+        if xor_sum != 0 {
+            return None;
+        }
+    }
+
+    let legacy_global_ta_euicc = !saw_t15_tb && matches!(first_t15_ta, Some(0x02 | 0x03));
+
+    Some(ParsedAtrEuiccFlags {
+        etsi_tb_euicc: global_euicc.unwrap_or(false),
+        legacy_global_ta_euicc,
+    })
+}

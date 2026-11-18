@@ -4,80 +4,56 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
-import android.os.Looper
+import android.os.HandlerThread
 import android.telephony.IccOpenLogicalChannelResponse
 import android.telephony.TelephonyManager
 import android.util.Log
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.plugins.activity.ActivityAware
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.EventChannel
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import org.json.JSONObject
 
-private fun ByteArray.toHex(): String =
-        joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-
-private fun hexStringToByteArray(hex: String): ByteArray {
-    val cleanHex = hex.replace(" ", "").replace("\n", "")
-    require(cleanHex.length % 2 == 0) { "Hex string must have an even length" }
-    return ByteArray(cleanHex.length / 2) { i ->
-        val index = i * 2
-        cleanHex.substring(index, index + 2).toInt(16).toByte()
-    }
-}
-
-class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
-    private var methodChannel: MethodChannel? = null
-    private var eventChannel: EventChannel? = null
-    private var eventSink: EventChannel.EventSink? = null
+internal class TelephonyPlugin {
     private var context: Context? = null
     private var telephonyManager: TelephonyManager? = null
+    private var eventSink: HostEventSink? = null
+    private var receiverRegistered = false
 
     // Dedicated background thread for hardware operations
-    private var backgroundHandler: android.os.Handler? = null
-    private var backgroundThread: android.os.HandlerThread? = null
+    private var backgroundHandler: Handler? = null
+    private var backgroundThread: HandlerThread? = null
 
     private val simStateReceiver =
-            object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    if (intent?.action == "android.intent.action.SIM_STATE_CHANGED" ||
-                                    intent?.action ==
-                                            "android.telephony.action.SIM_CARD_STATE_CHANGED" ||
-                                    intent?.action ==
-                                            "android.telephony.action.SIM_APPLICATION_STATE_CHANGED"
-                    ) {
-                        val state = intent.getStringExtra("ss") ?: "UNKNOWN"
-                        Log.d(TAG, "SIM state changed event: ${intent.action}, state: $state")
-                        Handler(Looper.getMainLooper()).post {
-                            eventSink?.success(
-                                    mapOf(
-                                            "type" to "sim_state_changed",
-                                            "state" to state,
-                                            "action" to intent.action
-                                    )
-                            )
-                        }
-                    }
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val action = intent?.action ?: return
+                if (
+                    action == "android.intent.action.SIM_STATE_CHANGED" ||
+                        action == "android.telephony.action.SIM_CARD_STATE_CHANGED" ||
+                        action == "android.telephony.action.SIM_APPLICATION_STATE_CHANGED"
+                ) {
+                    val state = intent.getStringExtra("ss") ?: "UNKNOWN"
+                    Log.d(TAG, "SIM state changed event: $action, state: $state")
+                    eventSink?.emit(
+                        "sim_state_changed",
+                        mapOf("state" to state, "action" to action),
+                    )
                 }
             }
+        }
 
     companion object {
         private const val TAG = "TelephonyPlugin"
-        private const val CHANNEL_NAME = "ee.nekoko.telephony_plugin"
-        private const val EVENT_CHANNEL_NAME = "ee.nekoko.telephony_plugin/event"
+        private const val CALL_TIMEOUT_SECONDS = 60L
 
         // Hidden APIs via reflection
         private val getUiccCardsInfo: Method? by lazy {
             try {
                 TelephonyManager::class.java.getMethod("getUiccCardsInfo")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -85,12 +61,12 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private val iccOpenLogicalChannelBySlot: Method? by lazy {
             try {
                 TelephonyManager::class.java.getMethod(
-                        "iccOpenLogicalChannelBySlot",
-                        Int::class.java,
-                        String::class.java,
-                        Int::class.java
+                    "iccOpenLogicalChannelBySlot",
+                    Int::class.java,
+                    String::class.java,
+                    Int::class.java,
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -100,21 +76,21 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     tmClass.getMethod(
-                            "iccOpenLogicalChannelByPort",
-                            Int::class.java,
-                            Int::class.java,
-                            String::class.java,
-                            Int::class.java
+                        "iccOpenLogicalChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
+                        String::class.java,
+                        Int::class.java,
                     )
                 } else {
                     tmClass.getMethod(
-                            "iccOpenLogicalChannelByPort",
-                            Int::class.java,
-                            String::class.java,
-                            Int::class.java
+                        "iccOpenLogicalChannelByPort",
+                        Int::class.java,
+                        String::class.java,
+                        Int::class.java,
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -122,11 +98,11 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private val iccCloseLogicalChannelBySlot: Method? by lazy {
             try {
                 TelephonyManager::class.java.getMethod(
-                        "iccCloseLogicalChannelBySlot",
-                        Int::class.java,
-                        Int::class.java
+                    "iccCloseLogicalChannelBySlot",
+                    Int::class.java,
+                    Int::class.java,
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -136,19 +112,19 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     tmClass.getMethod(
-                            "iccCloseLogicalChannelByPort",
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java
+                        "iccCloseLogicalChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
                     )
                 } else {
                     tmClass.getMethod(
-                            "iccCloseLogicalChannelByPort",
-                            Int::class.java,
-                            Int::class.java
+                        "iccCloseLogicalChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -156,17 +132,17 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private val iccTransmitApduLogicalChannelBySlot: Method? by lazy {
             try {
                 TelephonyManager::class.java.getMethod(
-                        "iccTransmitApduLogicalChannelBySlot",
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        String::class.java
+                    "iccTransmitApduLogicalChannelBySlot",
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    String::class.java,
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -176,30 +152,30 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     tmClass.getMethod(
-                            "iccTransmitApduLogicalChannelByPort",
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            String::class.java
+                        "iccTransmitApduLogicalChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        String::class.java,
                     )
                 } else {
                     tmClass.getMethod(
-                            "iccTransmitApduLogicalChannelByPort",
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            String::class.java
+                        "iccTransmitApduLogicalChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        String::class.java,
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -207,16 +183,16 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private val iccTransmitApduBasicChannelBySlot: Method? by lazy {
             try {
                 TelephonyManager::class.java.getMethod(
-                        "iccTransmitApduBasicChannelBySlot",
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        Int::class.java,
-                        String::class.java
+                    "iccTransmitApduBasicChannelBySlot",
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    String::class.java,
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -226,62 +202,152 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     tmClass.getMethod(
-                            "iccTransmitApduBasicChannelByPort",
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            String::class.java
+                        "iccTransmitApduBasicChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        String::class.java,
                     )
                 } else {
                     tmClass.getMethod(
-                            "iccTransmitApduBasicChannelByPort",
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            String::class.java
+                        "iccTransmitApduBasicChannelByPort",
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        Int::class.java,
+                        String::class.java,
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
     }
 
+    fun attach(appContext: Context, sink: HostEventSink) {
+        val ctx = appContext.applicationContext
+        context = ctx
+        eventSink = sink
+        telephonyManager = ctx.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+        startBackgroundThread()
+
+        if (!receiverRegistered) {
+            val filter =
+                IntentFilter("android.intent.action.SIM_STATE_CHANGED").apply {
+                    addAction("android.telephony.action.SIM_CARD_STATE_CHANGED")
+                    addAction("android.telephony.action.SIM_APPLICATION_STATE_CHANGED")
+                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ctx.registerReceiver(simStateReceiver, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                @Suppress("UnspecifiedRegisterReceiverFlag")
+                ctx.registerReceiver(simStateReceiver, filter)
+            }
+            receiverRegistered = true
+        }
+    }
+
+    fun detach() {
+        val ctx = context
+        if (receiverRegistered && ctx != null) {
+            try {
+                ctx.unregisterReceiver(simStateReceiver)
+            } catch (_: Exception) {}
+            receiverRegistered = false
+        }
+        stopBackgroundThread()
+        eventSink = null
+        telephonyManager = null
+        context = null
+    }
+
+    private fun startBackgroundThread() {
+        if (backgroundThread == null) {
+            val thread = HandlerThread("TelephonyPluginBackend").apply { start() }
+            backgroundThread = thread
+            backgroundHandler = Handler(thread.looper)
+        }
+    }
+
+    private fun stopBackgroundThread() {
+        backgroundThread?.quitSafely()
+        backgroundThread = null
+        backgroundHandler = null
+    }
+
+    fun call(method: String, args: JSONObject): HostCallResult {
+        val handler =
+            backgroundHandler
+                ?: return HostCallResult.Error("ERROR", "Background thread not available")
+        val future = CompletableFuture<HostCallResult>()
+        val posted =
+            handler.post {
+                val result =
+                    try {
+                        when (method) {
+                            "hasPrivilegedPermission" -> handleHasPrivilegedPermission()
+                            "listSlots" -> handleListSlots()
+                            "openChannel" -> handleOpenChannel(args)
+                            "closeChannel" -> handleCloseChannel(args)
+                            "cleanupAllChannels" -> handleCleanupAllChannels(args)
+                            "transmit" -> handleTransmit(args)
+                            "sendTerminalCapabilities" -> handleSendTerminalCapabilities(args)
+                            else ->
+                                HostCallResult.Error(
+                                    "UNSUPPORTED_METHOD",
+                                    "Unknown Telephony method: $method",
+                                )
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error in background method: $method", e)
+                        HostCallResult.Error("ERROR", e.message ?: "Telephony error")
+                    }
+                future.complete(result)
+            }
+        if (!posted) {
+            return HostCallResult.Error("ERROR", "Background thread not available")
+        }
+        return try {
+            future.get(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            HostCallResult.Error("ERROR", e.message ?: "Telephony call timed out")
+        }
+    }
+
     private fun iccOpenLogicalChannel(
-            tm: TelephonyManager,
-            slotIndex: Int,
-            portIndex: Int,
-            aid: String?,
-            p2: Int
+        tm: TelephonyManager,
+        slotIndex: Int,
+        portIndex: Int,
+        aid: String?,
+        p2: Int,
     ): IccOpenLogicalChannelResponse {
         return if (iccOpenLogicalChannelByPort != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                iccOpenLogicalChannelByPort!!.invoke(tm, slotIndex, portIndex, aid, p2) as
-                        IccOpenLogicalChannelResponse
+                iccOpenLogicalChannelByPort!!.invoke(tm, slotIndex, portIndex, aid, p2)
+                    as IccOpenLogicalChannelResponse
             } else {
-                iccOpenLogicalChannelByPort!!.invoke(tm, portIndex, aid, p2) as
-                        IccOpenLogicalChannelResponse
+                iccOpenLogicalChannelByPort!!.invoke(tm, portIndex, aid, p2)
+                    as IccOpenLogicalChannelResponse
             }
         } else if (iccOpenLogicalChannelBySlot != null) {
-            iccOpenLogicalChannelBySlot!!.invoke(tm, slotIndex, aid, p2) as
-                    IccOpenLogicalChannelResponse
+            iccOpenLogicalChannelBySlot!!.invoke(tm, slotIndex, aid, p2)
+                as IccOpenLogicalChannelResponse
         } else {
             throw Exception("Logical channel APIs not available")
         }
     }
 
     private fun iccCloseLogicalChannel(
-            tm: TelephonyManager,
-            slotIndex: Int,
-            portIndex: Int,
-            channel: Int
+        tm: TelephonyManager,
+        slotIndex: Int,
+        portIndex: Int,
+        channel: Int,
     ) {
         if (iccCloseLogicalChannelByPort != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -297,247 +363,134 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun iccTransmitApduLogicalChannel(
-            tm: TelephonyManager,
-            slotIndex: Int,
-            portIndex: Int,
-            channel: Int,
-            cla: Int,
-            ins: Int,
-            p1: Int,
-            p2: Int,
-            p3: Int,
-            data: String?
+        tm: TelephonyManager,
+        slotIndex: Int,
+        portIndex: Int,
+        channel: Int,
+        cla: Int,
+        ins: Int,
+        p1: Int,
+        p2: Int,
+        p3: Int,
+        data: String?,
     ): String? {
         return if (iccTransmitApduLogicalChannelByPort != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 iccTransmitApduLogicalChannelByPort!!.invoke(
-                        tm,
-                        slotIndex,
-                        portIndex,
-                        channel,
-                        cla,
-                        ins,
-                        p1,
-                        p2,
-                        p3,
-                        data
-                ) as
-                        String?
-            } else {
-                iccTransmitApduLogicalChannelByPort!!.invoke(
-                        tm,
-                        portIndex,
-                        channel,
-                        cla,
-                        ins,
-                        p1,
-                        p2,
-                        p3,
-                        data
-                ) as
-                        String?
-            }
-        } else if (iccTransmitApduLogicalChannelBySlot != null) {
-            iccTransmitApduLogicalChannelBySlot!!.invoke(
                     tm,
                     slotIndex,
+                    portIndex,
                     channel,
                     cla,
                     ins,
                     p1,
                     p2,
                     p3,
-                    data
-            ) as
-                    String?
+                    data,
+                ) as String?
+            } else {
+                iccTransmitApduLogicalChannelByPort!!.invoke(
+                    tm,
+                    portIndex,
+                    channel,
+                    cla,
+                    ins,
+                    p1,
+                    p2,
+                    p3,
+                    data,
+                ) as String?
+            }
+        } else if (iccTransmitApduLogicalChannelBySlot != null) {
+            iccTransmitApduLogicalChannelBySlot!!.invoke(
+                tm,
+                slotIndex,
+                channel,
+                cla,
+                ins,
+                p1,
+                p2,
+                p3,
+                data,
+            ) as String?
         } else {
             throw Exception("Logical channel APIs not available")
         }
     }
 
     private fun iccTransmitApduBasicChannel(
-            tm: TelephonyManager,
-            slotIndex: Int,
-            portIndex: Int,
-            cla: Int,
-            ins: Int,
-            p1: Int,
-            p2: Int,
-            p3: Int,
-            data: String?
+        tm: TelephonyManager,
+        slotIndex: Int,
+        portIndex: Int,
+        cla: Int,
+        ins: Int,
+        p1: Int,
+        p2: Int,
+        p3: Int,
+        data: String?,
     ): String? {
         return if (iccTransmitApduBasicChannelByPort != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 iccTransmitApduBasicChannelByPort!!.invoke(
-                        tm,
-                        slotIndex,
-                        portIndex,
-                        cla,
-                        ins,
-                        p1,
-                        p2,
-                        p3,
-                        data
-                ) as
-                        String?
+                    tm,
+                    slotIndex,
+                    portIndex,
+                    cla,
+                    ins,
+                    p1,
+                    p2,
+                    p3,
+                    data,
+                ) as String?
             } else {
                 iccTransmitApduBasicChannelByPort!!.invoke(
-                        tm,
-                        portIndex,
-                        cla,
-                        ins,
-                        p1,
-                        p2,
-                        p3,
-                        data
-                ) as
-                        String?
+                    tm,
+                    portIndex,
+                    cla,
+                    ins,
+                    p1,
+                    p2,
+                    p3,
+                    data,
+                ) as String?
             }
         } else if (iccTransmitApduBasicChannelBySlot != null) {
-            iccTransmitApduBasicChannelBySlot!!.invoke(tm, slotIndex, cla, ins, p1, p2, p3, data) as
-                    String?
+            iccTransmitApduBasicChannelBySlot!!.invoke(
+                tm,
+                slotIndex,
+                cla,
+                ins,
+                p1,
+                p2,
+                p3,
+                data,
+            ) as String?
         } else {
             throw Exception("Basic channel APIs not available")
         }
     }
 
-    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        methodChannel = MethodChannel(binding.binaryMessenger, CHANNEL_NAME)
-        methodChannel?.setMethodCallHandler(this)
-
-        eventChannel = EventChannel(binding.binaryMessenger, EVENT_CHANNEL_NAME)
-        eventChannel?.setStreamHandler(
-                object : EventChannel.StreamHandler {
-                    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                        eventSink = events
-                    }
-                    override fun onCancel(arguments: Any?) {
-                        eventSink = null
-                    }
-                }
-        )
-
-        context = binding.applicationContext
-        val filter = IntentFilter("android.intent.action.SIM_STATE_CHANGED")
-        filter.addAction("android.telephony.action.SIM_CARD_STATE_CHANGED")
-        filter.addAction("android.telephony.action.SIM_APPLICATION_STATE_CHANGED")
-        context?.registerReceiver(simStateReceiver, filter)
-    }
-
-    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        methodChannel?.setMethodCallHandler(null)
-        methodChannel = null
-        eventChannel?.setStreamHandler(null)
-        eventChannel = null
-        eventSink = null
-
-        try {
-            context?.unregisterReceiver(simStateReceiver)
-        } catch (e: Exception) {
-            // Likely not registered
+    private fun handleHasPrivilegedPermission(): HostCallResult {
+        if (telephonyManager == null) {
+            return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
         }
-
-        stopBackgroundThread()
-    }
-
-    private fun startBackgroundThread() {
-        if (backgroundThread == null) {
-            backgroundThread = android.os.HandlerThread("TelephonyPluginBackend")
-            backgroundThread?.start()
-            backgroundHandler = android.os.Handler(backgroundThread!!.looper)
-        }
-    }
-
-    private fun stopBackgroundThread() {
-        backgroundThread?.quitSafely()
-        backgroundThread = null
-        backgroundHandler = null
-    }
-
-    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        context = binding.activity.applicationContext
-        telephonyManager = context?.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-        startBackgroundThread()
-    }
-
-    override fun onDetachedFromActivityForConfigChanges() {}
-    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        context = binding.activity.applicationContext
-        telephonyManager = context?.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-    }
-
-    override fun onDetachedFromActivity() {
-        stopBackgroundThread()
-        context = null
-        telephonyManager = null
-    }
-
-    override fun onMethodCall(call: MethodCall, result: Result) {
-        backgroundHandler?.post {
-            try {
-                when (call.method) {
-                    "hasPrivilegedPermission" -> handleHasPrivilegedPermission(result)
-                    "listSlots" -> handleListSlots(result)
-                    "openChannel" -> handleOpenChannel(call, result)
-                    "closeChannel" -> handleCloseChannel(call, result)
-                    "cleanupAllChannels" -> handleCleanupAllChannels(call, result)
-                    "transmit" -> handleTransmit(call, result)
-                    "sendTerminalCapabilities" -> handleSendTerminalCapabilities(call, result)
-                    else -> runOnUiThread { result.notImplemented() }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error in background method: ${call.method}", e)
-                runOnUiThread { result.error("ERROR", e.message, e.stackTraceToString()) }
-            }
-        }
-                ?: run { result.error("ERROR", "Background thread not available", null) }
-    }
-
-    private fun handleHasPrivilegedPermission(result: Result) {
-        val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
         val hasPermission =
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        // For Android O+, check if we have carrier privileges (which implies we can
-                        // do TS 43 operations)
-                        // or if we have MODIFY_PHONE_STATE.
-                        // However, MODIFY_PHONE_STATE is system-only.
-                        // The user specifically asked to check
-                        // "android.permission.MODIFY_PHONE_STATE".
-                        context?.checkSelfPermission("android.permission.MODIFY_PHONE_STATE") ==
-                                android.content.pm.PackageManager.PERMISSION_GRANTED
-                    } else {
-                        context?.checkSelfPermission("android.permission.MODIFY_PHONE_STATE") ==
-                                android.content.pm.PackageManager.PERMISSION_GRANTED
-                    }
-                } catch (e: Exception) {
-                    false
-                }
-        runOnUiThread { result.success(hasPermission) }
+            try {
+                context?.checkSelfPermission("android.permission.MODIFY_PHONE_STATE") ==
+                    PackageManager.PERMISSION_GRANTED
+            } catch (_: Exception) {
+                false
+            }
+        return HostCallResult.Success(hasPermission)
     }
 
-    private fun runOnUiThread(action: () -> Unit) {
-        context?.let {
-            val mainHandler = android.os.Handler(it.mainLooper)
-            mainHandler.post { action() }
-        }
-                ?: action()
-    }
-
-    private fun handleListSlots(result: Result) {
+    private fun handleListSlots(): HostCallResult {
         val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
+            telephonyManager
+                ?: return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
 
         val slots = mutableListOf<Map<String, Any>>()
 
-        // Try getUiccCardsInfo (System API)
         if (getUiccCardsInfo != null) {
             try {
                 val cardsInfo = getUiccCardsInfo!!.invoke(tm) as? List<*>
@@ -546,114 +499,104 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     val cardMap = mutableMapOf<String, Any>()
                     var slotIndex = -1
 
-                    // Use reflection to get properties of UiccCardInfo
                     try {
                         val cardClass = card.javaClass
-
                         slotIndex =
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    try {
-                                        cardClass.getMethod("getPhysicalSlotIndex").invoke(card) as?
-                                                Int
-                                                ?: -1
-                                    } catch (e: Exception) {
-                                        try {
-                                            cardClass.getMethod("getSlotIndex").invoke(card) as? Int
-                                                    ?: -1
-                                        } catch (e2: Exception) {
-                                            -1
-                                        }
-                                    }
-                                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                try {
+                                    cardClass.getMethod("getPhysicalSlotIndex").invoke(card) as? Int
+                                        ?: -1
+                                } catch (_: Exception) {
                                     try {
                                         cardClass.getMethod("getSlotIndex").invoke(card) as? Int
-                                                ?: -1
-                                    } catch (e: Exception) {
+                                            ?: -1
+                                    } catch (_: Exception) {
                                         -1
                                     }
-                                } else {
+                                }
+                            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                try {
+                                    cardClass.getMethod("getSlotIndex").invoke(card) as? Int ?: -1
+                                } catch (_: Exception) {
                                     -1
                                 }
+                            } else {
+                                -1
+                            }
 
                         if (slotIndex == -1) {
                             Log.d(
-                                    TAG,
-                                    "Skipping card with invalid slot index (likely inactive eSIM)"
+                                TAG,
+                                "Skipping card with invalid slot index (likely inactive eSIM)",
                             )
                             return@forEach
                         }
 
                         val isEuiccVal =
-                                try {
-                                    val isEuiccMethod = cardClass.getMethod("isEuicc")
-                                    isEuiccMethod.invoke(card) as? Boolean ?: false
-                                } catch (e: Exception) {
-                                    false
-                                }
+                            try {
+                                cardClass.getMethod("isEuicc").invoke(card) as? Boolean ?: false
+                            } catch (_: Exception) {
+                                false
+                            }
 
                         val cardIdVal =
-                                try {
-                                    val getCardId = cardClass.getMethod("getCardId")
-                                    getCardId.invoke(card)
-                                } catch (e: Exception) {
-                                    null
-                                }
+                            try {
+                                cardClass.getMethod("getCardId").invoke(card)
+                            } catch (_: Exception) {
+                                null
+                            }
 
                         val isRemovableVal =
-                                try {
-                                    val getIsRemovable = cardClass.getMethod("isRemovable")
-                                    getIsRemovable.invoke(card) as? Boolean ?: true
-                                } catch (e: Exception) {
-                                    true
-                                }
+                            try {
+                                cardClass.getMethod("isRemovable").invoke(card) as? Boolean ?: true
+                            } catch (_: Exception) {
+                                true
+                            }
 
                         cardMap["slotIndex"] = slotIndex
                         cardMap["isEuicc"] = isEuiccVal
-                        cardMap["cardId"] = cardIdVal ?: ""
+                        cardMap["cardId"] = cardIdVal?.toString() ?: ""
                         cardMap["isRemovable"] = isRemovableVal
                     } catch (e: Exception) {
                         Log.w(TAG, "Dynamic access failed for card: ${e.message}")
                     }
 
-                    // Handle ports (Tiramisu+)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         try {
-                            val getPorts = card.javaClass.getMethod("getPorts")
-                            val ports = getPorts.invoke(card) as? Collection<*>
+                            val ports = card.javaClass.getMethod("getPorts").invoke(card) as? Collection<*>
                             val portList = mutableListOf<Map<String, Any>>()
                             ports?.forEach { port ->
                                 if (port == null) return@forEach
                                 try {
                                     val portMap = mutableMapOf<String, Any>()
                                     val portClass = port.javaClass
-                                    val getPortIndex = portClass.getMethod("getPortIndex")
-                                    val getLogicalSlotIndex =
-                                            portClass.getMethod("getLogicalSlotIndex")
-                                    portMap["portIndex"] = getPortIndex.invoke(port) as? Int ?: 0
+                                    portMap["portIndex"] =
+                                        portClass.getMethod("getPortIndex").invoke(port) as? Int
+                                            ?: 0
                                     portMap["logicalSlotIndex"] =
-                                            getLogicalSlotIndex.invoke(port) as? Int ?: 0
+                                        portClass.getMethod("getLogicalSlotIndex").invoke(port)
+                                            as? Int ?: 0
                                     portList.add(portMap)
                                 } catch (e: Exception) {
                                     Log.w(TAG, "Failed to get port info: ${e.message}")
                                 }
                             }
                             cardMap["ports"] = portList
-                        } catch (e: Exception) {
-                            // Fallback for non-MEP or older
+                        } catch (_: Exception) {
                             cardMap["ports"] =
-                                    listOf(mapOf("portIndex" to 0, "logicalSlotIndex" to slotIndex))
+                                listOf(mapOf("portIndex" to 0, "logicalSlotIndex" to slotIndex))
                         }
                     } else {
                         cardMap["ports"] =
-                                listOf(mapOf("portIndex" to 0, "logicalSlotIndex" to slotIndex))
+                            listOf(mapOf("portIndex" to 0, "logicalSlotIndex" to slotIndex))
                     }
 
-                    // Add generic sim state
-                    try {
-                        cardMap["simState"] = tm.getSimState(slotIndex)
-                    } catch (e: Exception) {
-                        cardMap["simState"] = 0 // UNKNOWN
-                    }
+                    cardMap["simState"] =
+                        try {
+                            tm.getSimState(slotIndex)
+                        } catch (_: Exception) {
+                            0
+                        }
 
                     slots.add(cardMap)
                 }
@@ -662,138 +605,126 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
         }
 
-        // Fallback to active count if nothing found
         if (slots.isEmpty()) {
-            val count =
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) tm.activeModemCount else 1
+            val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) tm.activeModemCount else 1
             for (i in 0 until count) {
                 val state =
-                        try {
-                            tm.getSimState(i)
-                        } catch (e: Exception) {
-                            0
-                        }
+                    try {
+                        tm.getSimState(i)
+                    } catch (_: Exception) {
+                        0
+                    }
                 slots.add(
-                        mapOf(
-                                "slotIndex" to i,
-                                "isEuicc" to true,
-                                "ports" to listOf(mapOf("portIndex" to 0, "logicalSlotIndex" to i)),
-                                "simState" to state
-                        )
+                    mapOf(
+                        "slotIndex" to i,
+                        "isEuicc" to true,
+                        "cardId" to "",
+                        "isRemovable" to false,
+                        "ports" to listOf(mapOf("portIndex" to 0, "logicalSlotIndex" to i)),
+                        "simState" to state,
+                    ),
                 )
             }
         }
 
-        runOnUiThread { result.success(slots) }
+        return HostCallResult.Success(slots)
     }
 
-    private fun handleOpenChannel(call: MethodCall, result: Result) {
+    private fun handleOpenChannel(args: JSONObject): HostCallResult {
         val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
-        val slotIndex = call.argument<Int>("slotIndex") ?: 0
-        val portIndex = call.argument<Int>("portIndex") ?: 0
-        val aid = call.argument<String>("aid") ?: ""
+            telephonyManager
+                ?: return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
+        val slotIndex = args.optInt("slotIndex", 0)
+        val portIndex = args.optInt("portIndex", 0)
+        val aid = args.optString("aid", "")
 
         // SGP.22: Send Terminal Capabilities on basic channel before opening logical channel
         try {
             Log.d(
-                    TAG,
-                    "Sending Terminal Capabilities on basic channel (Slot $slotIndex Port $portIndex)..."
+                TAG,
+                "Sending Terminal Capabilities on basic channel (Slot $slotIndex Port $portIndex)...",
             )
             iccTransmitApduBasicChannel(
-                    tm,
-                    slotIndex,
-                    portIndex,
-                    0x80,
-                    0xAA,
-                    0x00,
-                    0x00,
-                    0x0A,
-                    "A9088100820101830107"
+                tm,
+                slotIndex,
+                portIndex,
+                0x80,
+                0xAA,
+                0x00,
+                0x00,
+                0x0A,
+                "A9088100820101830107",
             )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to send Terminal Capabilities on BASIC channel: ${e.message}")
         }
 
-        try {
+        return try {
             val response = iccOpenLogicalChannel(tm, slotIndex, portIndex, aid, 0)
             if (response.status == IccOpenLogicalChannelResponse.STATUS_NO_ERROR) {
-                val resultMap =
-                        mapOf(
-                                "channel" to response.channel,
-                                "selectResponse" to response.selectResponse?.toHex()
-                        )
-                runOnUiThread { result.success(resultMap) }
+                val resultMap = linkedMapOf<String, Any?>("channel" to response.channel)
+                response.selectResponse?.let { resultMap["selectResponse"] = it.toHexStringLower() }
+                HostCallResult.Success(resultMap)
             } else {
-                runOnUiThread { result.error("OPEN_FAILED", "Status: ${response.status}", null) }
+                HostCallResult.Error("OPEN_FAILED", "Status: ${response.status}")
             }
         } catch (e: Exception) {
             val root = e.rootCause()
-            runOnUiThread { result.error("OPEN_FAILED", root.readableMessage(), root.stackTraceToString()) }
+            HostCallResult.Error("OPEN_FAILED", root.readableMessage())
         }
     }
 
-    private fun handleCloseChannel(call: MethodCall, result: Result) {
+    private fun handleCloseChannel(args: JSONObject): HostCallResult {
         val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
-        val slotIndex = call.argument<Int>("slotIndex") ?: 0
-        val portIndex = call.argument<Int>("portIndex") ?: 0
-        val channel = call.argument<Int>("channel") ?: -1
+            telephonyManager
+                ?: return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
+        val slotIndex = args.optInt("slotIndex", 0)
+        val portIndex = args.optInt("portIndex", 0)
+        val channel = args.optInt("channel", -1)
 
-        try {
+        return try {
             iccCloseLogicalChannel(tm, slotIndex, portIndex, channel)
-            runOnUiThread { result.success(true) }
+            HostCallResult.Success(true)
         } catch (e: Exception) {
             val root = e.rootCause()
-            runOnUiThread { result.error("CLOSE_FAILED", root.readableMessage(), root.stackTraceToString()) }
+            HostCallResult.Error("CLOSE_FAILED", root.readableMessage())
         }
     }
 
-    private fun handleCleanupAllChannels(call: MethodCall, result: Result) {
+    private fun handleCleanupAllChannels(args: JSONObject): HostCallResult {
         val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
-        val slotIndex = call.argument<Int>("slotIndex") ?: 0
-        val portIndex = call.argument<Int>("portIndex") ?: 0
+            telephonyManager
+                ?: return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
+        val slotIndex = args.optInt("slotIndex", 0)
+        val portIndex = args.optInt("portIndex", 0)
 
-        try {
-            // Attempt to close all possible logical channels (1..19)
+        return try {
             for (channel in 1..19) {
                 try {
                     iccCloseLogicalChannel(tm, slotIndex, portIndex, channel)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Ignore errors for individual channels (likely not open)
                 }
             }
-            runOnUiThread { result.success(true) }
+            HostCallResult.Success(true)
         } catch (e: Exception) {
             val root = e.rootCause()
-            runOnUiThread { result.error("CLEANUP_FAILED", root.readableMessage(), root.stackTraceToString()) }
+            HostCallResult.Error("CLEANUP_FAILED", root.readableMessage())
         }
     }
 
-    private fun handleTransmit(call: MethodCall, result: Result) {
+    private fun handleTransmit(args: JSONObject): HostCallResult {
         val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
-        val slotIndex = call.argument<Int>("slotIndex") ?: 0
-        val portIndex = call.argument<Int>("portIndex") ?: 0
-        val channel = call.argument<Int>("channel") ?: -1
-        val apdu = call.argument<String>("apdu") ?: ""
+            telephonyManager
+                ?: return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
+        val slotIndex = args.optInt("slotIndex", 0)
+        val portIndex = args.optInt("portIndex", 0)
+        val channel = args.optInt("channel", -1)
+        val apdu = args.optString("apdu", "")
 
-        try {
-            val tx = hexStringToByteArray(apdu)
-            if (tx.size < 4) throw Exception("APDU too short")
+        return try {
+            val tx = apdu.decodeHexBytes()
+            if (tx.size < 4) throw IllegalArgumentException("APDU too short")
 
             val cla = tx[0].toUByte().toInt()
             val ins = tx[1].toUByte().toInt()
@@ -805,88 +736,69 @@ class TelephonyPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (tx.size > 4) {
                 p3 = tx[4].toUByte().toInt()
                 if (tx.size > 5) {
-                    data = tx.sliceArray(5 until tx.size).toHex()
+                    data = tx.sliceArray(5 until tx.size).toHexStringLower()
                 }
             }
 
             val response =
-                    if (channel == 0) {
-                        iccTransmitApduBasicChannel(
-                                tm,
-                                slotIndex,
-                                portIndex,
-                                cla,
-                                ins,
-                                p1,
-                                p2,
-                                p3,
-                                data
-                        )
-                    } else {
-                        iccTransmitApduLogicalChannel(
-                                tm,
-                                slotIndex,
-                                portIndex,
-                                channel,
-                                cla,
-                                ins,
-                                p1,
-                                p2,
-                                p3,
-                                data
-                        )
-                    }
-
-            runOnUiThread { result.success(response) }
-        } catch (e: Exception) {
-            val root = e.rootCause()
-            runOnUiThread { result.error("TRANSMIT_FAILED", root.readableMessage(), root.stackTraceToString()) }
-        }
-    }
-
-    private fun handleSendTerminalCapabilities(call: MethodCall, result: Result) {
-        val tm =
-                telephonyManager
-                        ?: return runOnUiThread {
-                            result.error("NOT_AVAILABLE", "TelephonyManager not available", null)
-                        }
-        val slotIndex = call.argument<Int>("slotIndex") ?: 0
-        val portIndex = call.argument<Int>("portIndex") ?: 0
-
-        try {
-            val response =
+                if (channel == 0) {
                     iccTransmitApduBasicChannel(
-                            tm,
-                            slotIndex,
-                            portIndex,
-                            0x80,
-                            0xAA,
-                            0x00,
-                            0x00,
-                            0x0A,
-                            "A9088100820101830107"
+                        tm,
+                        slotIndex,
+                        portIndex,
+                        cla,
+                        ins,
+                        p1,
+                        p2,
+                        p3,
+                        data,
                     )
-            runOnUiThread { result.success(response) }
+                } else {
+                    iccTransmitApduLogicalChannel(
+                        tm,
+                        slotIndex,
+                        portIndex,
+                        channel,
+                        cla,
+                        ins,
+                        p1,
+                        p2,
+                        p3,
+                        data,
+                    )
+                }
+
+            HostCallResult.Success(response ?: "")
         } catch (e: Exception) {
             val root = e.rootCause()
-            runOnUiThread { result.error("ERROR", root.readableMessage(), root.stackTraceToString()) }
+            HostCallResult.Error("TRANSMIT_FAILED", root.readableMessage())
         }
     }
 
-    private fun Throwable.rootCause(): Throwable {
-        return if (this is InvocationTargetException && targetException != null) {
-            targetException.rootCause()
-        } else {
-            cause?.takeIf { it !== this }?.rootCause() ?: this
-        }
-    }
+    private fun handleSendTerminalCapabilities(args: JSONObject): HostCallResult {
+        val tm =
+            telephonyManager
+                ?: return HostCallResult.Error("NOT_AVAILABLE", "TelephonyManager not available")
+        val slotIndex = args.optInt("slotIndex", 0)
+        val portIndex = args.optInt("portIndex", 0)
 
-    private fun Throwable.readableMessage(): String {
-        val message = message
-        return if (message.isNullOrBlank()) {
-            this::class.java.name
-        } else {
-            "${this::class.java.name}: $message"
+        return try {
+            val response =
+                iccTransmitApduBasicChannel(
+                    tm,
+                    slotIndex,
+                    portIndex,
+                    0x80,
+                    0xAA,
+                    0x00,
+                    0x00,
+                    0x0A,
+                    "A9088100820101830107",
+                )
+            HostCallResult.Success(response ?: "")
+        } catch (e: Exception) {
+            val root = e.rootCause()
+            HostCallResult.Error("ERROR", root.readableMessage())
         }
     }
 }

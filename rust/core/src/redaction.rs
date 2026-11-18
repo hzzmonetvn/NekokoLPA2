@@ -2,46 +2,48 @@
 
 use std::fmt::Write;
 
+use serde::{Deserialize, Serialize};
+
 const MASK: char = '*';
 const SHUFFLED_COUNTRY_CODES: [&str; 20] = [
     "US", "JP", "GB", "DE", "FR", "CA", "AU", "KR", "SG", "NL", "CH", "SE", "NO", "DK", "FI", "ES",
     "IT", "PT", "IE", "NZ",
 ];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum NicknameRedactionMode {
     #[default]
     None,
     RedactPhoneNumbers,
     HideNickname,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum OperatorRedactionMode {
     #[default]
     None,
     CountryName,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum TagsRedactionMode {
     #[default]
     None,
     HideTags,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum FlagRedactionMode {
     #[default]
     None,
     HideFlag,
     ShuffledFlags,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum IconRedactionMode {
     #[default]
     None,
     HideIcon,
     RandomIcon,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum SizeUnit {
     B,
     Kb,
@@ -51,7 +53,8 @@ pub enum SizeUnit {
     AdaptiveSi,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct RedactionSettings {
     pub reveal_sensitive_profile_data: bool,
     pub redact_eid_first: bool,

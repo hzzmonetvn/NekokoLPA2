@@ -1,36 +1,37 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in Flutter's gradle rules.
+# Project-specific ProGuard / R8 rules for pure-Android NekokoLPA2.
 
 # The ADB bridge helper is reached only by name: app_process names the starter
 # class on the command line, and the helper's binder is reached through the
-# AIDL stub. Keep them even if minification is ever turned on.
+# AIDL stub. Keep them even when minification is enabled.
 -keep class ee.nekoko.nlpa2.AdbBridgeStarter { *; }
 -keep class ee.nekoko.nlpa2.AdbBridgeServer { *; }
 -keep class ee.nekoko.nlpa2.IAdbBridge { *; }
 -keep class ee.nekoko.nlpa2.IAdbBridge$* { *; }
 
-# Shizuku API bindings
+# Shizuku API bindings & QRTR / SE HAL user service
 -keep class rikka.shizuku.** { *; }
 -keep class dev.rikka.shizuku.** { *; }
 -keep interface rikka.shizuku.** { *; }
 -keep interface dev.rikka.shizuku.** { *; }
+-keep class ee.nekoko.nlpa2.QrtrUserService { *; }
+-keep class ee.nekoko.nlpa2.IQrtrService { *; }
+-keep class ee.nekoko.nlpa2.IQrtrService$* { *; }
 
-# Flutter Rust Bridge & Cargokit native JNI entrypoints
+# Rust JNI bridge, host callback interface, and WebView JavaScript interfaces
+-keep class ee.nekoko.nlpa2.RustBridge { *; }
+-keep interface ee.nekoko.nlpa2.NativeHostBridge { *; }
+-keep class ee.nekoko.nlpa2.NativeHostBridgeImpl { *; }
+-keep class ee.nekoko.nlpa2.MainActivity { *; }
+-keep class ee.nekoko.nlpa2.MainActivity$* { *; }
 -keepclasseswithmembernames class * {
     native <methods>;
 }
--keep class com.cargokit.** { *; }
--keep class flutter_rust_bridge.** { *; }
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# Flutter engine & plugin bindings
--keep class io.flutter.** { *; }
--keep class com.tekartik.sqflite.** { *; }
--dontwarn io.flutter.embedding.engine.deferredcomponents.**
--dontwarn com.google.android.play.core.**
-
-# Desugaring and core AndroidX
+# Desugaring and core Java annotations
 -dontwarn java.awt.**
 -dontwarn javax.annotation.**
 -dontwarn org.bouncycastle.**
--keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,JavascriptInterface

@@ -20,10 +20,14 @@ fn test_build_select_isdr_apdu() {
 fn test_wrap_store_data_apdu() {
     let payload = vec![0xBF, 0x20, 0x00];
     let apdu = wrap_store_data_apdu(&payload, true, true);
-    assert_eq!(apdu[0..4], [0x80, 0xE2, 0x88, 0x00]);
+    assert_eq!(apdu[0..4], [0x80, 0xE2, 0x91, 0x00]);
     assert_eq!(apdu[4], 3);
     assert_eq!(&apdu[5..8], &payload);
-    assert_eq!(apdu[8], 0x00);
+    assert_eq!(apdu.len(), 5 + payload.len());
+
+    let more_blocks = wrap_store_data_apdu(&payload, true, false);
+    assert_eq!(more_blocks[0..4], [0x80, 0xE2, 0x11, 0x00]);
+    assert_eq!(more_blocks.len(), 5 + payload.len());
 }
 
 #[test]
@@ -46,12 +50,27 @@ fn test_es10_command_builders_header() {
     for apdu in apdus {
         assert_eq!(apdu[0], 0x80);
         assert_eq!(apdu[1], 0xE2);
-        assert_eq!(apdu[2], 0x88); // STORE DATA single block
+        assert_eq!(apdu[2], 0x91); // SGP.22 STORE DATA last block
         assert_eq!(apdu[3], 0x00);
         let lc = apdu[4] as usize;
-        assert_eq!(apdu.len(), 5 + lc + 1);
-        assert_eq!(apdu[apdu.len() - 1], 0x00);
+        assert_eq!(apdu.len(), 5 + lc);
     }
+
+    let list_all = build_list_notifications_apdu(None);
+    let expected_list_all = [0x80, 0xE2, 0x91, 0x00, 0x03, 0xBF, 0x28, 0x00];
+    assert_eq!(list_all, expected_list_all);
+
+    let list_install = build_list_notifications_apdu(Some(1));
+    let expected_list_install = [
+        0x80, 0xE2, 0x91, 0x00, 0x07, 0xBF, 0x28, 0x04, 0x81, 0x02, 0x07, 0x80,
+    ];
+    assert_eq!(list_install, expected_list_install);
+
+    let remove_one = build_remove_notification_apdu(1);
+    let expected_remove_one = [
+        0x80, 0xE2, 0x91, 0x00, 0x06, 0xBF, 0x30, 0x03, 0x80, 0x01, 0x01,
+    ];
+    assert_eq!(remove_one, expected_remove_one);
 }
 
 #[test]
