@@ -100,6 +100,9 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     },
                     safetyStore = SharedPreferencesOmapiSafetyStore(appContext),
                     bootIdentityProvider = AndroidOmapiBootIdentityProvider(appContext),
+                    bootedAtEpochMillis = {
+                        System.currentTimeMillis() - android.os.SystemClock.elapsedRealtime()
+                    },
                     hasOpenChannels = { readerChannels.values.any { it.isNotEmpty() } },
             )
 
@@ -196,6 +199,7 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
         methodChannel?.setMethodCallHandler(null)
         methodChannel = null
+        eventChannel?.setStreamHandler(null)
         eventChannel = null
         eventSink = null
 
@@ -319,7 +323,7 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         } catch (e: Exception) {
             cleanupCoordinator.markPoisoned(
                     readerName = null,
-                    reason = "SEService.shutdown() failed during $reason: ${e.message ?: e.javaClass.simpleName}",
+                    reason = "SEService.shutdown() failed during $reason: ${e.omapiReason()}",
                     operationMayHaveSucceeded = true,
             )
             Log.e(TAG, "SEService.shutdown() failed during $reason", e)
@@ -504,7 +508,7 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val info =
                     cleanupCoordinator.markPoisoned(
                             readerName,
-                            closeError.message ?: closeError.javaClass.simpleName,
+                            closeError.omapiReason(),
                             operationMayHaveSucceeded = profileSwitchInProgress,
                     )
             runOnUiThread {
@@ -533,7 +537,7 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val info =
                     cleanupCoordinator.markPoisoned(
                             readerName,
-                            error.message ?: error.javaClass.simpleName,
+                            error.omapiReason(),
                             operationMayHaveSucceeded = true,
                     )
             runOnUiThread {
@@ -737,7 +741,7 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                             readerName = null,
                             reason =
                                     "SEService.shutdown() failed during reset: " +
-                                            (e.message ?: e.javaClass.simpleName),
+                                            e.omapiReason(),
                             operationMayHaveSucceeded = true,
                     )
             return runOnUiThread {
@@ -814,7 +818,7 @@ class OmapiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val info =
                         cleanupCoordinator.markPoisoned(
                                 readerName,
-                                closeError.message ?: closeError.javaClass.simpleName,
+                                closeError.omapiReason(),
                                 operationMayHaveSucceeded = profileSwitchInProgress,
                         )
                 return runOnUiThread {

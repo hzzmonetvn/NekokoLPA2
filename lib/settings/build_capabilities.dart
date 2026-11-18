@@ -2,10 +2,16 @@ class BuildCapabilities {
   BuildCapabilities._();
 
   static String variantForPlatform(String variant, {required bool isAndroid}) {
-    if (!isAndroid && (variant == 'open' || variant == 'open-rooted')) {
+    final canonical = switch (variant) {
+      'open' => 'community',
+      'open-rooted' => 'community-rooted',
+      _ => variant,
+    };
+    if (!isAndroid &&
+        (canonical == 'community' || canonical == 'community-rooted')) {
       return 'std';
     }
-    return variant;
+    return canonical;
   }
 
   static bool isEsim9Variant(String value) {

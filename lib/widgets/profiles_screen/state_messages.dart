@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../settings/app_settings.dart';
-import '../../utils/platform_adapter.dart';
 import '../common/loading_spinner.dart';
 
 /// Base widget for displaying state messages in the profiles screen.

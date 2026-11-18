@@ -2,14 +2,81 @@
 
 All notable changes to NekokoLPA2 will be documented in this file.
 
-## Unreleased
-
-### Added
-- Published the 3HK number, line-expiry and package-status plugin. All provider plugins now live in the public repository.
+## [Unreleased]
 
 ### Changed
-- Use Open only for Android variant names; Windows, macOS, Linux and web use NekokoLPA 2.
+- Sentry, and with it the "Send report" button, is part of the 9eSIM build only. Every other build ignores a Sentry DSN and sends nothing.
+- The BeeSIM "Update BeeSIM firmware" reader action is turned off while the BeeSIM firmware server presents an expired TLS certificate.
+- Startup no longer asks the OTBridge helper for its slot list once the OMAPI and TMAPI reader choices are stored, and waits at most 5 seconds for it otherwise.
+
+### Security
+- Accept unverified TLS certificates only on SM-DP+ and SM-DS requests, where the eUICC authenticates the server. Making one such request previously turned certificate checks off for the rest of the app until it was closed, including the update check and reader firmware downloads.
+
+- Desktop VoWiFi no longer writes the SIM's IMSI, ICCID or AKA authentication vectors (RAND, AUTN, RES, CK, IK) to its logs.
+
+### Fixed
+- Desktop VoWiFi: release the socket of every ePDG address that fails to attach, close the tunnel when registration fails, and ignore malformed IKE and UDP packets that could previously hang or stop the tunnel.
+- Desktop VoWiFi: show an error when sending an SMS, refreshing or disconnecting fails, instead of failing silently.
+- eSIM transfer: stop waiting when a carrier entitlement server accepts a request and never answers.
+- Batch download: run over the list just entered. The first row's status and ICCID could previously be written to a list that had already been replaced.
+- Tag reminders: a failed load no longer leaves the loading spinner up for good.
+- Show a 3HK number as soon as it has been looked up, instead of only after the next profile reload.
+- Run each provider plugin's profile lookup independently, so a slow or failing one no longer delays or cancels the others.
+- Give the update check, operator icon downloads and installation statistics a timeout, so an unresponsive server cannot leave them waiting forever.
+- Unregister the Android SIM state receiver when the app's engine is torn down; it was previously left registered each time the activity was recreated.
+
+## [2.5.0+606] - 2026-11-10
+
+### Added
+- A "Send report" button on the "SIM/eSIM channel became invalid" error screen. After confirming, it sends the error, device model and recent app log to Sentry for review. Nothing is sent unless the button is pressed.
+
+### Fixed
+- Clear the OMAPI "SIM/eSIM channel became invalid" lock after a device restart even when the saved failure has no message or no boot identity. Such a lock previously survived every restart, so OMAPI stayed unusable until the app's data was cleared.
+
+## [2.4.5+605] - 2026-11-08
+
+### Fixed
+- Send STORE DATA in 120-byte blocks by default, as lpac does, fixing profile downloads that stalled over OMAPI on modems that reject larger blocks. The APDU segment size setting now ranges from 60 to 240.
+
+## [2.4.4+604] - 2026-11-01
+
+### Fixed
+- Allow bound UDP sockets in sandboxed macOS release builds, fixing VoWiFi ePDG attachment failing with "Operation not permitted".
+
+## [2.4.3+603] - 2026-10-31
+
+### Fixed
+- Restore standard iOS Bluetooth discovery so BeeSIM and other name-discovered readers are not excluded by AccessorySetupKit service filters.
+- Keep Bluetooth reader setup errors inside the dialog error handler.
+- Keep delivered notifications visible while they remain on the eUICC, and verify card removal before reporting success (#42).
+- Preserve a minimal delivery receipt when local history is deleted, preventing an already delivered notification from being sent again (#42).
+- Queue automatic notification processing after profile operations instead of losing requests during a concurrent badge refresh (#43).
+- Send notifications without requiring an unrelated connectivity-probe server to be reachable (#43).
+
+### Build and distribution
+- Build Community and rooted Community Android APKs from public source without private credentials, verifying identical signed APKs across two clean builds.
+- Publish shared build and release tooling in NekokoLPA2; keep brand data and distribution credentials separate.
+
+## [2.4.2+602] - 2026-10-31
+
+### Fixed
+- Keep iOS AccessorySetupKit registration out of the shared macOS Bluetooth implementation.
+- Close released cached OMAPI channels immediately when Android enters the background, addressing the restart safety-marker path reported in #58. Keep active operations and reboot protection after a real channel-close failure.
+- Retry WebCard AID selection on the basic channel when a driver allocates a logical channel but SELECT returns 6881 (#31).
+
+### Added
+- Recognize the optional ATR eUICC capability flag and show OMAPI users a notice about keeping the SIM/eSIM slot enabled in Android system settings.
+- Published the 3HK number, line-expiry and package-status plugin. All provider plugins now live in the public repository.
+- Added iOS accessory setup for supported Bluetooth readers.
+
+### Changed
+- Name the public Android variant Community, retaining the existing package ID and signing certificate for upgrades. Desktop and web builds use NekokoLPA 2.
 - Publish the shared Windows/Linux builds to standard desktop update feeds, retaining earlier channel and filename compatibility.
+- Move Crowdin synchronization, validation and translation documentation into NekokoLPA2.
+
+### Upgrade notes
+- An existing reboot-required OMAPI marker still needs one device restart after updating; clearing app data is unnecessary.
+- Xiaomi and WebCard fixes have automated regression coverage; confirmation on the affected hardware is pending. See [issue review](docs/issue-audit-602.md).
 
 ## [2.4.1+601] - 2026-10-29
 

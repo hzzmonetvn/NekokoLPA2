@@ -34,7 +34,7 @@ class TelephonyAdapter extends BaseAdapter {
 
   @override
   String? get lastAtr => null; // TelephonyManager doesn't give ATR directly
- 
+
   @override
   bool get supportsRawApdu => false;
 
@@ -174,18 +174,6 @@ class TelephonyAdapter extends BaseAdapter {
       'apdu': apduHex,
     });
     return HexUtils.hexToBytes(responseHex);
-  }
-
-  Future<void> sendTerminalCapabilities() async {
-    if (_slotIndex == null) return;
-    try {
-      await _channel.invokeMethod('sendTerminalCapabilities', {
-        'slotIndex': _slotIndex,
-        'portIndex': _portIndex,
-      });
-    } catch (e) {
-      log.warning('Failed to send terminal capabilities: $e');
-    }
   }
 
   @override

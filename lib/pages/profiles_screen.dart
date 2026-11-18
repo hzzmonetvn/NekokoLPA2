@@ -25,6 +25,7 @@ import '../adapter/telephony/telephony_adapter.dart';
 import '../logic/profile_manager.dart';
 import '../logic/profile_state_transition.dart';
 import '../utils/apdu_exception.dart';
+import '../utils/atr_capabilities.dart';
 import '../utils/profile_tag_utils.dart';
 import '../utils/profile_redaction.dart';
 import '../services/profile_metadata_service.dart';
@@ -64,11 +65,10 @@ import '../services/update_service.dart';
 import '../utils/update_utils.dart';
 import '../widgets/profiles_screen/profile_list_section.dart';
 import '../widgets/profiles_screen/reader_helper.dart';
-import '../widgets/profiles_screen/state_messages.dart' hide ColumnStateMessage;
+import '../widgets/profiles_screen/state_messages.dart';
 import '../widgets/profiles_screen/error_state.dart';
 import '../widgets/profiles_screen/profiles_header.dart';
 import '../services/deep_link_service.dart';
-import '../services/connectivity_service.dart';
 import '../widgets/log_console.dart';
 
 enum ReaderStatus {
@@ -159,6 +159,8 @@ class _ProfilesScreenState extends State<ProfilesScreen>
   final CompositeAdapter _adapter = CompositeAdapter();
   late ProfileManager _manager;
   final Map<String, ReaderState> _readerStates = {};
+  final Set<String> _omapiEuiccNoticesShown = {};
+  bool _showingOmapiEuiccNotice = false;
   List<EuiccProfile>? _profiles;
   List<Reader> _readers = [];
   bool _reloadingHalModes = false;
@@ -352,26 +354,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
 
       // Pass the error object directly to be handled by ErrorState widget
       _setErrorState(reader, e, isRemote);
-      return;
-    }
-
-    if (e is AppException &&
-        (e.code == AppErrorCode.ERROR_TRANSACTION_FAILED ||
-            e.message != null)) {
-      final reason = e.message ?? "Unknown";
-      _showPremiumConfirmDialog(
-        title: AppLocalizations.of(context)!.failed,
-        message: "Operation failed: $reason",
-        details: e.toString(),
-        confirmLabel: AppLocalizations.of(context)!.ok,
-        showCancel: false,
-      );
-      if (reader != null) {
-        _updateReaderSession(reader.id, (s) {
-          s.loading = false;
-          s.error = null; // Handled by dialog
-        });
-      }
       return;
     }
 
@@ -785,7 +767,10 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     final eid = _eid;
     if (eid == null) return;
 
-    NotificationService().currentNotifications.value = const [];
+    if (NotificationService().currentEid != eid) {
+      NotificationService().currentEid = eid;
+      NotificationService().currentNotifications.value = const [];
+    }
     final unsent = await DatabaseService().getUnsentCount(eid);
     NotificationService().pendingCount.value = unsent;
   }
@@ -838,7 +823,18 @@ class _ProfilesScreenState extends State<ProfilesScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      unawaited(
+        _adapter.setAppInBackground(true).catchError((Object error) {
+          _log.warning(
+            'Unable to close released OMAPI channels on background: $error',
+          );
+        }),
+      );
+    }
     if (state == AppLifecycleState.resumed) {
+      unawaited(_adapter.setAppInBackground(false));
       _log.info("App resumed, refreshing readers and checking for deep links");
       // Reload readers when app returns to foreground (e.g. after USB permission dialog)
       _loadReaders(skipLoading: true);
@@ -1484,13 +1480,53 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     await _listProfiles();
   }
 
+  void _maybeShowOmapiEuiccNotice(Reader reader, String? atr) {
+    if (!PlatformX.isAndroid ||
+        !reader.id.startsWith('omapi:') ||
+        AtrCapabilities.supportsEuicc(atr) != true) {
+      return;
+    }
+    final key = '${reader.id}:$atr';
+    if (_omapiEuiccNoticesShown.contains(key)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          _selectedReader?.id != reader.id ||
+          _showingOmapiEuiccNotice ||
+          !TickerMode.valuesOf(context).enabled ||
+          _omapiEuiccNoticesShown.contains(key) ||
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
+          ModalRoute.of(context)?.isCurrent != true) {
+        return;
+      }
+      _omapiEuiccNoticesShown.add(key);
+      _showingOmapiEuiccNotice = true;
+      final l10n = AppLocalizations.of(context)!;
+      unawaited(
+        showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.omapiEuiccDetectedTitle),
+            content: Text(l10n.omapiEuiccSystemDisableWarning),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.ok),
+              ),
+            ],
+          ),
+        ).whenComplete(() => _showingOmapiEuiccNotice = false),
+      );
+    });
+  }
+
   // _handleReaderSelection removed
 
   Future<void> _listProfiles({
     int retryCount = 0,
     bool disableRetry = false,
   }) async {
-
+    // Reached after awaits from several callers; context is read just below.
+    if (!mounted) return;
     final reader = _selectedReader;
     if (reader == null) return;
     final l10n = AppLocalizations.of(context)!;
@@ -1507,6 +1543,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
 
     String? eid;
     EUICCInfo2? info2;
+    String? connectedAtr;
 
     try {
       _updateReaderSession(reader.id, (s) => s.isConnecting = true);
@@ -1533,6 +1570,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         try {
           // Ensure reader is still the selected one or at least the one we started with
           await _adapter.connect(reader);
+          connectedAtr = _adapter.lastAtr;
           if (reopenHal) await _adapter.reconnect();
         } finally {
           _adapter.connectProgress.removeListener(showConnectStep);
@@ -1606,12 +1644,11 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         } finally {
           await channel.close();
         }
-
-        // 5. Update Notifications in background (non-blocking) AFTER closing the list channel
-        _handleNotifications(null, eid, reader);
       });
       _autoDiscoveryFinished = true;
       _setSwitching(false); // Success! Toggle is done.
+      // Start a fresh notification session after releasing the list reservation.
+      await _handleNotifications(null, eid, reader);
     } catch (e) {
       if (isOmapiSessionCorruptedError(e)) {
         _setSwitching(false);
@@ -1824,6 +1861,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         s.isConnecting = false;
         s.operationLoadingMessage = null;
       });
+      _maybeShowOmapiEuiccNotice(reader, connectedAtr);
     }
   }
 
@@ -2087,21 +2125,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
       );
     }
 
-    if (!reader.id.startsWith('omapi:')) {
-      final enabledProfile = profiles.where((p) => p.enabled).firstOrNull;
-      if (enabledProfile != null) {
-        try {
-          final msisdn = await _manager.readActiveMsisdn();
-          if (msisdn != null) {
-            unawaited(
-              DatabaseService().saveMsisdn(enabledProfile.iccid, msisdn),
-            );
-          }
-        } catch (e) {
-          _log.warning("Tricky MSISDN query failed: $e");
-        }
-      }
-    }
     return profiles;
   }
 
@@ -2232,7 +2255,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     if (refreshNotificationCount &&
         mounted &&
         _selectedReader?.id == reader.id) {
-      _loadPendingNotificationCount();
+      await _refreshPendingCountFromDb();
     }
   }
 
@@ -2242,39 +2265,27 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     Reader reader,
   ) async {
     final settings = AppSettings();
-    if (settings.notifProcessInitialLoad &&
-        settings.isAnyNotificationProcessingEnabled) {
-      await NotificationService().processPendingNotifications(
-        _manager,
-        channel,
-        readerName: reader.id,
-        eid: eid,
-        autoSendInstall: settings.notifAutoSendInstall,
-        autoRemoveInstall: settings.notifAutoRemoveInstall,
-        autoSendEnable: settings.notifAutoSendEnable,
-        autoRemoveEnable: settings.notifAutoRemoveEnable,
-        deleteWithoutSendingEnable: settings.notifDeleteWithoutSendingEnable,
-        autoSendDisable: settings.notifAutoSendDisable,
-        autoRemoveDisable: settings.notifAutoRemoveDisable,
-        deleteWithoutSendingDisable: settings.notifDeleteWithoutSendingDisable,
-        autoSendDelete: settings.notifAutoSendDelete,
-        autoRemoveDelete: settings.notifAutoRemoveDelete,
-      );
-      // The card was just listed and processed above, so only the badge needs
-      // refreshing. Calling _loadPendingNotificationCount() here would open a
-      // second channel and re-read the same notifications off the card.
-      await _refreshPendingCountFromDb();
-    } else {
-      try {
-        final notifs = channel != null
-            ? await _manager.retrieveNotifications(useChannel: channel)
-            : await _adapter.runExclusive(
-                () => _manager.retrieveNotifications(),
-              );
-        NotificationService().pendingCount.value = notifs.length;
-        NotificationService().currentNotifications.value = notifs;
-      } catch (_) {}
-    }
+    final process =
+        settings.notifProcessInitialLoad &&
+        settings.isAnyNotificationProcessingEnabled;
+    await NotificationService().processPendingNotifications(
+      _manager,
+      channel,
+      readerName: reader.id,
+      eid: eid,
+      autoSendInstall: process && settings.notifAutoSendInstall,
+      autoRemoveInstall: process && settings.notifAutoRemoveInstall,
+      autoSendEnable: process && settings.notifAutoSendEnable,
+      autoRemoveEnable: process && settings.notifAutoRemoveEnable,
+      deleteWithoutSendingEnable:
+          process && settings.notifDeleteWithoutSendingEnable,
+      autoSendDisable: process && settings.notifAutoSendDisable,
+      autoRemoveDisable: process && settings.notifAutoRemoveDisable,
+      deleteWithoutSendingDisable:
+          process && settings.notifDeleteWithoutSendingDisable,
+      autoSendDelete: process && settings.notifAutoSendDelete,
+      autoRemoveDelete: process && settings.notifAutoRemoveDelete,
+    );
   }
 
   bool _isProfileSwitchTransientError(Object error) {
@@ -2719,8 +2730,7 @@ class _ProfilesScreenState extends State<ProfilesScreen>
     try {
       final settings = AppSettings();
       if (!settings.notifProcessAfterSwitch ||
-          !settings.isAnyNotificationProcessingEnabled ||
-          !await ConnectivityService().checkConnectivity()) {
+          !settings.isAnyNotificationProcessingEnabled) {
         return;
       }
       if (!mounted || _selectedReader?.id != reader.id) return;
@@ -3015,44 +3025,42 @@ class _ProfilesScreenState extends State<ProfilesScreen>
         } finally {
           await channel.close();
         }
-
-        final settings = AppSettings();
-        if (reader.source is SeHalAdapter) {
-          await NotificationService().processPendingNotifications(
-            _manager,
-            null,
-            autoSendInstall: true,
-            autoRemoveInstall: false,
-            autoSendEnable: true,
-            autoRemoveEnable: false,
-            deleteWithoutSendingEnable: false,
-            autoSendDisable: true,
-            autoRemoveDisable: false,
-            deleteWithoutSendingDisable: false,
-            autoSendDelete: true,
-            autoRemoveDelete: false,
-          );
-        } else if (settings.notifProcessAfterDeletion &&
-            settings.isAnyNotificationProcessingEnabled) {
-          await NotificationService().processPendingNotifications(
-            _manager,
-            null, // Use fresh session
-            readerName: reader.id,
-            autoSendInstall: settings.notifAutoSendInstall,
-            autoRemoveInstall: settings.notifAutoRemoveInstall,
-            autoSendEnable: settings.notifAutoSendEnable,
-            autoRemoveEnable: settings.notifAutoRemoveEnable,
-            deleteWithoutSendingEnable:
-                settings.notifDeleteWithoutSendingEnable,
-            autoSendDisable: settings.notifAutoSendDisable,
-            autoRemoveDisable: settings.notifAutoRemoveDisable,
-            deleteWithoutSendingDisable:
-                settings.notifDeleteWithoutSendingDisable,
-            autoSendDelete: settings.notifAutoSendDelete,
-            autoRemoveDelete: settings.notifAutoRemoveDelete,
-          );
-        }
       });
+      final settings = AppSettings();
+      if (reader.source is SeHalAdapter) {
+        await NotificationService().processPendingNotifications(
+          _manager,
+          null,
+          autoSendInstall: true,
+          autoRemoveInstall: false,
+          autoSendEnable: true,
+          autoRemoveEnable: false,
+          deleteWithoutSendingEnable: false,
+          autoSendDisable: true,
+          autoRemoveDisable: false,
+          deleteWithoutSendingDisable: false,
+          autoSendDelete: true,
+          autoRemoveDelete: false,
+        );
+      } else if (settings.notifProcessAfterDeletion &&
+          settings.isAnyNotificationProcessingEnabled) {
+        await NotificationService().processPendingNotifications(
+          _manager,
+          null, // Use fresh session
+          readerName: reader.id,
+          autoSendInstall: settings.notifAutoSendInstall,
+          autoRemoveInstall: settings.notifAutoRemoveInstall,
+          autoSendEnable: settings.notifAutoSendEnable,
+          autoRemoveEnable: settings.notifAutoRemoveEnable,
+          deleteWithoutSendingEnable: settings.notifDeleteWithoutSendingEnable,
+          autoSendDisable: settings.notifAutoSendDisable,
+          autoRemoveDisable: settings.notifAutoRemoveDisable,
+          deleteWithoutSendingDisable:
+              settings.notifDeleteWithoutSendingDisable,
+          autoSendDelete: settings.notifAutoSendDelete,
+          autoRemoveDelete: settings.notifAutoRemoveDelete,
+        );
+      }
     } catch (e) {
       if (reader.source is SeHalAdapter) {
         setState(
@@ -4978,7 +4986,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
       case ReaderStatus.unsupported:
         return UnsupportedCardState(
           isTelephony: reader != null && _isTelephony(reader),
-          isOmapi: reader != null && _isOmapi(reader),
           operatorIconBase64: _unsupportedOperatorIcon,
           fallbackDetails: _unsupportedFallbackDetails,
           onRetry: _listProfiles,
@@ -5332,15 +5339,6 @@ class _ProfilesScreenState extends State<ProfilesScreen>
                               },
                               onReadersLoaded: () =>
                                   _loadReaders(skipLoading: true, force: true),
-                              onScanStarted: () {
-                                setState(() {
-                                  _loading = true;
-                                  _operationLoadingMessage =
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.initializing;
-                                });
-                              },
                             ),
                     )
                   else

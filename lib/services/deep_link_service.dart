@@ -18,6 +18,7 @@ class DeepLinkService {
 
   final _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSubscription;
+  StreamSubscription<String>? _stringLinkSubscription;
 
   final _linkController = StreamController<String>.broadcast();
   Stream<String> get linkStream => _linkController.stream;
@@ -25,7 +26,6 @@ class DeepLinkService {
   final ValueNotifier<String?> pendingLpa = ValueNotifier<String?>(null);
   final ValueNotifier<Uri?> pendingSigningUri = ValueNotifier<Uri?>(null);
   final ValueNotifier<bool> triggerSelection = ValueNotifier<bool>(false);
-  String? get pendingCode => pendingLpa.value;
 
   static const String _prefPendingLpa = 'pending_lpa_code';
   static const String _prefPendingSigning = 'pending_signing_uri';
@@ -40,7 +40,7 @@ class DeepLinkService {
       },
     );
 
-    _appLinks.stringLinkStream.listen(
+    _stringLinkSubscription = _appLinks.stringLinkStream.listen(
       (link) {
         _handleString(link);
       },
@@ -302,6 +302,7 @@ class DeepLinkService {
 
   void dispose() {
     _linkSubscription?.cancel();
+    _stringLinkSubscription?.cancel();
     _linkController.close();
   }
 }

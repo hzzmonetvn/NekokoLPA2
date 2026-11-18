@@ -8,6 +8,8 @@ import 'app_localizations.dart';
 class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
+
+
   @override
   String get settingsTitle => 'Настройки';
 
@@ -931,6 +933,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get vowifiDisclaimerBody =>
       'VoWiFi — экспериментальная функция. Она напрямую взаимодействует с вашим мобильным оператором и работает только с совместимым внешним считывателем SIM/eSIM, поддерживающим сырые APDU. Совместимость с оператором и считывателем может отличаться.';
+
+  @override
+  String get vowifiAutoRenewTitle => 'Auto-renew sessions';
+
+  @override
+  String get vowifiAutoRenewSubtitle =>
+      'Renew sessions with less than 10% time remaining, switching profiles and authenticating when needed.';
+
+  @override
+  String get vowifiAutoRenewEnabled => 'Auto-renew enabled';
+
+  @override
+  String get vowifiAutoRenewDue => 'Renewal due (<10% remaining)';
 
   @override
   String get processing => 'Обработка…';
@@ -3017,4 +3032,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pluginVisitWebsite => 'Visit Website';
+
+  @override
+  String get omapiEuiccDetectedTitle => 'Keep this eUICC available';
+
+  @override
+  String get omapiEuiccSystemDisableWarning =>
+      'Disabling this SIM/eSIM slot in Android system settings may stop OMAPI from detecting it. Enable or switch profiles in this app instead. If the slot is already disabled, re-enable it in system settings and refresh the reader list.';
+
+  @override
+  String get deleteNotificationHistoryEntry => 'Delete local history entry';
+
+  @override
+  String get sendErrorReport => 'Send report';
+
+  @override
+  String get sendErrorReportTitle => 'Send error report?';
+
+  @override
+  String get sendErrorReportMessage =>
+      'This sends the error, your device model and the app\'s recent log to the developers for review. The log can include your eSIM\'s EID and profile ICCIDs.';
+
+  @override
+  String errorReportSent(String reference) {
+    return 'Report sent. Reference: $reference';
+  }
+
+  @override
+  String get errorReportFailed =>
+      'Couldn\'t send the report. Check your connection and try again.';
 }

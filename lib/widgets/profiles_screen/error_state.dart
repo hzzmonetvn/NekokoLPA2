@@ -1,83 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../adapter/omapi/omapi_safety.dart';
 import '../../l10n/app_localizations.dart';
+import '../../services/error_report_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/apdu_exception.dart';
 import '../../utils/error_codes.dart';
-
-/// Base widget for displaying state messages in the profiles screen.
-class ColumnStateMessage extends StatelessWidget {
-  final Widget icon;
-  final String title;
-  final String? subtitle;
-  final List<Widget>? actions;
-  final Color? iconContainerColor;
-
-  const ColumnStateMessage({
-    super.key,
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.actions,
-    this.iconContainerColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color:
-                    iconContainerColor ??
-                    theme.colorScheme.primary.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-              ),
-              child: icon,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-                letterSpacing: -0.5,
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                subtitle!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.onSurfaceSubtle(context),
-                  height: 1.4,
-                ),
-              ),
-            ],
-            if (actions != null && actions!.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
-                children: actions!,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
+import 'state_messages.dart';
 
 /// Whether an error means the card needs to be physically re-seated.
 ///
@@ -194,7 +122,78 @@ class ErrorState extends StatelessWidget {
             foregroundColor: Colors.white,
           ),
         ),
+        if (ErrorReportService.isAvailable &&
+            isOmapiSessionCorruptedError(error))
+          _SendReportButton(error: error, kind: 'omapi_session_corrupted'),
       ],
+    );
+  }
+}
+
+/// Sends [error] to Sentry for manual review, after the user confirms.
+class _SendReportButton extends StatefulWidget {
+  final Object error;
+  final String kind;
+
+  const _SendReportButton({required this.error, required this.kind});
+
+  @override
+  State<_SendReportButton> createState() => _SendReportButtonState();
+}
+
+class _SendReportButtonState extends State<_SendReportButton> {
+  bool _sending = false;
+
+  Future<void> _send() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.sendErrorReportTitle),
+        content: Text(l10n.sendErrorReportMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.sendErrorReport),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _sending = true);
+    final id = await ErrorReportService.report(widget.error, kind: widget.kind);
+    if (!mounted) return;
+    setState(() => _sending = false);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          id == null
+              ? l10n.errorReportFailed
+              : l10n.errorReportSent(id.toString().substring(0, 8)),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return OutlinedButton.icon(
+      onPressed: _sending ? null : _send,
+      icon: _sending
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.bug_report_outlined),
+      label: Text(l10n.sendErrorReport),
     );
   }
 }

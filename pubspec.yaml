@@ -11,7 +11,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # build by specifying --build-name and --build-number, respectively.
 # In Android, build-name is used as versionName while build-number used as versionCode.
 # Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-version: 2.4.1+601
+version: 2.5.0+606
 
 environment:
   sdk: ^3.10.0
@@ -26,6 +26,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  asn1_codegen: ^0.1.0
   crypto: ^3.0.6
   ccid:
     path: local_packages/ccid
@@ -85,6 +86,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logo.png
+    - assets/logo-community.png
     - assets/flavor.json
     - assets/variant_tabs.yaml
     - assets/turtle.webp

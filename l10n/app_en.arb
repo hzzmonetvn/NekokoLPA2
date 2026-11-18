@@ -301,6 +301,10 @@
   "vowifiSubtitle": "Experimental; requires a compatible external reader",
   "vowifiDisclaimerTitle": "Enable experimental VoWiFi?",
   "vowifiDisclaimerBody": "VoWiFi is experimental. It communicates directly with your mobile network operator and only works with a compatible external SIM/eSIM reader that supports raw APDUs. Carrier and reader compatibility may vary.",
+  "vowifiAutoRenewTitle": "Auto-renew sessions",
+  "vowifiAutoRenewSubtitle": "Renew sessions with less than 10% time remaining, switching profiles and authenticating when needed.",
+  "vowifiAutoRenewEnabled": "Auto-renew enabled",
+  "vowifiAutoRenewDue": "Renewal due (<10% remaining)",
   "processing": "Processing...",
   "analyzingImage": "Analyzing image...",
   "noQrFoundInImage": "No QR code found in image",
@@ -1170,5 +1174,26 @@
   "pluginEsimGgProfile": "eSIM.gg Profile",
   "pluginEsimGgPortal": "eSIM.gg Portal",
   "pluginEsimGgWelcome": "Welcome to eSIM.gg Portal",
-  "pluginVisitWebsite": "Visit Website"
+  "pluginVisitWebsite": "Visit Website",
+  "omapiEuiccDetectedTitle": "Keep this eUICC available",
+  "omapiEuiccSystemDisableWarning": "Disabling this SIM/eSIM slot in Android system settings may stop OMAPI from detecting it. Enable or switch profiles in this app instead. If the slot is already disabled, re-enable it in system settings and refresh the reader list.",
+  "deleteNotificationHistoryEntry": "Delete local history entry",
+  "@deleteNotificationHistoryEntry": {
+    "description": "Deletes the local notification history payload, without removing the notification from the eUICC or sending it again."
+  },
+  "sendErrorReport": "Send report",
+  "@sendErrorReport": {
+    "description": "Button on an error screen that sends the error to the developers for review."
+  },
+  "sendErrorReportTitle": "Send error report?",
+  "sendErrorReportMessage": "This sends the error, your device model and the app's recent log to the developers for review. The log can include your eSIM's EID and profile ICCIDs.",
+  "errorReportSent": "Report sent. Reference: {reference}",
+  "@errorReportSent": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReportFailed": "Couldn't send the report. Check your connection and try again."
 }

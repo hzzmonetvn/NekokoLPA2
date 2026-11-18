@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -7,41 +5,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val signingProperties = Properties().apply {
-    val propertiesFile = rootProject.file("key.properties")
-    if (propertiesFile.isFile) {
-        propertiesFile.inputStream().use { load(it) }
-    }
-}
-
-val communitySigningDefaults = mapOf(
-    "storeFile" to "community.jks",
-    "storePassword" to "CommunityKey",
-    "keyAlias" to "communitykey",
-    "keyPassword" to "CommunityKey",
-)
-
-fun signingValue(prefix: String, key: String): String? {
-    val propertyValue = signingProperties.getProperty("$prefix.$key")
-    if (!propertyValue.isNullOrBlank()) {
-        return propertyValue
-    }
-
-    val envKey = "NLPA_${prefix.uppercase()}_${
-        key.replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
-    }"
-    val envValue = System.getenv(envKey)?.takeIf { it.isNotBlank() }
-    if (envValue != null) {
-        return envValue
-    }
-
-    return if (prefix == "community") communitySigningDefaults[key] else null
-}
-
-fun hasSigningValues(prefix: String): Boolean {
-    return listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
-        .all { !signingValue(prefix, it).isNullOrBlank() }
-}
+// Community builds always use the committed public key. Local properties and
+// NLPA_* signing overrides belong to private brand builds, not this recipe.
 
 android {
     namespace = "ee.nekoko.nlpa2"
@@ -65,6 +30,14 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // AGP encrypts this optional record with a fresh nonce. It is outside the
+    // signed payload and makes otherwise identical APKs differ between builds.
+    // Public Community APKs must be reproducible without Google Play metadata.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
@@ -73,10 +46,10 @@ android {
 
     signingConfigs {
         create("community") {
-            signingValue("community", "storeFile")?.let { storeFile = file(it) }
-            storePassword = signingValue("community", "storePassword")
-            keyAlias = signingValue("community", "keyAlias")
-            keyPassword = signingValue("community", "keyPassword")
+            storeFile = file("community.jks")
+            storePassword = "CommunityKey"
+            keyAlias = "communitykey"
+            keyPassword = "CommunityKey"
         }
     }
 
@@ -101,20 +74,23 @@ android {
             dimension = "version"
             applicationId = "ee.nekoko.nlpa2.open"
             manifestPlaceholders["appName"] = "NekokoLPA 2 Community"
-            if (hasSigningValues("community")) {
-                signingConfig = signingConfigs.getByName("community")
-            }
+            signingConfig = signingConfigs.getByName("community")
         }
 
         create("privileged") {
             dimension = "version"
             applicationId = "ee.nekoko.nlpa2"
-            manifestPlaceholders["appName"] = "NekokoLPA 2 Rooted"
-            if (hasSigningValues("community")) {
-                signingConfig = signingConfigs.getByName("community")
-            }
+            manifestPlaceholders["appName"] = "NekokoLPA 2 Community Rooted"
+            signingConfig = signingConfigs.getByName("community")
         }
 
+    }
+
+    // Public rooted builds share the Community dolphin artwork.
+    sourceSets {
+        getByName("privileged") {
+            res.setSrcDirs(listOf("src/community/res"))
+        }
     }
 
     defaultConfig {
@@ -142,9 +118,7 @@ android {
             }
         }
         debug {
-            if (hasSigningValues("community")) {
-                signingConfig = signingConfigs.getByName("community")
-            }
+            signingConfig = signingConfigs.getByName("community")
         }
     }
 }

@@ -18,9 +18,11 @@ scripts/** linguist-vendored=true
 magisk_template/** linguist-vendored=true
 assets/** linguist-vendored=true
 data/** linguist-vendored=true
+services/** linguist-vendored=true
 
 docs/** linguist-documentation=true
 test/** linguist-documentation=true
+test_release/** linguist-documentation=true
 *.md linguist-documentation=true
 
 rust/** linguist-detectable=true

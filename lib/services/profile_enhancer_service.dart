@@ -1,4 +1,3 @@
-// ignore_for_file: unused_local_variable
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
@@ -67,8 +66,7 @@ class ProfileEnhancerService {
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final body = response.body;
-        final json = jsonDecode(body);
+        final json = jsonDecode(response.body);
 
         if (json is Map<String, dynamic>) {
           // 1. Normalize MSISDN
@@ -86,14 +84,6 @@ class ProfileEnhancerService {
             }
           }
 
-          // 2. Fetch and Normalize Data Usage
-          List<Map<String, dynamic>> packages = [];
-
-
-          if (packages.isNotEmpty) {
-            json['packages'] = packages;
-          }
-
           await _saveToCache(iccid, json);
           return json;
         }
@@ -105,7 +95,6 @@ class ProfileEnhancerService {
     }
     return null;
   }
-
 
   Future<void> _saveToCache(String iccid, Map<String, dynamic> json) async {
     try {

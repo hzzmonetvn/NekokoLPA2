@@ -38,7 +38,9 @@ class UpdateService {
         return null;
       }
 
-      final response = await http.get(Uri.parse(_configUrl));
+      final response = await http
+          .get(Uri.parse(_configUrl))
+          .timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) {
         _log.warning('Failed to fetch update config: ${response.statusCode}');
         return null;
@@ -82,7 +84,9 @@ class UpdateService {
   }
 
   Future<UpdateInfo?> _checkAndroidUpdate(dynamic osConfig) async {
-    final variant = AppSettings().variant;
+    // A separate package may share feature flags without sharing APK updates.
+    const channel = String.fromEnvironment('APP_UPDATE_CHANNEL');
+    final variant = channel.isEmpty ? AppSettings().variant : channel;
 
     // Check if configuration exists for Android
     if (osConfig is! Map) {

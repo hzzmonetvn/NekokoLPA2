@@ -115,6 +115,8 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -1862,6 +1864,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VoWiFi is experimental. It communicates directly with your mobile network operator and only works with a compatible external SIM/eSIM reader that supports raw APDUs. Carrier and reader compatibility may vary.'**
   String get vowifiDisclaimerBody;
+
+  /// No description provided for @vowifiAutoRenewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-renew sessions'**
+  String get vowifiAutoRenewTitle;
+
+  /// No description provided for @vowifiAutoRenewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew sessions with less than 10% time remaining, switching profiles and authenticating when needed.'**
+  String get vowifiAutoRenewSubtitle;
+
+  /// No description provided for @vowifiAutoRenewEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-renew enabled'**
+  String get vowifiAutoRenewEnabled;
+
+  /// No description provided for @vowifiAutoRenewDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewal due (<10% remaining)'**
+  String get vowifiAutoRenewDue;
 
   /// No description provided for @processing.
   ///
@@ -5600,6 +5626,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Visit Website'**
   String get pluginVisitWebsite;
+
+  /// No description provided for @omapiEuiccDetectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this eUICC available'**
+  String get omapiEuiccDetectedTitle;
+
+  /// No description provided for @omapiEuiccSystemDisableWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabling this SIM/eSIM slot in Android system settings may stop OMAPI from detecting it. Enable or switch profiles in this app instead. If the slot is already disabled, re-enable it in system settings and refresh the reader list.'**
+  String get omapiEuiccSystemDisableWarning;
+
+  /// Deletes the local notification history payload, without removing the notification from the eUICC or sending it again.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete local history entry'**
+  String get deleteNotificationHistoryEntry;
+
+  /// Button on an error screen that sends the error to the developers for review.
+  ///
+  /// In en, this message translates to:
+  /// **'Send report'**
+  String get sendErrorReport;
+
+  /// No description provided for @sendErrorReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send error report?'**
+  String get sendErrorReportTitle;
+
+  /// No description provided for @sendErrorReportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This sends the error, your device model and the app\'s recent log to the developers for review. The log can include your eSIM\'s EID and profile ICCIDs.'**
+  String get sendErrorReportMessage;
+
+  /// No description provided for @errorReportSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Report sent. Reference: {reference}'**
+  String errorReportSent(String reference);
+
+  /// No description provided for @errorReportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send the report. Check your connection and try again.'**
+  String get errorReportFailed;
 }
 
 class _AppLocalizationsDelegate

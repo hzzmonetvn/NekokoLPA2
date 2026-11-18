@@ -1162,5 +1162,34 @@
   "pluginEsimGgProfile": "Hồ sơ eSIM.gg",
   "pluginEsimGgPortal": "Cổng thông tin eSIM.gg",
   "pluginEsimGgWelcome": "Chào mừng bạn đến với Cổng thông tin eSIM.gg",
-  "pluginVisitWebsite": "Truy cập trang web"
+  "pluginVisitWebsite": "Truy cập trang web",
+  "customBackground": "Hình nền tùy chỉnh",
+  "customBackgroundSubtitle": "Chọn ảnh làm hình nền cho ứng dụng",
+  "backgroundSelected": "Đã chọn hình nền tùy chỉnh",
+  "chooseBackground": "Chọn ảnh nền",
+  "removeBackground": "Xóa ảnh nền",
+  "backgroundLoadFailed": "Không thể tải hoặc lưu ảnh đã chọn",
+  "backgroundImageOpacity": "Độ mờ hình nền",
+  "backgroundImageOpacitySubtitle": "Điều chỉnh mức độ hiển thị của ảnh nền đã chọn",
+  "omapiEuiccDetectedTitle": "Giữ eUICC này luôn khả dụng",
+  "omapiEuiccSystemDisableWarning": "Việc tắt khe SIM/eSIM này trong cài đặt hệ thống Android có thể khiến OMAPI ngừng nhận diện thẻ. Hãy bật hoặc chuyển đổi hồ sơ ngay trong ứng dụng này. Nếu khe đã bị tắt, hãy bật lại trong cài đặt hệ thống và làm mới danh sách đầu đọc.",
+  "deleteNotificationHistoryEntry": "Xóa mục lịch sử cục bộ",
+  "@deleteNotificationHistoryEntry": {
+    "description": "Deletes the local notification history payload, without removing the notification from the eUICC or sending it again."
+  },
+  "sendErrorReport": "Gửi báo cáo",
+  "@sendErrorReport": {
+    "description": "Button on an error screen that sends the error to the developers for review."
+  },
+  "sendErrorReportTitle": "Gửi báo cáo lỗi?",
+  "sendErrorReportMessage": "Thao tác này sẽ gửi thông tin lỗi, kiểu thiết bị và nhật ký gần đây của ứng dụng tới nhóm phát triển để xem xét. Nhật ký có thể chứa mã EID của eSIM và ICCID của các hồ sơ.",
+  "errorReportSent": "Đã gửi báo cáo. Mã tham chiếu: {reference}",
+  "@errorReportSent": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReportFailed": "Không thể gửi báo cáo. Vui lòng kiểm tra kết nối mạng và thử lại."
 }
