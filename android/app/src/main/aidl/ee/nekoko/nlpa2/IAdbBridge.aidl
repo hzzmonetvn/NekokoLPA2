@@ -11,7 +11,7 @@ package ee.nekoko.nlpa2;
  * and the privileged half runs in the `shell` process.
  *
  * This is the same shape [NBridgePlugin] uses to reach OTBridge and the same
- * reader operations [NBridgeAdapter] drives, so the Dart side is shared. The
+ * reader operations the host adapter drives, so the protocol is shared. The
  * difference is only where the privilege comes from: a Magisk module there, an
  * ADB session here.
  *

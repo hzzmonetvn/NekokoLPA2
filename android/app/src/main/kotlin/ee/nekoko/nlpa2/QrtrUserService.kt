@@ -44,7 +44,7 @@ class QrtrUserService : IQrtrService.Stub() {
         }
 
         synchronized(this) {
-            // Shutdown may follow a failed Dart teardown or app death. We cannot
+            // Shutdown may follow a failed host teardown or app death. We cannot
             // prove these numbers are still ours; only explicit live disconnect
             // may close them. Abandon without a deferred close or card I/O.
             invalidation.invalidate(0)
@@ -485,7 +485,7 @@ class QrtrUserService : IQrtrService.Stub() {
     }
 }
 
-// Validate at the privileged boundary, not only in Dart/UI. Each E2 APDU
+// Validate at the privileged boundary, not only in host/UI. Each E2 APDU
 // must contain exactly one complete, short-form read-only ES10 request.
 internal fun isAllowedHalReadApdu(a: ByteArray): Boolean {
     fun b(i: Int) = a[i].toInt() and 255
@@ -681,7 +681,7 @@ internal fun halResultOk(response: ByteArray, tag: Int): Boolean {
     return result.second[0].toInt() == 0
 }
 
-// Dart and request validators keep virtual channel 1. Only the privileged
+// Host and request validators keep virtual channel 1. Only the privileged
 // transport maps it to the channel returned by its own successful open.
 internal fun halOwnedApdu(apdu: ByteArray, channel: Int): ByteArray {
     require(channel in 1..19 && apdu.size >= 5) { "Invalid owned-channel APDU" }

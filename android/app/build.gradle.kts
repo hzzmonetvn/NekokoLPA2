@@ -1,8 +1,6 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id("dev.flutter.flutter-gradle-plugin")
+    id("org.jetbrains.kotlin.android")
 }
 
 // Community builds always use the committed public key. Local properties and
@@ -10,15 +8,13 @@ plugins {
 
 android {
     namespace = "ee.nekoko.nlpa2"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
         // The QRTR user service is described by an AIDL interface.
         aidl = true
     }
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -74,6 +70,7 @@ android {
             dimension = "version"
             applicationId = "ee.nekoko.nlpa2.open"
             manifestPlaceholders["appName"] = "NekokoLPA 2 Community"
+            buildConfigField("boolean", "PRIVILEGED_BUILD", "false")
             signingConfig = signingConfigs.getByName("community")
         }
 
@@ -81,13 +78,17 @@ android {
             dimension = "version"
             applicationId = "ee.nekoko.nlpa2"
             manifestPlaceholders["appName"] = "NekokoLPA 2 Community Rooted"
+            buildConfigField("boolean", "PRIVILEGED_BUILD", "true")
             signingConfig = signingConfigs.getByName("community")
         }
-
     }
 
-    // Public rooted builds share the Community dolphin artwork.
+    // Bundle TS.43 entitlement DB and profile size reference data into Android assets,
+    // and share the Community dolphin artwork with public rooted builds.
     sourceSets {
+        getByName("main") {
+            assets.srcDirs("src/main/assets", "../../assets", "../../data")
+        }
         getByName("privileged") {
             res.setSrcDirs(listOf("src/community/res"))
         }
@@ -95,10 +96,10 @@ android {
 
     defaultConfig {
         applicationId = "ee.nekoko.nlpa2.open"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdk = 28
+        targetSdk = 36
+        versionCode = 606
+        versionName = "2.5.0"
     }
 
     buildTypes {
@@ -109,11 +110,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            
-            // Force version code to match flutter.versionCode, preventing ABI splitting logic from changing it
+
+            // Force version code to match defaultConfig.versionCode, preventing ABI splitting logic from changing it
             applicationVariants.all {
                 outputs.all {
-                    (this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl)?.versionCodeOverride = flutter.versionCode
+                    (this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl)?.versionCodeOverride = 606
                 }
             }
         }
@@ -121,10 +122,6 @@ android {
             signingConfig = signingConfigs.getByName("community")
         }
     }
-}
-
-flutter {
-    source = "../.."
 }
 
 dependencies {
@@ -136,4 +133,5 @@ dependencies {
     implementation("dev.rikka.shizuku:provider:13.1.5")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

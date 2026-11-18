@@ -48,7 +48,7 @@ internal data class PersistedOmapiSafetyState(
 internal interface OmapiSafetyStore {
     /**
      * Optional process-local coordination scope. Production stores return a stable key so overlapping
-     * Flutter engines in the same process can hand off safely. Test/custom stores default to no
+     * host engines in the same process can hand off safely. Test/custom stores default to no
      * process handoff semantics unless they explicitly opt in.
      */
     val processScopeKey: Any?

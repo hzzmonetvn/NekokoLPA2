@@ -1,112 +1,161 @@
 package ee.nekoko.nlpa2
 
-import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Parcelable
-import android.os.Build
-import java.lang.reflect.InvocationTargetException
 import java.io.File
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import org.json.JSONObject
 
-class NBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+internal class NBridgePlugin {
     private var context: Context? = null
-    private var methodChannel: MethodChannel? = null
     private var backgroundThread: HandlerThread? = null
     private var backgroundHandler: Handler? = null
 
     companion object {
-        private const val CHANNEL_NAME = "ee.nekoko.nbridge_plugin"
         private const val DEFAULT_AUTHORITY = "ee.nekoko.nbridge.provider"
+        private const val CALL_TIMEOUT_SECONDS = 60L
     }
 
-    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        context = binding.applicationContext
-        methodChannel = MethodChannel(binding.binaryMessenger, CHANNEL_NAME)
-        methodChannel?.setMethodCallHandler(this)
-        backgroundThread = HandlerThread("NBridgePlugin")
-        backgroundThread?.start()
-        backgroundHandler = Handler(backgroundThread!!.looper)
+    fun attach(appContext: Context) {
+        context = appContext.applicationContext
+        if (backgroundThread == null) {
+            val thread = HandlerThread("NBridgePlugin").apply { start() }
+            backgroundThread = thread
+            backgroundHandler = Handler(thread.looper)
+        }
     }
 
-    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        methodChannel?.setMethodCallHandler(null)
-        methodChannel = null
+    fun detach() {
         backgroundThread?.quitSafely()
         backgroundThread = null
         backgroundHandler = null
         context = null
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        if (call.method == "isAvailable") {
-            result.success(isProviderAvailable(call.argument("authority")))
-            return
+    fun call(method: String, args: JSONObject): HostCallResult {
+        if (method == "isAvailable") {
+            val authority = args.optString("authority").ifBlank { null }
+            return HostCallResult.Success(isProviderAvailable(authority))
         }
-        if (call.method == "isRooted") {
-            result.success(isRooted())
-            return
+        if (method == "isRooted") {
+            return HostCallResult.Success(isRooted())
         }
 
-        backgroundHandler?.post {
-            try {
-                val response =
-                    when (call.method) {
-                        "listSlots" -> callProvider("listSlots", null)
-                        "connectLogicalChannel" ->
-                            callProvider(
-                                method = "connectLogicalChannel",
-                                extras =
-                                    Bundle().apply {
-                                        putString("slotId", call.argument("slotId"))
-                                        putStringArrayList(
-                                            "aids",
-                                            ArrayList(call.argument<List<String>>("aids") ?: emptyList()),
-                                        )
-                                    },
-                            )
-                        "transmitLogical" ->
-                            callProvider(
-                                method = "transmitLogical",
-                                extras =
-                                    Bundle().apply {
-                                        putString("connectionId", call.argument("connectionId"))
-                                        putString("apdu", call.argument("apdu"))
-                                    },
-                            )
-                        "transmitBasic" ->
-                            callProvider(
-                                method = "transmitBasic",
-                                extras =
-                                    Bundle().apply {
-                                        putString("slotId", call.argument("slotId"))
-                                        putString("apdu", call.argument("apdu"))
-                                    },
-                            )
-                        "closeLogicalChannel" ->
-                            callProvider(
-                                method = "closeLogicalChannel",
-                                extras =
-                                    Bundle().apply {
-                                        putString("connectionId", call.argument("connectionId"))
-                                    },
-                            )
-                        else -> throw IllegalArgumentException("Unknown method ${call.method}")
+        val handler =
+            backgroundHandler
+                ?: return HostCallResult.Error("ERROR", "Background handler unavailable")
+
+        val future = CompletableFuture<HostCallResult>()
+        val posted =
+            handler.post {
+                try {
+                    val response =
+                        when (method) {
+                            "listSlots" -> callProvider("listSlots", null)
+                            "connectLogicalChannel" -> {
+                                val slotId =
+                                    args.optString("slotId").ifBlank {
+                                        throw IllegalArgumentException("slotId is missing")
+                                    }
+                                val aids = args.optStringList("aids")
+                                callProvider(
+                                    method = "connectLogicalChannel",
+                                    extras =
+                                        Bundle().apply {
+                                            putString("slotId", slotId)
+                                            putStringArrayList("aids", ArrayList(aids))
+                                        },
+                                )
+                            }
+                            "transmitLogical" -> {
+                                val connectionId =
+                                    args.optString("connectionId").ifBlank {
+                                        throw IllegalArgumentException("connectionId is missing")
+                                    }
+                                val apdu =
+                                    args.optString("apdu").ifBlank {
+                                        throw IllegalArgumentException("apdu is missing")
+                                    }
+                                callProvider(
+                                    method = "transmitLogical",
+                                    extras =
+                                        Bundle().apply {
+                                            putString("connectionId", connectionId)
+                                            putString("apdu", apdu)
+                                        },
+                                )
+                            }
+                            "transmitBasic" -> {
+                                val slotId =
+                                    args.optString("slotId").ifBlank {
+                                        throw IllegalArgumentException("slotId is missing")
+                                    }
+                                val apdu =
+                                    args.optString("apdu").ifBlank {
+                                        throw IllegalArgumentException("apdu is missing")
+                                    }
+                                callProvider(
+                                    method = "transmitBasic",
+                                    extras =
+                                        Bundle().apply {
+                                            putString("slotId", slotId)
+                                            putString("apdu", apdu)
+                                        },
+                                )
+                            }
+                            "closeLogicalChannel" -> {
+                                val connectionId =
+                                    args.optString("connectionId").ifBlank {
+                                        throw IllegalArgumentException("connectionId is missing")
+                                    }
+                                callProvider(
+                                    method = "closeLogicalChannel",
+                                    extras =
+                                        Bundle().apply {
+                                            putString("connectionId", connectionId)
+                                        },
+                                )
+                            }
+                            else -> throw IllegalArgumentException("Unknown method $method")
+                        }
+
+                    val ok = response["ok"] as? Boolean ?: false
+                    if (!ok) {
+                        val errorCode = (response["errorCode"] as? String) ?: "ERROR"
+                        val errorMessage =
+                            (response["errorMessage"] as? String) ?: "Unknown NBridge error"
+                        future.complete(HostCallResult.Error(errorCode, errorMessage, response))
+                    } else {
+                        val data: Any? =
+                            when (method) {
+                                "listSlots" -> response["slots"] ?: emptyList<Any>()
+                                "transmitLogical", "transmitBasic" ->
+                                    response["responseApdu"]?.toString() ?: ""
+                                "closeLogicalChannel" -> true
+                                else -> response
+                            }
+                        future.complete(HostCallResult.Success(data))
                     }
-
-                Handler(context?.mainLooper ?: return@post).post { result.success(response) }
-            } catch (t: Throwable) {
-                Handler(context?.mainLooper ?: return@post).post {
+                } catch (t: Throwable) {
                     val root = t.rootCause()
-                    result.error("ERROR", root.readableMessage(), root.stackTraceToString())
+                    future.complete(HostCallResult.Error("ERROR", root.readableMessage()))
                 }
             }
-        } ?: result.error("ERROR", "Background handler unavailable", null)
+        if (!posted) {
+            return HostCallResult.Error("ERROR", "Background handler unavailable")
+        }
+
+        return try {
+            future.get(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            HostCallResult.Error("ERROR", e.message ?: "NBridge call timed out")
+        }
     }
 
     private fun isProviderAvailable(authority: String?): Boolean {
@@ -122,30 +171,32 @@ class NBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             return true
         }
 
-        val suspiciousPaths = listOf(
-            "/system/bin/su",
-            "/system/xbin/su",
-            "/sbin/su",
-            "/system_ext/bin/su",
-            "/system/bin/.ext/su",
-            "/system/usr/we-need-root/su",
-            "/vendor/bin/su",
-            "/data/adb/magisk",
-            "/data/adb/ksu",
-            "/data/adb/modules",
-            "/cache/magisk.log",
-        )
+        val suspiciousPaths =
+            listOf(
+                "/system/bin/su",
+                "/system/xbin/su",
+                "/sbin/su",
+                "/system_ext/bin/su",
+                "/system/bin/.ext/su",
+                "/system/usr/we-need-root/su",
+                "/vendor/bin/su",
+                "/data/adb/magisk",
+                "/data/adb/ksu",
+                "/data/adb/modules",
+                "/cache/magisk.log",
+            )
         if (suspiciousPaths.any { path -> File(path).exists() }) {
             return true
         }
 
         val pathEnv = System.getenv("PATH").orEmpty()
         if (pathEnv.isNotEmpty()) {
-            val hasSu = pathEnv
-                .split(':')
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .any { dir -> File(dir, "su").exists() }
+            val hasSu =
+                pathEnv
+                    .split(':')
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .any { dir -> File(dir, "su").exists() }
             if (hasSu) {
                 return true
             }
@@ -171,6 +222,7 @@ class NBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         return bundleToMap(response)
     }
 
+    @Suppress("DEPRECATION")
     private fun bundleToMap(bundle: Bundle): Map<String, Any?> {
         val map = linkedMapOf<String, Any?>()
         for (key in bundle.keySet()) {
@@ -179,33 +231,12 @@ class NBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         return map
     }
 
-    @Suppress("DEPRECATION")
-    private fun normalizeValue(value: Any?): Any? {
-        return when (value) {
+    private fun normalizeValue(value: Any?): Any? =
+        when (value) {
             is Bundle -> bundleToMap(value)
             is ArrayList<*> -> value.map { normalizeValue(it) }
             is List<*> -> value.map { normalizeValue(it) }
-            is Parcelable -> {
-                if (value is Bundle) bundleToMap(value) else value.toString()
-            }
+            is Parcelable -> if (value is Bundle) bundleToMap(value) else value.toString()
             else -> value
         }
-    }
-
-    private fun Throwable.rootCause(): Throwable {
-        return if (this is InvocationTargetException && targetException != null) {
-            targetException.rootCause()
-        } else {
-            cause?.takeIf { it !== this }?.rootCause() ?: this
-        }
-    }
-
-    private fun Throwable.readableMessage(): String {
-        val message = message
-        return if (message.isNullOrBlank()) {
-            this::class.java.name
-        } else {
-            "${this::class.java.name}: $message"
-        }
-    }
 }
