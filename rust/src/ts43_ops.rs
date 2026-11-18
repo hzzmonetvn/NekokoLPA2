@@ -190,7 +190,7 @@ pub fn parse_entitlement_database(json: &str) -> Vec<EntitlementRecord> {
     if json.trim().is_empty() {
         return Vec::new();
     }
-    nlpa_core::lpa::ts43::parse_entitlement_records(json).unwrap_or_default()
+    nlpa_core::lpa::ts43::entitlement::parse_entitlement_records(json).unwrap_or_default()
 }
 
 /// Builds a configured [`Ts43Client`] for initiating or continuing a carrier transfer.
