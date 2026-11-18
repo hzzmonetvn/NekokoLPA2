@@ -1,4 +1,4 @@
-//! Integration tests verifying Dioxus 0.6 SSR rendering, themes, wallpaper glass, i18n, and XSS safety.
+//! Integration tests for Dioxus 0.6 SSR rendering, themes, wallpaper glass, i18n, and XSS safety.
 
 use nlpa_core::i18n::{LocaleChoice, ALL_LOCALE_CHOICES};
 use nlpa_core::storage::{ColorMode, ThemeStyle};
@@ -151,6 +151,24 @@ fn settings_language_selector_exposes_all_12_choices_and_vietnamese_renders() {
     assert!(html.contains("Đen AMOLED"));
     assert!(html.contains("Hình nền tùy chỉnh"));
     assert!(html.contains("Độ mờ hình nền"));
+
+    model.settings.locale_choice = Some(LocaleChoice::System);
+    let sys_html = render_fragment(&model);
+    let Some(sys_start) = sys_html.find("value=\"system\"") else {
+        panic!("missing system option");
+    };
+    let Some(sys_end) = sys_html[sys_start..].find('>') else {
+        panic!("unterminated system option tag");
+    };
+    assert!(sys_html[sys_start..sys_start + sys_end].contains("selected"));
+    let Some(vi_start) = sys_html.find("value=\"vi\"") else {
+        panic!("missing vi option");
+    };
+    let Some(vi_end) = sys_html[vi_start..].find('>') else {
+        panic!("unterminated vi option tag");
+    };
+    assert!(!sys_html[vi_start..vi_start + vi_end].contains("selected"));
+    assert!(sys_html.contains("Ngôn ngữ"));
 }
 
 #[test]

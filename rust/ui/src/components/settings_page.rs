@@ -1,4 +1,4 @@
-//! Settings tab component: display/theme/wallpaper/language, privacy, readers, transport, and tools.
+//! Settings tab component: display/theme/wallpaper/language, privacy, readers, and tools.
 
 use dioxus::prelude::*;
 use nlpa_core::i18n::I18nCatalog;
@@ -11,7 +11,7 @@ use crate::models::{all_locale_options, locale_code, UiModel};
 pub fn render(model: &UiModel, catalog: &I18nCatalog) -> Element {
     let locale = model.locale;
     let s = &model.settings;
-    let current_locale_code = locale_code(locale);
+    let current_locale_code = locale_code(s.locale_choice.unwrap_or(locale));
     let opacity_pct = (model.wallpaper_opacity.clamp(0.05, 0.95) * 100.0).round() as i32;
 
     let lbl_appearance = tr(catalog, locale, "appearance", "Appearance");

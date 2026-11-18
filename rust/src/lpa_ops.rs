@@ -5,13 +5,16 @@ use std::collections::BTreeMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
+use nlpa_core::apdu::validate_apdu_sw;
 use nlpa_core::asn1::rsp::{
-    encode_iccid_bytes, EuiccChallenge, EuiccConfiguredAddresses, EuiccInfo2,
-    NotificationMetadata, RspProfileInfo, TAG_HANDLE_NOTIFICATION, TAG_NOTIFICATION_METADATA,
-    TAG_PROFILE_INFO, TAG_PROFILE_INFO_LIST,
+    DeleteProfileRequest, DisableProfileRequest, EnableProfileRequest, EuiccChallenge,
+    EuiccConfiguredAddresses, EuiccInfo2, NotificationMetadata, RspProfileInfo, SetNicknameRequest,
+    TAG_GET_CONFIGURED_ADDRESSES, TAG_GET_EUICC_CHALLENGE, TAG_GET_EUICC_INFO1,
+    TAG_GET_EUICC_INFO2, TAG_GET_PROFILES_INFO, TAG_HANDLE_NOTIFICATION, TAG_LIST_NOTIFICATION,
+    TAG_NOTIFICATION_METADATA, TAG_PROFILE_INFO, TAG_PROFILE_INFO_LIST, TAG_REMOVE_NOTIFICATION,
 };
 use nlpa_core::asn1::x509::{verify_ci_public_key_constraint, X509Certificate};
-use nlpa_core::asn1::{decode_integer, decode_utf8_string, encode_tlv, Asn1Reader};
+use nlpa_core::asn1::{decode_integer, decode_utf8_string, encode_integer, encode_tlv, Asn1Reader};
 use nlpa_core::bpp::{
     build_cancel_session_request_der, decompose_bpp, parse_nxp_memory_tlv, NxpMemoryInfo,
     EUICC_MEMORY_RESET_APDU_DATA,
@@ -30,21 +33,16 @@ use nlpa_core::es9::{
     ENDPOINT_AUTHENTICATE_CLIENT, ENDPOINT_CANCEL_SESSION, ENDPOINT_GET_BOUND_PROFILE_PACKAGE,
     ENDPOINT_HANDLE_NOTIFICATION, ENDPOINT_INITIATE_AUTHENTICATION,
 };
-use nlpa_core::hex::{bytes_to_hex, hex_to_bytes};
+use nlpa_core::hex::{bytes_to_hex, hex_to_bytes, swap_nibbles};
+use nlpa_core::iccid::iccid_for_display;
 use nlpa_core::imei::{calculate_imei_luhn_checksum, encode_stored_imei_bytes};
 use nlpa_core::lpa::download_session::ProfileDownloadSession;
-use nlpa_core::lpa::es10::{
-    build_delete_profile_apdu, build_disable_profile_apdu, build_enable_profile_apdu,
-    build_euicc_memory_reset_apdu, build_get_euicc_challenge_apdu,
-    build_get_euicc_configured_addresses_apdu, build_get_euicc_info1_apdu,
-    build_get_euicc_info2_apdu, build_get_profiles_info_apdu, build_list_notifications_apdu,
-    build_remove_notification_apdu, build_set_nickname_apdu, parse_es10_response,
-};
 use nlpa_core::lpa::es11::{
     build_smds_auth_client_request, build_smds_initiate_auth_request, clean_smds_host,
     parse_smds_discovery_response, DiscoveredEvent,
 };
 use nlpa_core::lpa::state_transition::ProfileStateTransition;
+use nlpa_core::mcc::parse_operator_id;
 use nlpa_core::plugins::{
     build_estk_mgt_read_apdu, build_gm_auth_apdu, esim_cc_badge, is_gm_eid, match_provider_plugin,
     parse_esim_gg_response, parse_estk_mgt_string, parse_three_hk_response, EstkCardInfo,
@@ -52,6 +50,7 @@ use nlpa_core::plugins::{
 };
 use nlpa_core::profile::EuiccProfile;
 use nlpa_core::profile_size_predictor::ProfileSizeCatalog;
+use nlpa_core::profile_tag::parse_nickname;
 use nlpa_core::storage::PersistedState;
 
 use crate::host::{HostClient, HostTransport, HttpRequestArgs};
@@ -177,7 +176,12 @@ impl<'a> Es9Client<'a> {
         }
     }
 
-    fn post_es9(&self, host_addr: &str, endpoint: &str, body_json: &str) -> Result<(u16, String), LpaOpError> {
+    fn post_es9(
+        &self,
+        host_addr: &str,
+        endpoint: &str,
+        body_json: &str,
+    ) -> Result<(u16, String), LpaOpError> {
         let clean = clean_smds_host(host_addr);
         let url = format!("https://{clean}{endpoint}");
         let mut headers = BTreeMap::new();
@@ -354,8 +358,10 @@ pub fn load_card_snapshot(
     let mut snap = CardSnapshot::default();
 
     snap.eid = read_eid(&mut ch)?;
-    if let Ok(cfg) = read_configured_addresses(&mut ch) {
-        snap.configured = cfg;
+    if !ch.is_se_hal() {
+        if let Ok(cfg) = read_configured_addresses(&mut ch) {
+            snap.configured = cfg;
+        }
     }
     if let Ok((info2, nxp)) = read_euicc_info2_and_nxp(&mut ch) {
         snap.info2 = info2;
@@ -364,10 +370,10 @@ pub fn load_card_snapshot(
     snap.profiles = read_profiles(&mut ch)?;
     snap.notifications = read_notifications(&mut ch).unwrap_or_default();
 
-    if reader.looks_like_estk() {
+    if !ch.is_se_hal() && reader.looks_like_estk() {
         snap.estk_info = read_estk_info(&mut ch);
     }
-    if is_gm_eid(&snap.eid) {
+    if !ch.is_se_hal() && is_gm_eid(&snap.eid) {
         if let Some(psk_hex) = state.gm_psk_cache.get(&snap.eid) {
             if perform_gm_auth(&mut ch, psk_hex).is_ok() {
                 snap.gm_authenticated = true;
@@ -395,8 +401,8 @@ fn read_asn1_root(bytes: &[u8]) -> Result<nlpa_core::asn1::Asn1Node, LpaOpError>
 }
 
 fn read_configured_addresses(ch: &mut CardChannel) -> Result<EuiccConfiguredAddresses, LpaOpError> {
-    let apdu = build_get_euicc_configured_addresses_apdu();
-    let resp = send_es10_apdu_on_channel(ch, &apdu)?;
+    let tlv = encode_tlv(TAG_GET_CONFIGURED_ADDRESSES, &[]);
+    let resp = ch.transmit_es10_tlv(&tlv)?;
     let node = read_asn1_root(&resp)?;
     EuiccConfiguredAddresses::decode(&node).map_err(|e| LpaOpError::Protocol(e.to_string()))
 }
@@ -404,22 +410,25 @@ fn read_configured_addresses(ch: &mut CardChannel) -> Result<EuiccConfiguredAddr
 fn read_euicc_info2_and_nxp(
     ch: &mut CardChannel,
 ) -> Result<(EuiccInfo2, Option<NxpMemoryInfo>), LpaOpError> {
-    let apdu = build_get_euicc_info2_apdu();
-    let resp = send_es10_apdu_on_channel(ch, &apdu)?;
+    let tlv = encode_tlv(TAG_GET_EUICC_INFO2, &[]);
+    let resp = ch.transmit_es10_tlv(&tlv)?;
     let node = read_asn1_root(&resp)?;
     let info2 = EuiccInfo2::decode(&node).map_err(|e| LpaOpError::Protocol(e.to_string()))?;
 
-    let nxp = ch
-        .transmit_raw(&[0x80, 0xCA, 0x00, 0xFE, 0x00])
-        .ok()
-        .and_then(|raw| parse_nxp_memory_tlv(&raw))
-        .or_else(|| parse_nxp_memory_tlv(&resp));
+    let nxp = if ch.is_se_hal() {
+        parse_nxp_memory_tlv(&resp)
+    } else {
+        ch.transmit_raw(&[0x80, 0xCA, 0x00, 0xFE, 0x00])
+            .ok()
+            .and_then(|raw| parse_nxp_memory_tlv(&raw))
+            .or_else(|| parse_nxp_memory_tlv(&resp))
+    };
     Ok((info2, nxp))
 }
 
 fn read_profiles(ch: &mut CardChannel) -> Result<Vec<EuiccProfile>, LpaOpError> {
-    let apdu = build_get_profiles_info_apdu();
-    let resp = send_es10_apdu_on_channel(ch, &apdu)?;
+    let tlv = encode_tlv(TAG_GET_PROFILES_INFO, &[]);
+    let resp = ch.transmit_es10_tlv(&tlv)?;
     let root = read_asn1_root(&resp)?;
     let mut profiles = Vec::new();
     let list_node = root.find_child(TAG_PROFILE_INFO_LIST).unwrap_or(root);
@@ -435,12 +444,62 @@ fn read_profiles(ch: &mut CardChannel) -> Result<Vec<EuiccProfile>, LpaOpError> 
                     if let Some(aid) = rsp.isdp_aid {
                         profile.isdp_aid = Some(bytes_to_hex(&aid));
                     }
+                    apply_profile_extra_tlvs(&item, &mut profile);
+                    profile.tags = parse_nickname(profile.nickname.as_deref())
+                        .tags
+                        .into_iter()
+                        .map(|t| t.raw())
+                        .collect();
                     profiles.push(profile);
                 }
             }
         }
     }
     Ok(profiles)
+}
+
+fn apply_profile_extra_tlvs(
+    item: &nlpa_core::asn1::Asn1Node,
+    profile: &mut EuiccProfile,
+) {
+    if let Some(owner) = item.find_child(0xB7) {
+        if let Some(mcc_mnc) = owner.find_child(0x80) {
+            if let Some((mcc, mnc)) = parse_operator_id(&mcc_mnc.value) {
+                profile.mcc = Some(mcc);
+                profile.mnc = Some(mnc);
+            }
+        } else if let Some((mcc, mnc)) = parse_operator_id(&owner.value) {
+            profile.mcc = Some(mcc);
+            profile.mnc = Some(mnc);
+        }
+        if let Some(g1) = owner.find_child(0x81) {
+            profile.gid1 = Some(bytes_to_hex(&g1.value).to_ascii_uppercase());
+        }
+        if let Some(g2) = owner.find_child(0x82) {
+            profile.gid2 = Some(bytes_to_hex(&g2.value).to_ascii_uppercase());
+        }
+    }
+    if let Some(notif_cfg) = item.find_child(0xB6) {
+        if let Ok(entries) = notif_cfg.children() {
+            for entry in entries {
+                let addr_node = entry.find_child(0x81).or_else(|| {
+                    if entry.is_tag(0x81) {
+                        Some(entry.clone())
+                    } else {
+                        None
+                    }
+                });
+                if let Some(node) = addr_node {
+                    if let Ok(addr) = decode_utf8_string(&node.value) {
+                        if !addr.trim().is_empty() {
+                            profile.smdp_address = Some(addr);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn read_notifications(ch: &mut CardChannel) -> Result<Vec<RetrievedNotification>, LpaOpError> {
@@ -454,8 +513,8 @@ fn read_notifications(ch: &mut CardChannel) -> Result<Vec<RetrievedNotification>
         }
     }
     // Fallback to ListNotification (0xBF28) metadata skeletons.
-    let apdu = build_list_notifications_apdu(None);
-    let resp = send_es10_apdu_on_channel(ch, &apdu)?;
+    let list_tlv = encode_tlv(TAG_LIST_NOTIFICATION, &[]);
+    let resp = ch.transmit_es10_tlv(&list_tlv)?;
     let root = read_asn1_root(&resp)?;
     let mut out = Vec::new();
     if let Ok(nodes) = root.children() {
@@ -510,7 +569,7 @@ fn extract_metadata_from_pending_notification(
     if let Some(meta) = entry.find_child(TAG_NOTIFICATION_METADATA) {
         return NotificationMetadata::decode(&meta).ok();
     }
-    // Check ProfileInstallationResult (0xBF37 -> 0xBF27 -> 0xBF2F) or OtherSignedNotification (0x30 -> 0xBF2F).
+    // Check ProfileInstallationResult (0xBF37 -> 0xBF27 -> 0xBF2F) or OtherSignedNotification.
     if let Ok(children) = entry.children() {
         for child in children {
             if let Some(found) = extract_metadata_from_pending_notification(&child) {
@@ -521,7 +580,7 @@ fn extract_metadata_from_pending_notification(
     None
 }
 
-/// Switches a profile (`enable=true` or `false`) enforcing non-retry on `6881` and convergence read-backs.
+/// Switches a profile (`enable=true` or `false`) enforcing non-retry and convergence checks.
 pub fn switch_profile(
     host: Arc<dyn HostTransport>,
     reader: &DiscoveredReader,
@@ -567,7 +626,7 @@ fn switch_profile_inner(
 
     if reader.kind == TransportKind::SeHal {
         let slot = reader.slot_index.unwrap_or(1);
-        let iccid_hex = bytes_to_hex(&encode_iccid_bytes(iccid));
+        let iccid_hex = se_hal_iccid_bcd_hex(iccid);
         let hal_res = client.se_hal_switch_profile(slot, &iccid_hex, enable, expected_eid);
         if let Err(err) = hal_res {
             let msg_lower = err.message.to_ascii_lowercase();
@@ -590,14 +649,14 @@ fn switch_profile_inner(
     }
 
     let mut ch = open_reader_channel(Arc::clone(&host), reader, state, omapi_latch)?;
-    let apdu = if enable {
-        build_enable_profile_apdu(iccid, true)
+    let req_tlv = if enable {
+        EnableProfileRequest::new(iccid.to_string(), true).encode()
     } else {
-        build_disable_profile_apdu(iccid, true)
+        DisableProfileRequest::new(iccid.to_string(), true).encode()
     };
 
     // Single submission invariant: NEVER replay switch command after sending to the card.
-    let send_res = send_es10_apdu_on_channel(&mut ch, &apdu);
+    let send_res = ch.transmit_es10_tlv(&req_tlv).map_err(LpaOpError::Reader);
     let mut logs = core::mem::take(&mut ch.apdu_log);
     let _ = ch.close();
 
@@ -696,15 +755,15 @@ pub fn rename_profile(
     if reader.kind == TransportKind::SeHal {
         let client = HostClient::new(host.as_ref());
         let slot = reader.slot_index.unwrap_or(1);
-        let iccid_hex = bytes_to_hex(&encode_iccid_bytes(iccid));
+        let iccid_hex = se_hal_iccid_bcd_hex(iccid);
         let rx = client
             .se_hal_rename_profile(slot, &iccid_hex, nickname, eid_hex)
             .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
         return Ok(vec![("SE_HAL_RENAME".into(), rx)]);
     }
     let mut ch = open_reader_channel(host, reader, state, omapi_latch)?;
-    let apdu = build_set_nickname_apdu(iccid, nickname);
-    let resp = send_es10_apdu_on_channel(&mut ch, &apdu)?;
+    let req_tlv = SetNicknameRequest::new(iccid.to_string(), nickname.to_string()).encode();
+    let resp = ch.transmit_es10_tlv(&req_tlv)?;
     if let Some(code) = extract_management_result_code(&resp) {
         if code != 0 {
             return Err(LpaOpError::Protocol(format!(
@@ -727,15 +786,15 @@ pub fn delete_profile(
     if reader.kind == TransportKind::SeHal {
         let client = HostClient::new(host.as_ref());
         let slot = reader.slot_index.unwrap_or(1);
-        let iccid_hex = bytes_to_hex(&encode_iccid_bytes(iccid));
+        let iccid_hex = se_hal_iccid_bcd_hex(iccid);
         let rx = client
             .se_hal_delete_profile(slot, &iccid_hex, eid_hex)
             .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
         return Ok(vec![("SE_HAL_DELETE".into(), rx)]);
     }
     let mut ch = open_reader_channel(host, reader, state, omapi_latch)?;
-    let apdu = build_delete_profile_apdu(iccid);
-    let resp = send_es10_apdu_on_channel(&mut ch, &apdu)?;
+    let req_tlv = DeleteProfileRequest::new(iccid.to_string()).encode();
+    let resp = ch.transmit_es10_tlv(&req_tlv)?;
     if let Some(code) = extract_management_result_code(&resp) {
         if code != 0 {
             return Err(LpaOpError::Protocol(format!(
@@ -754,15 +813,7 @@ pub fn reset_euicc_memory(
     omapi_latch: &Arc<Mutex<OmapiSafetyLatch>>,
 ) -> Result<Vec<(String, String)>, LpaOpError> {
     let mut ch = open_reader_channel(host, reader, state, omapi_latch)?;
-    let apdu = build_euicc_memory_reset_apdu(0x01);
-    let resp = if EUICC_MEMORY_RESET_APDU_DATA.is_empty() {
-        send_es10_apdu_on_channel(&mut ch, &apdu)?
-    } else {
-        match send_es10_apdu_on_channel(&mut ch, &apdu) {
-            Ok(data) => data,
-            Err(_) => ch.transmit_es10_tlv(EUICC_MEMORY_RESET_APDU_DATA)?,
-        }
-    };
+    let resp = ch.transmit_es10_tlv(EUICC_MEMORY_RESET_APDU_DATA)?;
     if let Some(code) = extract_management_result_code(&resp) {
         if code != 0 && code != 1 {
             return Err(LpaOpError::Protocol(format!(
@@ -797,8 +848,8 @@ pub fn remove_notification_safe(
         return Ok(vec![("SE_HAL_REMOVE_NOTIF".into(), rx)]);
     }
     let mut ch = open_reader_channel(host, reader, state, omapi_latch)?;
-    let apdu = build_remove_notification_apdu(seq_number);
-    let _ = send_es10_apdu_on_channel(&mut ch, &apdu)?;
+    let req_tlv = encode_tlv(TAG_REMOVE_NOTIFICATION, &encode_integer(i64::from(seq_number)));
+    let _ = ch.transmit_es10_tlv(&req_tlv)?;
     Ok(core::mem::take(&mut ch.apdu_log))
 }
 
@@ -847,10 +898,18 @@ pub fn download_profile(
                 .unwrap_or(u64::from(info2.free_nvram))
         });
 
-    let info1_apdu = build_get_euicc_info1_apdu();
-    let info1_bytes = send_es10_apdu_on_channel(&mut ch, &info1_apdu)?;
-    let challenge_apdu = build_get_euicc_challenge_apdu();
-    let challenge_bytes = send_es10_apdu_on_channel(&mut ch, &challenge_apdu)?;
+    let info1_tlv = encode_tlv(TAG_GET_EUICC_INFO1, &[]);
+    let info1_bytes = ch.transmit_es10_tlv(&info1_tlv)?;
+
+    let hal_guard = if ch.is_se_hal() {
+        let slot = reader.slot_index.unwrap_or(1);
+        Some(SeHalDownloadGuard::begin(host.as_ref(), slot)?)
+    } else {
+        None
+    };
+
+    let challenge_tlv = encode_tlv(TAG_GET_EUICC_CHALLENGE, &[]);
+    let challenge_bytes = transmit_download_tlv(&mut ch, hal_guard.as_ref(), &challenge_tlv)?;
     let chal_node = read_asn1_root(&challenge_bytes)?;
     let challenge =
         EuiccChallenge::decode(&chal_node).map_err(|e| LpaOpError::Protocol(e.to_string()))?;
@@ -870,7 +929,10 @@ pub fn download_profile(
         &base64_encode(&info1_bytes),
     )?;
     session
-        .process_initiate_authentication_response(&init_resp.transaction_id, &init_resp.server_certificate)
+        .process_initiate_authentication_response(
+            &init_resp.transaction_id,
+            &init_resp.server_certificate,
+        )
         .map_err(|e| LpaOpError::Protocol(e.to_string()))?;
 
     let ci_trusted = verify_server_ci(&init_resp);
@@ -879,7 +941,7 @@ pub fn download_profile(
         matching_id.unwrap_or(""),
         &state.device_imei,
     );
-    let auth_resp = ch.transmit_es10_tlv(&auth_req)?;
+    let auth_resp = transmit_download_tlv(&mut ch, hal_guard.as_ref(), &auth_req)?;
     session.process_authenticate_server_response(&auth_resp);
 
     let auth_client_res = es9.authenticate_client(
@@ -917,6 +979,9 @@ pub fn download_profile(
 
     if !confirm_install {
         send_cancel_session_best_effort(&mut ch, &es9, &clean_smdp, &session, 0);
+        if let Some(guard) = hal_guard {
+            guard.finish();
+        }
         let logs = core::mem::take(&mut ch.apdu_log);
         let _ = ch.close();
         return Ok(DownloadOutcome::PreviewOnly {
@@ -925,14 +990,12 @@ pub fn download_profile(
         });
     }
 
-    let signed2 = auth_client
-        .smdp_signed2
-        .as_deref()
-        .ok_or_else(|| LpaOpError::Protocol("Missing smdpSigned2 in AuthenticateClient".into()))?;
-    let sig2 = auth_client
-        .smdp_signature2
-        .as_deref()
-        .ok_or_else(|| LpaOpError::Protocol("Missing smdpSignature2 in AuthenticateClient".into()))?;
+    let signed2 = auth_client.smdp_signed2.as_deref().ok_or_else(|| {
+        LpaOpError::Protocol("Missing smdpSigned2 in AuthenticateClient".into())
+    })?;
+    let sig2 = auth_client.smdp_signature2.as_deref().ok_or_else(|| {
+        LpaOpError::Protocol("Missing smdpSignature2 in AuthenticateClient".into())
+    })?;
     let cert2 = auth_client
         .smdp_certificate
         .as_deref()
@@ -943,12 +1006,13 @@ pub fn download_profile(
         None
     };
 
-    let prep_req = build_prepare_download_request(signed2, sig2, hash_cc.as_ref().map(|h| h.as_slice()), cert2);
-    let prep_resp = match ch.transmit_es10_tlv(&prep_req) {
+    let prep_req =
+        build_prepare_download_request(signed2, sig2, hash_cc.as_deref(), cert2);
+    let prep_resp = match transmit_download_tlv(&mut ch, hal_guard.as_ref(), &prep_req) {
         Ok(r) => r,
         Err(e) => {
             send_cancel_session_best_effort(&mut ch, &es9, &clean_smdp, &session, 2);
-            return Err(LpaOpError::Reader(e));
+            return Err(e);
         }
     };
 
@@ -967,16 +1031,13 @@ pub fn download_profile(
     let segments = decompose_bpp(&bpp_resp.bound_profile_package)
         .map_err(|e| LpaOpError::Protocol(format!("BPP decomposition failed: {e}")))?;
 
-    if reader.kind == TransportKind::SeHal {
-        let client = HostClient::new(host.as_ref());
-        let slot = reader.slot_index.unwrap_or(1);
-        client
-            .se_hal_begin_download(slot)
-            .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
+    if let Some(guard) = hal_guard {
         let segments_hex: Vec<String> = segments.iter().map(|s| bytes_to_hex(s)).collect();
-        let dl_res = client.se_hal_download(slot, &segments_hex);
-        let _ = client.se_hal_end_download(slot);
-        dl_res.map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
+        let dl_res = guard.client.se_hal_download(guard.slot, &segments_hex);
+        guard.finish();
+        let rx_hex = dl_res.map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
+        ch.apdu_log.push(("SE_HAL_DOWNLOAD_BPP".into(), rx_hex.clone()));
+        let _ = strip_hal_download_sw(&rx_hex)?;
     } else {
         for seg in &segments {
             if let Err(e) = ch.transmit_es10_tlv(seg) {
@@ -1004,8 +1065,18 @@ pub fn discover_smds_events(
 ) -> Result<(Vec<DiscoveredEvent>, Vec<(String, String)>), LpaOpError> {
     let clean_smds = clean_smds_host(smds_address);
     let mut ch = open_reader_channel(Arc::clone(&host), reader, state, omapi_latch)?;
-    let info1 = send_es10_apdu_on_channel(&mut ch, &build_get_euicc_info1_apdu())?;
-    let chal_raw = send_es10_apdu_on_channel(&mut ch, &build_get_euicc_challenge_apdu())?;
+    let info1_tlv = encode_tlv(TAG_GET_EUICC_INFO1, &[]);
+    let info1 = ch.transmit_es10_tlv(&info1_tlv)?;
+
+    let hal_guard = if ch.is_se_hal() {
+        let slot = reader.slot_index.unwrap_or(1);
+        Some(SeHalDownloadGuard::begin(host.as_ref(), slot)?)
+    } else {
+        None
+    };
+
+    let chal_tlv = encode_tlv(TAG_GET_EUICC_CHALLENGE, &[]);
+    let chal_raw = transmit_download_tlv(&mut ch, hal_guard.as_ref(), &chal_tlv)?;
     let chal_node = read_asn1_root(&chal_raw)?;
     let challenge =
         EuiccChallenge::decode(&chal_node).map_err(|e| LpaOpError::Protocol(e.to_string()))?;
@@ -1021,7 +1092,10 @@ pub fn discover_smds_events(
         .map_err(|e| LpaOpError::Protocol(e.to_string()))?;
 
     let auth_req = build_authenticate_server_request(&init_resp, "", &state.device_imei);
-    let auth_resp = ch.transmit_es10_tlv(&auth_req)?;
+    let auth_resp = transmit_download_tlv(&mut ch, hal_guard.as_ref(), &auth_req)?;
+    if let Some(guard) = hal_guard {
+        guard.finish();
+    }
     let auth_body =
         build_smds_auth_client_request(&init_resp.transaction_id, &base64_encode(&auth_resp));
     let (st2, resp2) = es9.post_es9(&clean_smds, ENDPOINT_AUTHENTICATE_CLIENT, &auth_body)?;
@@ -1166,7 +1240,8 @@ fn ensure_9esim_ok(rx_hex: &str) -> Result<(), LpaOpError> {
 fn perform_gm_auth(ch: &mut CardChannel, psk_hex: &str) -> Result<(), LpaOpError> {
     let psk = hex_to_bytes(psk_hex.trim())
         .map_err(|e| LpaOpError::Protocol(format!("Invalid GM PSK hex: {e}")))?;
-    let chall_raw = send_es10_apdu_on_channel(ch, &build_get_euicc_challenge_apdu())?;
+    let chal_tlv = encode_tlv(TAG_GET_EUICC_CHALLENGE, &[]);
+    let chall_raw = ch.transmit_es10_tlv(&chal_tlv)?;
     let chal_node = read_asn1_root(&chall_raw)?;
     let challenge =
         EuiccChallenge::decode(&chal_node).map_err(|e| LpaOpError::Protocol(e.to_string()))?;
@@ -1199,23 +1274,87 @@ fn read_estk_info(ch: &mut CardChannel) -> Option<EstkCardInfo> {
     })
 }
 
-fn send_es10_apdu_on_channel(ch: &mut CardChannel, apdu: &[u8]) -> Result<Vec<u8>, LpaOpError> {
-    if ch.is_se_hal() {
-        let rx = ch.transmit_raw(apdu)?;
-        return Ok(if rx.len() >= 2 && rx[rx.len() - 2] == 0x90 && rx[rx.len() - 1] == 0x00 {
-            rx[..rx.len() - 2].to_vec()
-        } else {
-            rx
-        });
+fn se_hal_iccid_bcd_hex(iccid: &str) -> String {
+    let mut clean: String = iccid
+        .trim()
+        .chars()
+        .filter(|c| c.is_ascii_hexdigit())
+        .collect::<String>()
+        .to_ascii_uppercase();
+    if clean.len() % 2 != 0 {
+        clean.push('F');
     }
-    let resp = ch.transmit_raw(apdu)?;
-    parse_es10_response(&resp).map_err(|e| {
-        if let nlpa_core::apdu::ApduError::Failure { sw1, sw2 } = e {
-            LpaOpError::Reader(ReaderError::ApduFailed { sw1, sw2 })
-        } else {
-            LpaOpError::Protocol(e.to_string())
+    swap_nibbles(&clean).to_ascii_uppercase()
+}
+
+struct SeHalDownloadGuard<'a> {
+    client: HostClient<'a>,
+    slot: i32,
+    active: bool,
+}
+
+impl<'a> SeHalDownloadGuard<'a> {
+    fn begin(host: &'a dyn HostTransport, slot: i32) -> Result<Self, LpaOpError> {
+        let client = HostClient::new(host);
+        client
+            .se_hal_begin_download(slot)
+            .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
+        Ok(Self {
+            client,
+            slot,
+            active: true,
+        })
+    }
+
+    fn finish(mut self) {
+        if self.active {
+            self.active = false;
+            let _ = self.client.se_hal_end_download(self.slot);
         }
-    })
+    }
+}
+
+impl Drop for SeHalDownloadGuard<'_> {
+    fn drop(&mut self) {
+        if self.active {
+            self.active = false;
+            let _ = self.client.se_hal_end_download(self.slot);
+        }
+    }
+}
+
+fn transmit_download_tlv(
+    ch: &mut CardChannel,
+    hal_guard: Option<&SeHalDownloadGuard<'_>>,
+    tlv: &[u8],
+) -> Result<Vec<u8>, LpaOpError> {
+    if let Some(guard) = hal_guard {
+        let req_hex = bytes_to_hex(tlv);
+        let resp_hex = guard
+            .client
+            .se_hal_download(guard.slot, std::slice::from_ref(&req_hex))
+            .map_err(|e| LpaOpError::Reader(ReaderError::Host(e)))?;
+        ch.apdu_log.push((req_hex, resp_hex.clone()));
+        strip_hal_download_sw(&resp_hex)
+    } else {
+        ch.transmit_es10_tlv(tlv).map_err(LpaOpError::Reader)
+    }
+}
+
+fn strip_hal_download_sw(resp_hex: &str) -> Result<Vec<u8>, LpaOpError> {
+    let raw = hex_to_bytes(resp_hex).map_err(|e| LpaOpError::Protocol(e.to_string()))?;
+    if raw.len() < 2 {
+        return Err(LpaOpError::Reader(ReaderError::ApduFailed {
+            sw1: 0x6F,
+            sw2: 0x00,
+        }));
+    }
+    let sw1 = raw[raw.len() - 2];
+    let sw2 = raw[raw.len() - 1];
+    if validate_apdu_sw(sw1, sw2).is_err() {
+        return Err(LpaOpError::Reader(ReaderError::ApduFailed { sw1, sw2 }));
+    }
+    Ok(raw[..raw.len() - 2].to_vec())
 }
 
 fn send_cancel_session_best_effort(
@@ -1225,7 +1364,13 @@ fn send_cancel_session_best_effort(
     session: &ProfileDownloadSession,
     reason: u8,
 ) {
-    let (Some(tx_octets), Some(tx_hex)) = (session.get_transaction_id(), session.get_transaction_id_hex()) else {
+    if ch.is_se_hal() {
+        return;
+    }
+    let (Some(tx_octets), Some(tx_hex)) = (
+        session.get_transaction_id(),
+        session.get_transaction_id_hex(),
+    ) else {
         return;
     };
     let cancel_req = build_cancel_session_request_der(tx_octets, reason);
@@ -1325,7 +1470,10 @@ fn build_preview(
             if let Ok(children) = root.children() {
                 for c in children {
                     match c.tag {
-                        0x5A => iccid = bytes_to_hex(&c.value),
+                        0x5A => {
+                            let swapped = swap_nibbles(&bytes_to_hex(&c.value));
+                            iccid = iccid_for_display(&swapped).to_string();
+                        }
                         0x91 => {
                             if let Ok(s) = decode_utf8_string(&c.value) {
                                 spn = s;
@@ -1342,7 +1490,11 @@ fn build_preview(
                             }
                         }
                         0xB7 => {
-                            if let Some((mcc, mnc)) = nlpa_core::mcc::parse_operator_id(&c.value) {
+                            let raw_mcc = c
+                                .find_child(0x80)
+                                .map(|n| n.value)
+                                .unwrap_or_else(|| c.value.clone());
+                            if let Some((mcc, mnc)) = parse_operator_id(&raw_mcc) {
                                 plmn = Some(format!("{mcc}{mnc}"));
                             }
                         }

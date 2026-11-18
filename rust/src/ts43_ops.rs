@@ -113,7 +113,8 @@ impl SourceSimProvider for CardSourceSim {
         };
         let imsi_bytes = read_ef_binary(&mut ch, UsimFiles::EF_IMSI, 9)?;
         let imsi = Imsi::from_bytes(&imsi_bytes)?;
-        let ad_bytes = read_ef_binary(&mut ch, UsimFiles::EF_AD, 4).unwrap_or_else(|_| vec![0, 0, 0, 2]);
+        let ad_bytes =
+            read_ef_binary(&mut ch, UsimFiles::EF_AD, 4).unwrap_or_else(|_| vec![0, 0, 0, 2]);
         let gid1_bytes = read_ef_binary(&mut ch, UsimFiles::EF_GID1, 16).unwrap_or_default();
         let gid1 = if gid1_bytes.is_empty() {
             String::new()

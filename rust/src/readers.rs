@@ -11,12 +11,12 @@ use std::sync::{Arc, Mutex};
 use nlpa_core::apdu::validate_apdu_sw;
 use nlpa_core::atr::is_likely_euicc_atr;
 use nlpa_core::channel::{
-    chain_apdu_request, map_logical_channel_cla, OmapiSafetyLatch, ReassemblyAction,
-    ResponseReassembler, DEFAULT_STORE_DATA_MSS,
+    build_manage_channel_close_apdu, chain_apdu_request, map_logical_channel_cla,
+    OmapiSafetyLatch, ReassemblyAction, ResponseReassembler, DEFAULT_STORE_DATA_MSS,
 };
 use nlpa_core::crypto::{base64_decode, base64_encode};
 use nlpa_core::hex::{bytes_to_hex, hex_to_bytes};
-use nlpa_core::lpa::es10::{build_select_isdr_apdu, ISDR_AID};
+use nlpa_core::lpa::es10::ISDR_AID;
 use nlpa_core::modem::{ModemSession, QrtrSocketAddress, QrtrSocketDatagram, TransportSocket};
 use nlpa_core::plugins::{estk_extra_aids, ESTK_ATR_MARKER};
 use nlpa_core::remocard::{
@@ -361,8 +361,13 @@ fn collect_omapi_readers(
 ) {
     if let Ok(guard) = omapi_latch.lock() {
         if guard.is_poisoned() {
-            report.omapi_corrupted_banner =
-                Some("OMAPI session was marked corrupted; reconnect or restart device before retrying OMAPI.".into());
+            report.omapi_corrupted_banner = Some(
+                concat!(
+                    "OMAPI session was marked corrupted; ",
+                    "reconnect or restart device before retrying OMAPI."
+                )
+                .into(),
+            );
             return;
         }
     }
@@ -381,9 +386,11 @@ fn collect_omapi_readers(
         }
     };
     for name in names {
-        if !name.to_ascii_uppercase().starts_with("SIM")
-            && !name.to_ascii_uppercase().starts_with("ESE")
-        {
+        if name.contains('|') {
+            continue;
+        }
+        let upper = name.to_ascii_uppercase();
+        if !upper.starts_with("SIM") && !upper.starts_with("ESE") {
             continue;
         }
         match client.omapi_connect(&name) {
@@ -391,7 +398,7 @@ fn collect_omapi_readers(
                 let is_likely = hex_to_bytes(&conn.atr)
                     .map(|b| is_likely_euicc_atr(&b))
                     .unwrap_or(false);
-                if conn.atr.is_empty() && name.to_ascii_uppercase().contains("SIM") {
+                if upper.starts_with("SIM") && (conn.atr.is_empty() || is_likely) {
                     report.omapi_euicc_warning = true;
                 }
                 let _ = client.omapi_disconnect(&name);
@@ -413,15 +420,12 @@ fn collect_omapi_readers(
                     eid: None,
                     remocard_server: None,
                 });
-                if !is_likely && out.last().is_some_and(|r| r.atr_hex.is_none()) {
-                    report.omapi_euicc_warning = true;
-                }
             }
             Ok(conn) => {
                 let is_likely = hex_to_bytes(&conn.atr)
                     .map(|b| is_likely_euicc_atr(&b))
                     .unwrap_or(false);
-                if is_likely || name.to_ascii_uppercase().starts_with("SIM") {
+                if is_likely || upper.starts_with("SIM") {
                     report.omapi_euicc_warning = true;
                 }
             }
@@ -849,7 +853,11 @@ impl CardChannel {
         se_hal_borrowed: bool,
         proxy_url: Option<String>,
     ) -> Result<Self, ReaderError> {
-        let effective_mss = if mss < 32 { DEFAULT_STORE_DATA_MSS } else { mss };
+        let effective_mss = if mss < 32 {
+            DEFAULT_STORE_DATA_MSS
+        } else {
+            mss
+        };
         let client = HostClient::new(host.as_ref());
 
         match reader.kind {
@@ -975,14 +983,22 @@ impl CardChannel {
                 let mut session = ModemSession::new(Box::new(QrtrModemTransport {
                     host: Arc::clone(&host),
                 }));
-                let aid_bytes = aids
-                    .first()
-                    .and_then(|h| hex_to_bytes(h).ok())
-                    .unwrap_or_else(|| ISDR_AID.to_vec());
-                let ch = runtime::block_on(session.open_channel(slot, aid_bytes)).map_err(|e| {
+                let candidates = resolve_aid_candidates(aids);
+                let mut opened = None;
+                let mut last_err = "No AID selected on QRTR".to_string();
+                for aid_bytes in candidates {
+                    match runtime::block_on(session.open_channel(slot, aid_bytes)) {
+                        Ok(ch) => {
+                            opened = Some(ch);
+                            break;
+                        }
+                        Err(e) => last_err = e,
+                    }
+                }
+                let Some(ch) = opened else {
                     let _ = client.qrtr_close_bus();
-                    ReaderError::Protocol(e)
-                })?;
+                    return Err(ReaderError::Protocol(last_err));
+                };
                 Ok(Self {
                     host,
                     backend: Some(ChannelBackend::Qrtr {
@@ -1020,7 +1036,7 @@ impl CardChannel {
                     return Err(ReaderError::PermissionRequired(reader.label.clone()));
                 }
                 client.ccid_connect(&reader.raw_name)?;
-                // Try MANAGE CHANNEL OPEN; fallback to basic channel 0 if reader restricts logical channels.
+                // Try MANAGE CHANNEL OPEN; fallback to basic channel 0 if restricted.
                 let open_hex = bytes_to_hex(&nlpa_core::channel::build_manage_channel_open_apdu());
                 let open_resp_hex = client.ccid_transceive(&reader.raw_name, &open_hex)?;
                 let open_resp = hex_to_bytes(&open_resp_hex).unwrap_or_default();
@@ -1035,25 +1051,40 @@ impl CardChannel {
                 } else {
                     0
                 };
-                let mut select_apdu = build_select_isdr_apdu();
-                if ch > 0 {
-                    select_apdu[0] = map_logical_channel_cla(select_apdu[0], ch)
-                        .map_err(|e| ReaderError::Protocol(e.to_string()))?;
-                }
-                let sel_hex = client.ccid_transceive(&reader.raw_name, &bytes_to_hex(&select_apdu))?;
-                let sel_bytes = hex_to_bytes(&sel_hex)
-                    .map_err(|e| ReaderError::Protocol(e.to_string()))?;
-                Ok(Self {
+                let mut channel = Self {
                     host,
                     backend: Some(ChannelBackend::Ccid {
                         reader: reader.raw_name.clone(),
                         channel: ch,
                     }),
                     mss: effective_mss,
-                    select_response: sel_bytes,
+                    select_response: Vec::new(),
                     omapi_latch: Arc::clone(omapi_latch),
                     apdu_log: Vec::new(),
-                })
+                };
+                let candidates = resolve_aid_candidates(aids);
+                let mut last_err =
+                    ReaderError::ChannelUnavailable("No AID selected on CCID".into());
+                for aid_bytes in candidates {
+                    if let Ok(len) = u8::try_from(aid_bytes.len()) {
+                        let mut select_apdu = Vec::with_capacity(6 + aid_bytes.len());
+                        select_apdu.extend_from_slice(&[0x00, 0xA4, 0x04, 0x00, len]);
+                        select_apdu.extend_from_slice(&aid_bytes);
+                        select_apdu.push(0x00);
+                        match channel.transmit_raw(&select_apdu) {
+                            Ok(sel_raw) => match strip_and_validate_sw(&sel_raw) {
+                                Ok(fci) => {
+                                    channel.select_response = fci;
+                                    return Ok(channel);
+                                }
+                                Err(e) => last_err = e,
+                            },
+                            Err(e) => last_err = e,
+                        }
+                    }
+                }
+                let _ = channel.close_inner();
+                Err(last_err)
             }
             TransportKind::Remote => {
                 let server = reader.remocard_server.clone().ok_or_else(|| {
@@ -1108,27 +1139,15 @@ impl CardChannel {
     }
 
     /// Transmits an SGP.22 ES10 TLV command (`STORE DATA`), segmenting when exceeding MSS.
+    /// Sends an ES10 BER-TLV command with automatic MSS chaining and `61xx`/`6Cxx` reassembly.
     pub fn transmit_es10_tlv(&mut self, tlv_der: &[u8]) -> Result<Vec<u8>, ReaderError> {
-        if let Some(ChannelBackend::SeHal { slot, .. }) = &self.backend {
-            let client = HostClient::new(self.host.as_ref());
-            let full_apdu = nlpa_core::lpa::es10::wrap_store_data_apdu(tlv_der, true, true);
-            let req_hex = bytes_to_hex(&full_apdu);
-            let resp_hex = client.se_hal_read(*slot, &req_hex)?;
-            self.apdu_log.push((req_hex, resp_hex.clone()));
-            let raw = hex_to_bytes(&resp_hex).map_err(|e| ReaderError::Protocol(e.to_string()))?;
-            return unwrap_se_hal_or_sw(&raw);
+        let frames = chain_apdu_request(0x80, 0xE2, 0x91, 0x00, tlv_der, None, self.mss);
+        if self.is_se_hal() && frames.len() != 1 {
+            return Err(ReaderError::Protocol(format!(
+                "SE HAL read rejects multi-frame APDU ({} chunks)",
+                frames.len()
+            )));
         }
-
-        let frames = if tlv_der.len() <= self.mss {
-            vec![nlpa_core::lpa::es10::wrap_store_data_apdu(tlv_der, true, true)]
-        } else {
-            let mut pkts =
-                chain_apdu_request(0x80, 0xE2, 0x91, 0x00, tlv_der, None, self.mss);
-            if let Some(last) = pkts.last_mut() {
-                last.push(0x00);
-            }
-            pkts
-        };
 
         let mut last_response = Vec::new();
         for frame in frames {
@@ -1137,7 +1156,7 @@ impl CardChannel {
         strip_and_validate_sw(&last_response)
     }
 
-    /// Transmits an arbitrary ISO 7816-4 APDU, automatically handling channel CLA and `61xx`/`6Cxx`.
+    /// Transmits an ISO 7816-4 APDU, automatically handling channel CLA and `61xx`/`6Cxx`.
     pub fn transmit_raw(&mut self, apdu: &[u8]) -> Result<Vec<u8>, ReaderError> {
         let mut current = apdu.to_vec();
         if let Some(ch) = self.raw_cla_channel() {
@@ -1178,6 +1197,7 @@ impl CardChannel {
     fn raw_cla_channel(&self) -> Option<u8> {
         match self.backend {
             Some(ChannelBackend::Telephony { channel, .. }) => u8::try_from(channel).ok(),
+            Some(ChannelBackend::SeHal { .. }) => Some(1),
             Some(ChannelBackend::Ccid { channel, .. }) => Some(channel),
             _ => None,
         }
@@ -1302,7 +1322,7 @@ impl CardChannel {
             }
             ChannelBackend::Ccid { reader, channel } => {
                 if channel > 0 {
-                    if let Ok(close_apdu) = nlpa_core::channel::build_manage_channel_close_apdu(channel) {
+                    if let Ok(close_apdu) = build_manage_channel_close_apdu(channel) {
                         let _ = client.ccid_transceive(&reader, &bytes_to_hex(&close_apdu));
                     }
                 }
@@ -1365,6 +1385,19 @@ impl Drop for CardChannel {
     }
 }
 
+fn resolve_aid_candidates(aids: &[String]) -> Vec<Vec<u8>> {
+    let parsed: Vec<Vec<u8>> = aids
+        .iter()
+        .filter_map(|h| hex_to_bytes(h).ok())
+        .filter(|b| !b.is_empty())
+        .collect();
+    if parsed.is_empty() {
+        vec![ISDR_AID.to_vec()]
+    } else {
+        parsed
+    }
+}
+
 fn strip_and_validate_sw(raw: &[u8]) -> Result<Vec<u8>, ReaderError> {
     if raw.len() < 2 {
         return Err(ReaderError::ApduFailed {
@@ -1378,18 +1411,4 @@ fn strip_and_validate_sw(raw: &[u8]) -> Result<Vec<u8>, ReaderError> {
         return Err(ReaderError::ApduFailed { sw1, sw2 });
     }
     Ok(raw[..raw.len() - 2].to_vec())
-}
-
-fn unwrap_se_hal_or_sw(raw: &[u8]) -> Result<Vec<u8>, ReaderError> {
-    if raw.len() >= 2 {
-        let sw1 = raw[raw.len() - 2];
-        let sw2 = raw[raw.len() - 1];
-        if (sw1 == 0x90 && sw2 == 0x00) || sw1 == 0x91 {
-            return Ok(raw[..raw.len() - 2].to_vec());
-        }
-        if matches!(sw1, 0x61..=0x6F) && raw.len() == 2 {
-            return Err(ReaderError::ApduFailed { sw1, sw2 });
-        }
-    }
-    Ok(raw.to_vec())
 }

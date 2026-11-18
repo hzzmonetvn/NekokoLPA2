@@ -395,9 +395,11 @@ impl AppController {
                 self.toast = Some(("Copied to clipboard".into(), false));
             }
             UiAction::FetchProviderBadge { iccid } => {
-                if let Some(badge) =
-                    fetch_provider_badge(self.host.as_ref(), self.state.proxy_url.as_deref(), &iccid)
-                {
+                if let Some(badge) = fetch_provider_badge(
+                    self.host.as_ref(),
+                    self.state.proxy_url.as_deref(),
+                    &iccid,
+                ) {
                     self.provider_badges.insert(iccid, badge);
                 } else {
                     self.toast = Some(("Provider status unavailable".into(), true));
@@ -433,7 +435,8 @@ impl AppController {
                             .to_ascii_uppercase()
                     })
                     .unwrap_or_default();
-                let euicc_mode = nlpa_core::ccid::nine_esim::euicc_capability_enabled(&atr).unwrap_or(true);
+                let euicc_mode =
+                    nlpa_core::ccid::nine_esim::euicc_capability_enabled(&atr).unwrap_or(true);
                 self.modal = ModalState::NineEsimManagement {
                     device_name: dev,
                     atr,
@@ -963,11 +966,9 @@ impl AppController {
         let now_ms = current_time_ms();
         let mut changed = false;
         for item in pending {
-            let exists = self
-                .state
-                .notifications_history
-                .iter()
-                .any(|h| h.seq_number == item.metadata.seq_number && (h.eid == eid || h.eid.is_empty()));
+            let exists = self.state.notifications_history.iter().any(|h| {
+                h.seq_number == item.metadata.seq_number && (h.eid == eid || h.eid.is_empty())
+            });
             if !exists {
                 self.state.notifications_history.push(PersistedNotification {
                     eid: eid.to_string(),
@@ -1270,11 +1271,13 @@ impl AppController {
         };
         let smdp = if !self.download.smdp_input.trim().is_empty() {
             self.download.smdp_input.trim().to_string()
-        } else if let Some(parsed) = ActivationCode::extract_from_text(&self.download.combined_lpa_input)
+        } else if let Some(parsed) =
+            ActivationCode::extract_from_text(&self.download.combined_lpa_input)
         {
             parsed.smdp_address
         } else {
-            self.download.error = Some("Enter a valid SM-DP+ address or LPA activation code".into());
+            self.download.error =
+                Some("Enter a valid SM-DP+ address or LPA activation code".into());
             return;
         };
 
@@ -1431,7 +1434,8 @@ impl AppController {
                 }
             }
 
-            let matching_opt = (!parsed.matching_id.is_empty()).then_some(parsed.matching_id.as_str());
+            let matching_opt =
+                (!parsed.matching_id.is_empty()).then_some(parsed.matching_id.as_str());
             self.foreground_card_session_open = true;
             let res = download_profile(
                 Arc::clone(&self.host),
@@ -1575,7 +1579,9 @@ impl AppController {
             omapi_latch: Arc::clone(&self.omapi_latch),
             fallback_iccid: source_iccid,
         };
-        use nlpa_core::lpa::ts43::{discover_entitlement_for_channel, EntitlementChannel, SimType, SourceSimProvider};
+        use nlpa_core::lpa::ts43::{
+            discover_entitlement_for_channel, EntitlementChannel, SimType, SourceSimProvider,
+        };
         match sim.identity() {
             Ok(id) => {
                 self.transfer.source_iccid = id.iccid.clone();
@@ -1589,7 +1595,8 @@ impl AppController {
                     Ok(ent) => {
                         self.transfer.is_eligible = Some(true);
                         self.transfer.can_start = true;
-                        self.transfer.step_message = format!("Carrier entitlement found: {}", ent.server);
+                        self.transfer.step_message =
+                            format!("Carrier entitlement found: {}", ent.server);
                         self.transfer.error = None;
                     }
                     Err(e) => {
@@ -1807,9 +1814,12 @@ impl AppController {
                         .map(|p| p.iccid.clone())
                         .unwrap_or_default()
                 };
-                if let Ok(done_res) =
-                    client.complete_activation(&mut res, &ActivationResult { iccid: installed_iccid })
-                {
+                if let Ok(done_res) = client.complete_activation(
+                    &mut res,
+                    &ActivationResult {
+                        iccid: installed_iccid,
+                    },
+                ) {
                     self.transfer.state_label = format!("{:?}", done_res.state);
                     self.transfer.is_busy = false;
                     self.transfer.step_message = "Transfer complete".into();
@@ -2208,7 +2218,8 @@ impl AppController {
             iccid: p.iccid.clone(),
             display_iccid: redact_iccid(&p.iccid, &self.state.redaction),
             display_name: display_name(&view, &self.state.redaction),
-            operator_summary: operator_summary(&view, &self.state.redaction, &[]).unwrap_or_default(),
+            operator_summary: operator_summary(&view, &self.state.redaction, &[])
+                .unwrap_or_default(),
             nickname: p.nickname.clone(),
             service_provider_name: p.service_provider_name.clone(),
             profile_name: p.name.clone(),
@@ -2376,6 +2387,7 @@ impl AppController {
                 notice: self.notif_notice.clone(),
             },
             settings: SettingsView {
+                locale_choice: Some(self.state.locale),
                 reveal_sensitive: r.reveal_sensitive_profile_data,
                 redact_eid_first: r.redact_eid_first,
                 redact_eid_middle: r.redact_eid_middle,

@@ -1,4 +1,4 @@
-//! Integration tests for `AppController`, safety invariants, EID deduplication, and JNI bridge logic.
+//! Integration tests for `AppController`, safety invariants, EID dedup, SE HAL, and JNI logic.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -7,11 +7,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use nlpa_core::asn1::encode_tlv;
 use nlpa_core::asn1::rsp::{
-    EuiccConfiguredAddresses, EuiccInfo2, RspProfileInfo, TAG_GET_PROFILES_INFO,
+    EuiccChallenge, EuiccConfiguredAddresses, EuiccInfo2, RspProfileInfo, TAG_GET_PROFILES_INFO,
     TAG_PROFILE_INFO_LIST,
 };
 use nlpa_core::crypto::base64_encode;
-use nlpa_core::hex::bytes_to_hex;
+use nlpa_core::hex::{bytes_to_hex, hex_to_bytes};
 use nlpa_core::i18n::LocaleChoice;
 use nlpa_core::storage::ThemeStyle;
 use nlpa_ui::RenderMeta;
@@ -43,6 +43,10 @@ struct MockHostState {
     sw6881_on_next_switch: bool,
     se_hal_uncertain_on_switch: bool,
     enable_apdu_count: usize,
+    se_hal_begin_download_count: usize,
+    se_hal_end_download_count: usize,
+    se_hal_download_open: bool,
+    se_hal_download_tags: Vec<String>,
     http_responses: BTreeMap<String, (u16, String)>,
 }
 
@@ -123,7 +127,10 @@ impl HostTransport for MockHostTransport {
             }
             "telephony.closeChannel" => json!(null),
             "omapi.listReaders" => json!(st.omapi_readers),
-            "omapi.connect" => json!({"success": true, "atr": "3B9F96801F038031E073FE21136702434F537EC101FF"}),
+            "omapi.connect" => json!({
+                "success": true,
+                "atr": "3B9F96801F038031E073FE21136702434F537EC101FF"
+            }),
             "omapi.openChannel" => {
                 let reader = args["reader"].as_str().unwrap_or("");
                 json!({
@@ -181,9 +188,54 @@ impl HostTransport for MockHostTransport {
             "seHal.openOwned" | "seHal.closeOwned" | "seHal.useBorrowed" => json!(null),
             "seHal.read" => {
                 let apdu = args["apduHex"].as_str().unwrap_or("");
+                assert_allowed_hal_read_apdu(apdu);
                 handle_card_apdu(&mut st, "sehal:slot1", apdu)?
             }
+            "seHal.beginDownload" => {
+                st.se_hal_begin_download_count += 1;
+                st.se_hal_download_open = true;
+                json!(null)
+            }
+            "seHal.endDownload" => {
+                st.se_hal_end_download_count += 1;
+                st.se_hal_download_open = false;
+                json!(null)
+            }
+            "seHal.download" => {
+                assert!(
+                    st.se_hal_download_open,
+                    "seHal.download called without active seHal.beginDownload"
+                );
+                let segments = args["segmentsHex"].as_array().expect("segmentsHex array");
+                assert!(!segments.is_empty(), "segmentsHex must not be empty");
+                let mut payload = Vec::new();
+                for seg in segments {
+                    let s = seg.as_str().unwrap_or("");
+                    payload.extend_from_slice(&hex_to_bytes(s).expect("valid segment hex"));
+                }
+                assert!(payload.len() >= 3 && payload[0] == 0xBF);
+                let tag = payload[1];
+                assert!(
+                    matches!(tag, 0x2E | 0x38 | 0x21 | 0x36),
+                    "unexpected ES10b tag BF{tag:02X} in seHal.download"
+                );
+                if tag != 0x36 {
+                    assert_eq!(segments.len(), 1, "only BF36 allows multi-segment download");
+                }
+                st.se_hal_download_tags.push(format!("BF{tag:02X}"));
+                let mut resp = match tag {
+                    0x2E => EuiccChallenge::new([0x11; 16]).encode(),
+                    0x38 => encode_tlv(0xBF38, &encode_tlv(0xA0, &[])),
+                    0x21 => encode_tlv(0xBF21, &encode_tlv(0xA0, &[])),
+                    0x36 => encode_tlv(0xBF37, &encode_tlv(0x80, &[0x00])),
+                    _ => unreachable!(),
+                };
+                resp.extend_from_slice(&[0x90, 0x00]);
+                json!(bytes_to_hex(&resp))
+            }
             "seHal.switchProfile" => {
+                let iccid_hex = args["iccidHex"].as_str().unwrap_or("");
+                assert_se_hal_swapped_bcd_iccid(iccid_hex);
                 st.profile_a_enabled = args["enable"].as_bool().unwrap_or(true);
                 if st.se_hal_uncertain_on_switch {
                     return Ok(json!({
@@ -194,6 +246,11 @@ impl HostTransport for MockHostTransport {
                     .to_string());
                 }
                 json!("BF31038001009000")
+            }
+            "seHal.renameProfile" | "seHal.deleteProfile" => {
+                let iccid_hex = args["iccidHex"].as_str().unwrap_or("");
+                assert_se_hal_swapped_bcd_iccid(iccid_hex);
+                json!("BF29038001009000")
             }
             "seHal.removeNotification" => json!("BF30030201009000"),
             "ccid.listReaders" => json!([]),
@@ -375,7 +432,9 @@ fn reader_eid_deduplication_follows_exact_priority_order() {
     assert_eq!(ctrl.discovered_readers()[0].kind, TransportKind::NBridgeTmapi);
 
     // Disable NBridge -> Telephony wins over OMAPI and ADB
-    ctrl.dispatch_json(r#"{"action":"toggle_reader_type","reader_type":"nbridge","enabled":false}"#);
+    ctrl.dispatch_json(
+        r#"{"action":"toggle_reader_type","reader_type":"nbridge","enabled":false}"#,
+    );
     assert_eq!(ctrl.discovered_readers().len(), 1);
     assert_eq!(ctrl.discovered_readers()[0].kind, TransportKind::Telephony);
 
@@ -530,9 +589,10 @@ fn jni_lifecycle_wallpaper_opacity_vietnamese_roundtrip_and_atomic_persistence()
     assert!(doc.contains("#000000"));
 
     // Toggle wallpaper + opacity + locale vi + switch to Settings tab
-    handle_platform_event_json(
-        r#"{"type":"wallpaper_changed","active":true,"path":"/data/user/0/app/files/wallpaper.img"}"#,
-    );
+    handle_platform_event_json(concat!(
+        r#"{"type":"wallpaper_changed","active":true,"#,
+        r#""path":"/data/user/0/app/files/wallpaper.img"}"#
+    ));
     dispatch_action_json(r#"{"action":"set_wallpaper_opacity","opacity":0.45}"#);
     dispatch_action_json(r#"{"action":"set_locale","locale":"vi"}"#);
     dispatch_action_json(r#"{"action":"set_theme_style","style":"amoled"}"#);
@@ -624,4 +684,230 @@ fn notification_removal_requires_local_history_backup() {
         Some(TEST_EID),
     );
     assert!(allowed.is_ok(), "backed-up notification removal must succeed");
+}
+
+fn assert_allowed_hal_read_apdu(apdu_hex: &str) {
+    let a = hex_to_bytes(apdu_hex).expect("valid seHal.read APDU hex");
+    assert!(a.len() >= 5, "seHal.read APDU too short: {apdu_hex}");
+    if a[1] == 0xC0 {
+        assert!(
+            a.len() == 5 && (a[0] == 0x01 || a[0] == 0x81) && a[2] == 0 && a[3] == 0,
+            "invalid SE HAL GET RESPONSE APDU: {apdu_hex}"
+        );
+        return;
+    }
+    assert!(
+        a.len() >= 8 && a[0] == 0x81 && a[1] == 0xE2 && a[2] == 0x91 && a[3] == 0x00,
+        "SE HAL read APDU must use CLA=81 INS=E2 P1=91 P2=00, got {apdu_hex}"
+    );
+    let lc = usize::from(a[4]);
+    assert!(
+        a.len() == 5 + lc || a.len() == 6 + lc,
+        "invalid Lc framing in seHal.read: {apdu_hex}"
+    );
+    assert!(
+        a[5] == 0xBF && matches!(a[6], 0x20 | 0x22 | 0x28 | 0x2B | 0x2D | 0x3E),
+        "disallowed ES10 tag in seHal.read: {apdu_hex}"
+    );
+    assert!(
+        a[7] < 128 && lc == 3 + usize::from(a[7]),
+        "SE HAL read only allows short-form TLVs: {apdu_hex}"
+    );
+}
+
+fn assert_se_hal_swapped_bcd_iccid(iccid_hex: &str) {
+    assert_eq!(
+        iccid_hex.len(),
+        20,
+        "SE HAL expects 10-byte BCD iccidHex, got {iccid_hex}"
+    );
+    assert!(
+        iccid_hex.starts_with("98"),
+        "SE HAL expects swapped-BCD ICCID starting with 98, got {iccid_hex}"
+    );
+}
+
+#[test]
+fn se_hal_download_uses_single_begin_end_and_valid_read_apdus() {
+    let mut http_responses = BTreeMap::new();
+    let init_json = json!({
+        "header": { "functionExecutionStatus": { "status": "Executed-Success" } },
+        "transactionId": "0A1B2C3D",
+        "serverSigned1": base64_encode(&encode_tlv(0x30, &encode_tlv(0x80, &[0x01]))),
+        "serverSignature1": base64_encode(&encode_tlv(0x5F37, &[0xAA; 4])),
+        "serverCertificate": base64_encode(&encode_tlv(0x30, &[0x02, 0x01, 0x00]))
+    })
+    .to_string();
+    http_responses.insert(
+        "https://rsp.example.com/gsma/rsp2/es9plus/initiateAuthentication".into(),
+        (200, init_json),
+    );
+
+    let mut meta_children = Vec::new();
+    let iccid_bcd = hex_to_bytes("981062000000000000F3").expect("iccid bcd");
+    meta_children.extend_from_slice(&encode_tlv(0x5A, &iccid_bcd));
+    meta_children.extend_from_slice(&encode_tlv(0x91, b"DemoTel"));
+    meta_children.extend_from_slice(&encode_tlv(0x92, b"Demo Plan"));
+    let auth_client_json = json!({
+        "header": { "functionExecutionStatus": { "status": "Executed-Success" } },
+        "transactionId": "0A1B2C3D",
+        "profileMetadata": base64_encode(&encode_tlv(0xBF25, &meta_children)),
+        "smdpSigned2": base64_encode(&encode_tlv(0x30, &encode_tlv(0x80, &[0x02]))),
+        "smdpSignature2": base64_encode(&encode_tlv(0x5F37, &[0xBB; 4]))
+    })
+    .to_string();
+    http_responses.insert(
+        "https://rsp.example.com/gsma/rsp2/es9plus/authenticateClient".into(),
+        (200, auth_client_json),
+    );
+
+    let mut bpp_inner = encode_tlv(0xBF23, &[0x80, 0x01, 0x01]);
+    bpp_inner.extend_from_slice(&encode_tlv(0xA0, &encode_tlv(0x87, &[0x01])));
+    let bpp_json = json!({
+        "header": { "functionExecutionStatus": { "status": "Executed-Success" } },
+        "transactionId": "0A1B2C3D",
+        "boundProfilePackage": base64_encode(&encode_tlv(0xBF36, &bpp_inner))
+    })
+    .to_string();
+    http_responses.insert(
+        "https://rsp.example.com/gsma/rsp2/es9plus/getBoundProfilePackage".into(),
+        (200, bpp_json),
+    );
+
+    let mock_state = MockHostState {
+        se_hal_active: true,
+        http_responses,
+        ..MockHostState::default()
+    };
+    let host = MockHostTransport::new(mock_state);
+    let files_dir = temp_dir_for_test("se_hal_download");
+    let mut ctrl = AppController::new(
+        host.clone(),
+        AppConfig {
+            files_dir: files_dir.clone(),
+            ..AppConfig::default()
+        },
+    );
+    ctrl.dispatch_json(
+        r#"{"action":"toggle_reader_type","reader_type":"se_hal","enabled":true}"#,
+    );
+    let reader = ctrl
+        .discovered_readers()
+        .first()
+        .cloned()
+        .expect("SE HAL reader discovered");
+    assert_eq!(reader.kind, TransportKind::SeHal);
+
+    let state = ctrl.persisted_state().clone();
+    let latch = Arc::new(Mutex::new(nlpa_core::channel::OmapiSafetyLatch::new()));
+    let catalog = nlpa_core::profile_size_predictor::ProfileSizeCatalog::default();
+
+    let preview_out = rust_lib_nlpa2::lpa_ops::download_profile(
+        host.clone(),
+        &reader,
+        &state,
+        &latch,
+        "rsp.example.com",
+        Some("MATCH-1"),
+        None,
+        &catalog,
+        false,
+    )
+    .expect("SE HAL download preview succeeds");
+    match preview_out {
+        rust_lib_nlpa2::lpa_ops::DownloadOutcome::PreviewOnly { preview, .. } => {
+            assert_eq!(preview.iccid, "8901260000000000003");
+        }
+        other => panic!("expected PreviewOnly, got {other:?}"),
+    }
+
+    let install_out = rust_lib_nlpa2::lpa_ops::download_profile(
+        host.clone(),
+        &reader,
+        &state,
+        &latch,
+        "rsp.example.com",
+        Some("MATCH-1"),
+        None,
+        &catalog,
+        true,
+    )
+    .expect("SE HAL download install succeeds");
+    match install_out {
+        rust_lib_nlpa2::lpa_ops::DownloadOutcome::Installed {
+            installed_iccid, ..
+        } => {
+            assert_eq!(installed_iccid.as_deref(), Some("8901260000000000003"));
+        }
+        other => panic!("expected Installed, got {other:?}"),
+    }
+
+    let st = host.state.lock().expect("lock");
+    assert_eq!(st.se_hal_begin_download_count, 2);
+    assert_eq!(st.se_hal_end_download_count, 2);
+    assert!(!st.se_hal_download_open);
+    assert_eq!(
+        st.se_hal_download_tags,
+        vec!["BF2E", "BF38", "BF2E", "BF38", "BF21", "BF36"]
+    );
+    drop(st);
+
+    rust_lib_nlpa2::lpa_ops::rename_profile(
+        host.clone(),
+        &reader,
+        &state,
+        &latch,
+        PROFILE_A_ICCID,
+        "Renamed",
+        Some(TEST_EID),
+    )
+    .expect("SE HAL rename uses swapped-BCD ICCID");
+    rust_lib_nlpa2::lpa_ops::delete_profile(
+        host,
+        &reader,
+        &state,
+        &latch,
+        PROFILE_A_ICCID,
+        Some(TEST_EID),
+    )
+    .expect("SE HAL delete uses swapped-BCD ICCID");
+
+    let _ = std::fs::remove_dir_all(&files_dir);
+}
+
+#[test]
+fn omapi_discovery_skips_empty_slots_with_pipe_and_flags_euicc_atr() {
+    let mock_state = MockHostState {
+        omapi_readers: vec![
+            "SIM1".into(),
+            "SIM2|No SIM card|Card not detected in slot".into(),
+        ],
+        ..MockHostState::default()
+    };
+    let host = MockHostTransport::new(mock_state);
+    let files_dir = temp_dir_for_test("omapi_pipe");
+    let ctrl = AppController::new(
+        host.clone(),
+        AppConfig {
+            files_dir: files_dir.clone(),
+            ..AppConfig::default()
+        },
+    );
+
+    assert_eq!(ctrl.discovered_readers().len(), 1);
+    assert_eq!(ctrl.discovered_readers()[0].raw_name, "SIM1");
+    assert!(ctrl.build_ui_model().omapi_euicc_warning);
+
+    let st = host.state.lock().expect("lock");
+    let pipe_connects = st
+        .calls
+        .iter()
+        .filter(|(op, args)| {
+            op == "omapi.connect"
+                && args["reader"].as_str().is_some_and(|r| r.contains('|'))
+        })
+        .count();
+    assert_eq!(pipe_connects, 0, "empty slot strings with '|' must not be connected");
+
+    let _ = std::fs::remove_dir_all(&files_dir);
 }

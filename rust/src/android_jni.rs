@@ -71,8 +71,9 @@ fn serialize_render_meta(meta: &RenderMeta) -> String {
 }
 
 fn uninitialized_render_json(msg: &str) -> String {
+    let prefix = "<div class=\"nlpa-shell is-dark is-amoled\"><div class=\"nlpa-main\">";
     let meta = RenderMeta {
-        html: format!("<div class=\"nlpa-shell is-dark is-amoled\"><div class=\"nlpa-main\"><div class=\"nlpa-banner is-danger\">{msg}</div></div></div>"),
+        html: format!("{prefix}<div class=\"nlpa-banner is-danger\">{msg}</div></div></div>"),
         theme_style: "amoled".into(),
         dark: true,
         wallpaper_active: false,
@@ -195,11 +196,17 @@ mod jni_exports {
         let html = catch_unwind(AssertUnwindSafe(|| {
             let vm = match env.get_java_vm() {
                 Ok(vm) => vm,
-                Err(e) => return format!("<!DOCTYPE html><html><body>JNI VM error: {e}</body></html>"),
+                Err(e) => {
+                    return format!("<!DOCTYPE html><html><body>JNI VM error: {e}</body></html>");
+                }
             };
             let host_ref = match env.new_global_ref(&host) {
                 Ok(r) => r,
-                Err(e) => return format!("<!DOCTYPE html><html><body>JNI GlobalRef error: {e}</body></html>"),
+                Err(e) => {
+                    return format!(
+                        "<!DOCTYPE html><html><body>JNI GlobalRef error: {e}</body></html>"
+                    );
+                }
             };
             let config = AppConfig {
                 files_dir: PathBuf::from(read_jstring(&mut env, &files_dir)),

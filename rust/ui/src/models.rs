@@ -464,6 +464,7 @@ pub struct UpdateCandidateView {
 /// Full Settings tab view model.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct SettingsView {
+    pub locale_choice: Option<LocaleChoice>,
     pub reveal_sensitive: bool,
     pub redact_eid_first: bool,
     pub redact_eid_middle: bool,
